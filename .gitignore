@@ -9,6 +9,8 @@ cricket_key.txt
 *.apk
 talkies-backup.json
 wallpaper-backup.*
+# What census-art.sh saves: your watch titles and the artwork addresses of each provider. Nobody else's business.
+artwork-census.txt
 release.properties
 *.jks
 *.keystore

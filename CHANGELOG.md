@@ -74,6 +74,9 @@ features, a new fix number only fixes. The version shows in Talkies settings →
   nothing, and that card never tried the address again. The bytes now land on disk first, get measured, and are read
   at a sample size: the same picture at the same size on disk, and about a third of the memory while it is made
   (4096 px asked for 41 MB, it now asks for 13 MB).
+- **`./census-art.sh`** (new) answers where every card picture came from: what each provider publishes, what Talkies
+  fetched and what it could not, one file name reached from two different addresses, and the TV's screen in dp. It
+  writes `artwork-census.txt`, which git ignores because it holds your titles.
 
 ## 1.3.0 — 12 November 2026
 

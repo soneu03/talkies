@@ -115,6 +115,7 @@ salvapantallas necesita el wizard para tus fotos de Google Photos. Más en la gu
 ```bash
 ./build-and-install.sh                 # optimised build (about 270 KB, no libraries), install, set as home
 ./check-l10n.sh                        # the words: same names in both languages, every placeholder (build-and-install.sh runs it first)
+./census-art.sh                        # where each card picture came from, as text to paste (saves artwork-census.txt, which git ignores)
 ./restore.sh                           # the TV's own home screen back, Talkies removed
 ./restore.sh --keep-talkies            # the TV's own home screen back, Talkies kept
 ./switch-home.sh list|talkies|stock    # choose the home screen (see the guide)
