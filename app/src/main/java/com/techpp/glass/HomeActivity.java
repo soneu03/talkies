@@ -4097,6 +4097,33 @@ public class HomeActivity extends Activity {
         });
     }
 
+    /**
+     * A dot on the Settings icon, so Home itself answers the question the menu asks: no dot while nothing is switched
+     * on, a pale one while developer options are on and no computer can reach the TV, a red one while one can. Read
+     * from Android's own switches, in the same place Talkies settings keeps them.
+     */
+    private void refreshDebugDot() {
+        background.execute(() -> {
+            final boolean dev = DebugState.devOptions(this);
+            final boolean reachable = DebugState.wirelessText(this).startsWith("On");
+            runOnUiThread(() -> setDebugDot(dev, reachable));
+        });
+    }
+
+    private void setDebugDot(boolean devOn, boolean reachable) {
+        if (!devOn && !reachable) {
+            icons[P_SETTINGS].setForeground(null);
+            icons[P_SETTINGS].setContentDescription("Settings");
+            return;
+        }
+        android.graphics.drawable.Drawable d = getDrawable(R.drawable.dot).mutate();   // the menu rows' dot, tinted
+        d.setTint(reachable ? 0xFFFF453A : 0x99FFFFFF);
+        icons[P_SETTINGS].setForeground(d);
+        icons[P_SETTINGS].setForegroundGravity(android.view.Gravity.TOP | android.view.Gravity.END);
+        icons[P_SETTINGS].setContentDescription("Settings · developer options " + (devOn ? "on" : "off")
+                + ", network debugging " + (reachable ? "on" : "off"));
+    }
+
     private void openNetworkDebugging() {
         beginMenu(settingsAt, "Network debugging lets a computer on your network control this TV");
         boolean adbOn = DebugState.adbOn(this);
@@ -4104,8 +4131,10 @@ public class HomeActivity extends Activity {
         // permission the first one also switches developer options on before opening it, which is the part a person
         // pressing this row usually wants. Wireless debugging is left to the screen: pairing needs its code.
         addRow("Developer options", DebugState.devOptions(this) ? "On" : "Off", () -> {
-            if (DebugState.switchOnDevOptions(this))
+            if (DebugState.switchOnDevOptions(this)) {
+                refreshDebugDot();   // Home's dot follows the switch, not only the menu
                 Toast.makeText(this, "Developer options are on. The debugging switches are inside them.", Toast.LENGTH_LONG).show();
+            }
             start(new Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS));
         }, false);
         final View[] wd = new View[1];
@@ -4116,9 +4145,12 @@ public class HomeActivity extends Activity {
         }, false);
         checkNetworkDebugging(st -> { if (wd[0].isAttachedToWindow()) setStatus(wd[0], st); });
         if (adbOn && ServiceRepair.canRepair(this)) {
-            addRow("Turn off", "computers lose access", () -> Toast.makeText(this, DebugState.switchOffAdb(this)
-                    ? "Network debugging is off. Turn it on again in Developer options."
-                    : "Android kept it on: turn it off in Developer options", Toast.LENGTH_LONG).show(), false);
+            addRow("Turn off", "computers lose access", () -> {
+                boolean off = DebugState.switchOffAdb(this);
+                refreshDebugDot();
+                Toast.makeText(this, off ? "Network debugging is off. Turn it on again in Developer options."
+                        : "Android kept it on: turn it off in Developer options", Toast.LENGTH_LONG).show();
+            }, false);
         }
         showMenu(460);
     }
@@ -6148,6 +6180,7 @@ public class HomeActivity extends Activity {
         root.removeCallbacks(checkService);
         root.postDelayed(checkService, 6000);
         refreshOnline();   // back on the home screen: catch up on anything that went stale meanwhile
+        refreshDebugDot();   // and what Android's own debug switches are doing now
         root.removeCallbacks(reorderApps);
         if (appsOrder() == ORDER_RECENT && !recentSig.equals(String.join(",", RecentApps.all(this)))) root.postDelayed(reorderApps, 800);
     }

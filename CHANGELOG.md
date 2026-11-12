@@ -6,6 +6,9 @@ features, a new fix number only fixes. The version shows in Talkies settings →
 ## Unreleased
 
 ### New
+- **The debug state on Home**: the ⚙ icon takes a red dot while a computer can control this TV over the network, a pale
+  one while only developer options are on, and no dot while neither is, so the answer is on the screen rather than two
+  presses away. It is refreshed the same way the row is, on Android's own switches, and after this app switches one.
 - **Talkies settings → Network debugging reads the TV's own switches.** The row says what a computer can do with this
   TV right now - *On · Wi-Fi* on Android 11 and later, *On · port 5555* on Android TV's older Network debugging,
   *USB only*, *Off*, *Off · dev options off* - and inside, **Developer options** and **Wireless debugging** each show
