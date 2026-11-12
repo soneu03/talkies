@@ -37,11 +37,11 @@ jobs:
 
       - name: Still no libraries
         run: |
-          N="$(grep -cE '^[[:space:]]*(implementation|api|compileOnly|runtimeOnly|testImplementation)[[:space:]]' app/build.gradle)"
-          [ "$N" = 0 ] || {
-            echo "app/build.gradle now asks for $N artifact(s), and Talkies has shipped with none.";
+          if grep -nE '^[[:space:]]*(implementation|api|compileOnly|runtimeOnly|testImplementation)[[:space:]]' app/build.gradle; then
+            echo "app/build.gradle now asks for the artifact(s) above, and Talkies has shipped with none.";
             echo "That is a decision, not a detail: THIRD_PARTY_NOTICES.md, a ProGuard look and the ~260 KB APK all";
-            echo "move with it. Say why in docs/building.md and let this check know you meant it."; exit 1; }
+            echo "move with it. Say why in docs/building.md and let this check know you meant it."; exit 1;
+          fi
 
       - name: The scripts still parse
         run: for f in *.sh gradlew; do bash -n "$f" || exit 1; done
