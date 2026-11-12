@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One Control Center tile: four across the top of the menu, each a thing you reach for while watching.
+     Four of them share 464 dp, so 110 apiece and 86 of that for words - the label takes two lines because the
+     Spanish names are long ("Temporizador de apagado"). Colours come from the theme in code, as everywhere else. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="0dp"
+    android:layout_height="84dp"
+    android:layout_weight="1"
+    android:gravity="bottom"
+    android:orientation="vertical"
+    android:paddingStart="10dp"
+    android:paddingTop="6dp"
+    android:paddingEnd="10dp"
+    android:paddingBottom="6dp">
+
+    <ImageView
+        android:id="@+id/cc_glyph"
+        android:layout_width="16dp"
+        android:layout_height="16dp"
+        android:layout_marginBottom="4dp"
+        android:importantForAccessibility="no" />
+
+    <TextView
+        android:id="@+id/input_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:fontFamily="@font/plus_jakarta_sans"
+        android:maxLines="2"
+        android:textSize="13sp" />
+
+    <TextView
+        android:id="@+id/input_status"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="1dp"
+        android:ellipsize="end"
+        android:fontFamily="@font/inter_tight"
+        android:singleLine="true"
+        android:textSize="10sp"
+        android:visibility="gone" />
+</LinearLayout>

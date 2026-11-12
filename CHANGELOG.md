@@ -43,6 +43,16 @@ features, a new fix number only fixes. The version shows in Talkies settings →
   runs on a push), and says so when `versionName`, `versionCode` and CHANGELOG.md stop agreeing.
 
 ### Changed
+- **The Control Center is half the screen, in three blocks.** Four big buttons across the top - Talkies settings,
+  Recent apps, the sleep timer, Restart - then **On screen** as full rows (what's playing, the weather, an unpinned
+  score) and **TV status** as two cells to a row. It used to be 350 dp of one long column, so the bottom of it was
+  eight presses away. Left and Right now walk along a line instead of closing it, and only close it past the edge -
+  which is what they still do in every other menu, because a menu's shape is read from its views rather than stored.
+- **The weather and the clock changed places.** The temperature is the big line top left now - 42 sp, with its icon and
+  the condition after it at a third of that - and the time and date went up to the small capitals line the weather used
+  to fill. With no weather to show - no place set, or the TV offline before the first read - the time takes the big
+  line back, as before. Nothing else moved: the block is the same height, and For You hidden still grows everything
+  by 1.6.
 - **Content rows are square.** The Continue cards and the channel rows' pictures keep their corners: a rounded one cut
   pixels off a picture that is the whole card, and the focus line follows the square now too. The dock, the app tiles
   and the menus keep their rounding.

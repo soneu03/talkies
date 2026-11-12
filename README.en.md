@@ -31,7 +31,7 @@
 - **Your apps** in a dock of 4 to 10 (seven to start), the rest a click away with the **All apps** button at its end. Hold OK on
   any app to move, hide or uninstall it.
 - **For You:** what's trending on *your* streaming apps in *your* country, what's new there, and Continue watching.
-  Only titles that stream on a subscription you can use; hide it for a big clean clock instead.
+  Only titles that stream on a subscription you can use; hide it for a big clean weather line and clock.
 - **Live cricket, football, NBA and NFL** on the home screen, with your country's teams and leagues first.
 - **Weather** at a glance, with the next hours and days in Control Center.
 - **Control Center:** what's playing (pause, skip), sleep timer, turn off, recent apps, speed test, Bluetooth,

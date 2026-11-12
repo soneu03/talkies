@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One Control Center cell: two of these across the menu, for the facts about the TV whose status is short.
+     Half a row's width, so both lines give up their tail rather than their head. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="0dp"
+    android:layout_height="40dp"
+    android:layout_weight="1"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="10dp"
+    android:paddingEnd="10dp">
+
+    <TextView
+        android:id="@+id/input_label"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:fontFamily="@font/inter_tight"
+        android:singleLine="true"
+        android:textSize="14sp" />
+
+    <TextView
+        android:id="@+id/input_status"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:ellipsize="end"
+        android:fontFamily="@font/inter_tight"
+        android:maxWidth="96dp"
+        android:singleLine="true"
+        android:textAlignment="viewEnd"
+        android:textSize="11sp"
+        android:visibility="gone" />
+</LinearLayout>

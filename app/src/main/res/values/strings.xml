@@ -31,6 +31,8 @@
     <string name="heading_apps_inputs">Apps and inputs</string>
     <string name="heading_remote_power">Remote and power</string>
     <string name="heading_talkies">Talkies</string>
+    <string name="heading_on_screen">On screen</string>
+    <string name="heading_tv_status">TV status</string>
 
     <string name="row_appearance">Appearance</string>
     <string name="row_wallpaper">Wallpaper</string>

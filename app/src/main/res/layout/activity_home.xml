@@ -124,7 +124,7 @@
             android:text="@string/picks_from_tmdb"
             android:textSize="11sp" />
 
-        <!-- Weather, then time | date, top left. -->
+        <!-- Time | date small on top, the weather big under it: the temperature is the line that carries the corner. -->
         <LinearLayout
             android:id="@+id/big_clock"
             android:layout_width="wrap_content"
@@ -133,19 +133,9 @@
             android:layout_marginTop="26dp"
             android:orientation="vertical"
             >
-            <TextView
-                android:id="@+id/big_weather"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="@font/plus_jakarta_sans"
-                android:letterSpacing="0.14"
-                android:singleLine="true"
-                android:textAllCaps="true"
-                android:textSize="12sp" />
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
                 <TextView
@@ -155,25 +145,26 @@
                     android:layout_marginStart="-2dp"
                     android:fontFamily="@font/plus_jakarta_sans"
                     android:includeFontPadding="false"
+                    android:letterSpacing="0.14"
                     android:singleLine="true"
-                    android:textSize="42sp" />
+                    android:textAllCaps="true"
+                    android:textSize="12sp" />
                 <TextView
                     android:id="@+id/big_ampm"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="bottom"
                     android:layout_marginStart="6dp"
-                    android:layout_marginBottom="5dp"
                     android:fontFamily="@font/plus_jakarta_sans"
+                    android:letterSpacing="0.14"
                     android:singleLine="true"
                     android:textAllCaps="true"
-                    android:textSize="15sp" />
+                    android:textSize="12sp" />
                 <View
                     android:id="@+id/big_rule"
                     android:layout_width="1dp"
-                    android:layout_height="28dp"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginEnd="16dp" />
+                    android:layout_height="10dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginEnd="8dp" />
                 <TextView
                     android:id="@+id/big_date"
                     android:layout_width="wrap_content"
@@ -182,8 +173,18 @@
                     android:letterSpacing="0.14"
                     android:singleLine="true"
                     android:textAllCaps="true"
-                    android:textSize="14sp" />
+                    android:textSize="12sp" />
             </LinearLayout>
+            <TextView
+                android:id="@+id/big_weather"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="-2dp"
+                android:layout_marginTop="2dp"
+                android:fontFamily="@font/plus_jakarta_sans"
+                android:includeFontPadding="false"
+                android:singleLine="true"
+                android:textSize="42sp" />
         </LinearLayout>
 
         <!-- Picks: the current one large, the rest small -->

@@ -44,26 +44,31 @@ everything they do can also be done on the TV, in Talkies settings.
 
 ## Control Center
 
-Go up to the icon buttons and choose the first one (sliders). It has what you reach for while watching; everything
-you set once is in **Talkies settings**, at the top.
+Go up to the icon buttons and choose the first one (sliders). It takes half the screen in three blocks: four big
+buttons across the top for what you touch while watching, below them **what's on screen right now**, and at the
+bottom **TV status** in two columns. Everything you set once is in **Talkies settings**, at the top.
 
-| Row | What OK does |
-|---|---|
-| Fix Home and Turn off | Only when Talkies' accessibility service has stopped (see below): opens Accessibility, where you switch Talkies off and on |
-| Talkies settings | Opens Talkies settings (below) |
-| Now playing | Only while an app plays (or has paused) something: the song or show, its artwork, artist and app, then **Pause** / **Play**, **Next**, **Previous** (when the app allows skipping) and **Open** the app. It follows the player as tracks change |
-| Weather | The current weather on the right; OK shows the next six hours, and OK again the next six days (high / low and conditions) |
-| Sleep timer | Cycles Off → 30 → 60 → 90 min; the time left shows on the right. A minute before, a card counts down over whatever is playing: **OK** gives 15 more minutes |
-| Turn off now | Puts the TV in standby |
-| Recent apps | Big cards of the apps you opened through Talkies (dock, All apps, picks, channels, remote buttons) or left with Home, newest first. A card shows what you last watched in the app when Talkies knows it (its Continue picture), else the app's logo on its colour. Left and Right move, OK opens, Back closes. Down (or Menu, or holding OK) offers **Remove from list** and **App info**, where Android keeps Force stop. **Press Home twice quickly** to open it, from Talkies or from inside an app (needs Remote keys On). Also on a remote button: Remote keys → Recent apps |
-| Storage | Shows the free space ("12.4 GB free of 32 GB"); OK opens the TV's storage settings |
-| Animations | Cycles the speed of every animation on the TV: 1× → 0.5× → Off. Faster makes menus and app switches feel snappier; Off also stills Talkies' own motion. Needs the `WRITE_SECURE_SETTINGS` grant (see [Google Assistant](#google-assistant-and-the-google-tv-launcher)) |
-| Network | Shows the Wi-Fi name (or Ethernet); OK opens Wi-Fi settings |
-| Speed test | A few seconds' download from Cloudflare's speed test; shows e.g. "206 Mbps" |
-| Bluetooth | Shows the connected speaker or headphones. OK lists your paired ones: OK on one connects or disconnects it; **Pair a new device** opens the TV's Bluetooth settings. Bluetooth can't be turned off here, since many remotes use it |
-| Sound output | Shows *TV speakers*, or *Soundbar connected* when one is on HDMI ARC (Android doesn't say whether it's the one playing), and opens the TV's sound settings: on Sony, Display & sound, where Audio output chooses the speakers |
-| Screensaver | Starts the TV's screensaver right away (Talkies' own, if you picked it: see below), the way Google Assistant does (or through Android's own shortcut). Not shown on devices that offer apps neither |
-| Restart… | Opens the TV's own power menu, which asks before restarting. On some TVs (OnePlus) that menu puts the TV to sleep after 10 seconds if you choose nothing; Back closes it |
+Left and Right walk the top buttons and the pairs of cells; past the edge they close the menu, as always. Up and Down
+change line and remember which column you were in.
+
+| Block | Row | What OK does |
+|---|---|---|
+| (warning) | Fix Home and Turn off | Only when Talkies' accessibility service has stopped (see below): opens Accessibility, where you switch Talkies off and on. The one full row above the buttons |
+| Buttons | Talkies settings | Opens Talkies settings (below) |
+| Buttons | Recent apps | Big cards of the apps you opened through Talkies (dock, All apps, picks, channels, remote buttons) or left with Home, newest first. A card shows what you last watched in the app when Talkies knows it (its Continue picture), else the app's logo on its colour. Left and Right move, OK opens, Back closes. Down (or Menu, or holding OK) offers **Remove from list** and **App info**, where Android keeps Force stop. **Press Home twice quickly** to open it, from Talkies or from inside an app (needs Remote keys On). Also on a remote button: Remote keys → Recent apps |
+| Buttons | Sleep timer | Cycles Off → 30 → 60 → 90 min; the time left shows under the name. A minute before, a card counts down over whatever is playing: **OK** gives 15 more minutes |
+| Buttons | Restart… | Opens the TV's own power menu, which asks before restarting. On some TVs (OnePlus) that menu puts the TV to sleep after 10 seconds if you choose nothing; Back closes it |
+| On screen | Now playing | Only while an app plays (or has paused) something: the song or show, its artwork, artist and app, then **Pause** / **Play**, **Next**, **Previous** (when the app allows skipping) and **Open** the app. It follows the player as tracks change |
+| On screen | Weather | The current weather on the right; OK shows the next six hours, and OK again the next six days (high / low and conditions) |
+| On screen | Unpin score | Only with a score pinned: takes it away |
+| TV status | Screensaver | Starts the TV's screensaver right away (Talkies' own, if you picked it: see below), the way Google Assistant does (or through Android's own shortcut). Not shown on devices that offer apps neither |
+| TV status | Network | Shows the Wi-Fi name (or Ethernet); OK opens Wi-Fi settings |
+| TV status | Storage | Shows the free space ("12.4 GB free of 32 GB"); OK opens the TV's storage settings |
+| TV status | Bluetooth | Shows the connected speaker or headphones. OK lists your paired ones: OK on one connects or disconnects it; **Pair a new device** opens the TV's Bluetooth settings. Bluetooth can't be turned off here, since many remotes use it |
+| TV status | Animations | Cycles the speed of every animation on the TV: 1× → 0.5× → Off. Faster makes menus and app switches feel snappier; Off also stills Talkies' own motion. Needs the `WRITE_SECURE_SETTINGS` grant (see [Google Assistant](#google-assistant-and-the-google-tv-launcher)) |
+| TV status | Sound output | Shows *TV speakers*, or *Soundbar connected* when one is on HDMI ARC (Android doesn't say whether it's the one playing), and opens the TV's sound settings: on Sony, Display & sound, where Audio output chooses the speakers |
+| TV status | Speed test | A few seconds' download from Cloudflare's speed test; shows e.g. "206 Mbps" |
+| TV status | Turn off now | Puts the TV in standby
 
 ## Talkies settings
 
@@ -285,9 +290,11 @@ Artwork is cached on the TV in `files/channels/`.
 
 ## Weather
 
-The weather shows at the top left, for example "27° SHOWERS", in °C, or °F where that's the custom (the US and a
-few others, going by where the TV is), after a small line drawing of the sky: sun, moon, sun or
-moon behind a cloud, cloud, rain, snow, thunder or fog.
+The weather shows at the top left, and it is the big line: for example "27° Showers", the degrees at 42 sp and the
+condition at a third of that, in °C, or °F where that's the custom (the US and a few others, going by where the TV is),
+after a line drawing of the sky, as tall as the degrees: sun, moon, sun or moon behind a cloud, cloud, rain, snow,
+thunder or fog. Above it, on the small line, the time and the date. And with no weather to show (no place chosen, or
+the TV offline before the first read), the time takes the big line back.
 The weather part combines two sources:
 
 - **Temperature** is measured at the **nearest airport weather station**. Airports publish observations (METAR) every

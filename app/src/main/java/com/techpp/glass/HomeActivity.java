@@ -43,6 +43,7 @@ import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.format.DateFormat;
 import android.text.style.ForegroundColorSpan;
+import android.text.style.RelativeSizeSpan;
 import android.text.style.StyleSpan;
 import android.util.Log;
 import android.view.Gravity;
@@ -390,11 +391,11 @@ public class HomeActivity extends Activity {
         backdrop.setTheme(day, theme.bgTop, theme.bgBottom, theme.scrimTop, theme.scrimMid, theme.scrimBottom, theme.ambientAlpha);
         backdrop.setScrimStops(wallpaperScrim());
         title.setTextColor(theme.text);
-        bigTime.setTextColor(theme.text);
-        bigAmPm.setTextColor(theme.text);
-        bigDate.setTextColor(theme.text);
-        bigWeather.setTextColor(theme.text2);
-        bigWeather.setCompoundDrawableTintList(ColorStateList.valueOf(theme.text2));
+        bigTime.setTextColor(theme.text2);
+        bigAmPm.setTextColor(theme.text2);
+        bigDate.setTextColor(theme.text2);
+        bigWeather.setTextColor(theme.text);
+        bigWeather.setCompoundDrawableTintList(ColorStateList.valueOf(theme.text));
         meters.setColor(theme.text);
         bigRule.setBackgroundColor((theme.text2 & 0x00FFFFFF) | 0x66000000);
         allAppsLabel.setTextColor(theme.text);
@@ -490,30 +491,49 @@ public class HomeActivity extends Activity {
     }
 
     /**
-     * The weather, time and date always sit top left (the small line under the icons isn't used). For You shown: its
-     * tabs and picks follow below them; hidden: just the clock, 1.6 times the size, with the dock below.
+     * For You shown: its tabs and picks follow below the corner; hidden: the corner at 1.6 times the size, with the
+     * dock below it. The small line under the icons isn't used at all.
      */
     private void applyForYou() {
         forYouHead.setVisibility(forYou ? View.VISIBLE : View.GONE);
         info.setVisibility(View.GONE);
-        float k = forYou ? 1f : 1.6f;
-        bigWeather.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 12 * k);
-        weatherIcon();
-        bigTime.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 42 * k);
-        bigAmPm.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 15 * k);
-        bigDate.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 14 * k);
-        ViewGroup.MarginLayoutParams am = (ViewGroup.MarginLayoutParams) bigAmPm.getLayoutParams();
-        am.bottomMargin = px(5 * k);
-        ViewGroup.MarginLayoutParams rule = (ViewGroup.MarginLayoutParams) bigRule.getLayoutParams();
-        rule.height = px(28 * k);
-        rule.setMarginStart(px(16 * k));
-        rule.setMarginEnd(px(16 * k));
-        ((ViewGroup.MarginLayoutParams) bigClock.getLayoutParams()).topMargin = px(forYou ? 26 : 34);
-        bigClock.requestLayout();
+        styleCorner();
         styleTop();
     }
 
-    /** The weather line's icon, sized to its capitals and drawn in its colour (the text's tint). */
+    private float cornerK = -1f;
+    private boolean cornerWeather = true;   // what styleCorner last laid out, so the minute tick costs nothing
+
+    /**
+     * The corner's two lines. With weather: the time and date small on top, the temperature big under them. With none
+     * - no place set, or the TV offline before the first read - the time takes the big line itself, the way Home
+     * looked before the weather moved into the corner.
+     */
+    private void styleCorner() {
+        float k = forYou ? 1f : 1.6f;
+        boolean wx = weatherLine != null;
+        if (k == cornerK && wx == cornerWeather) return;
+        cornerK = k; cornerWeather = wx;
+        bigTime.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, (wx ? 12 : 42) * k);
+        bigTime.setAllCaps(wx);
+        bigTime.setLetterSpacing(wx ? 0.14f : 0f);
+        bigAmPm.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, (wx ? 12 : 15) * k);
+        bigAmPm.setLetterSpacing(wx ? 0.14f : 0f);
+        LinearLayout.LayoutParams am = (LinearLayout.LayoutParams) bigAmPm.getLayoutParams();
+        am.gravity = wx ? 0 : Gravity.BOTTOM;
+        am.bottomMargin = wx ? 0 : px(5 * k);
+        bigDate.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, (wx ? 12 : 14) * k);
+        bigWeather.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 42 * k);
+        weatherIcon();   // the icon is sized from the text size, so it moves with it
+        ViewGroup.MarginLayoutParams rule = (ViewGroup.MarginLayoutParams) bigRule.getLayoutParams();
+        rule.height = px(wx ? 10 * k : 28 * k);
+        rule.setMarginStart(px(wx ? 8 * k : 16 * k));
+        rule.setMarginEnd(px(wx ? 8 * k : 16 * k));
+        ((ViewGroup.MarginLayoutParams) bigClock.getLayoutParams()).topMargin = px(forYou ? 26 : 34);
+        bigClock.requestLayout();
+    }
+
+    /** The weather line's icon, as tall as the temperature it leads with and drawn in the text's colour. */
     private void weatherIcon() {
         int res = Weather.icon(weatherLine, weather.isDay());  // the sun's, not the look's
         android.graphics.drawable.Drawable d = res == 0 ? null : getDrawable(res);
@@ -528,6 +548,7 @@ public class HomeActivity extends Activity {
 
     /** "1:05 PM · Wed 21 Oct · 27° Showers", the time a little stronger. */
     private void updateInfo() {
+        styleCorner();   // the weather may have arrived since the last minute, or gone
         Calendar now = Calendar.getInstance();
         String time = DateFormat.format(DateFormat.is24HourFormat(this) ? "HH:mm" : "h:mm a", now).toString();
         SpannableStringBuilder b = new SpannableStringBuilder(time);
@@ -542,11 +563,23 @@ public class HomeActivity extends Activity {
         bigAmPm.setText(h24 ? "" : DateFormat.format("a", now));
         bigAmPm.setVisibility(h24 ? View.GONE : View.VISIBLE);
         bigDate.setText(DateFormat.format("EEEE  d MMMM", now));
-        bigWeather.setText(weatherLine == null ? "" : weather.shown(weatherLine));
+        bigWeather.setText(weatherLine == null ? "" : weatherHeadline(weather.shown(weatherLine)));
         weatherIcon();
         if (meters.getVisibility() == View.VISIBLE) meters.update();
         bigWeather.setVisibility(weatherLine == null ? View.GONE : View.VISIBLE);
         updateScore();
+    }
+
+    /**
+     * The temperature at the line's size and the words after it at a third of it, the size they had when the weather
+     * was the small line: the corner leads with the number, and a long forecast note can't push the row off screen.
+     */
+    private static CharSequence weatherHeadline(String line) {
+        int at = line.indexOf('°');
+        if (at < 0 || at + 1 >= line.length()) return line;
+        SpannableStringBuilder b = new SpannableStringBuilder(line);
+        b.setSpan(new RelativeSizeSpan(15f / 42f), at + 1, line.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        return b;
     }
 
     /** How deep the menus were when Country opened, so choosing one (from either list) goes back to Talkies settings. */
@@ -942,6 +975,7 @@ public class HomeActivity extends Activity {
 
     private void onWeather(String line) {
         weatherLine = line;
+        styleCorner();   // the first read gives the big line back to the temperature; losing it gives it to the time
         boolean nowDay = isDayNow();
         if (nowDay != day) { day = nowDay; applyTheme(); } else updateInfo();
     }
@@ -2412,11 +2446,14 @@ public class HomeActivity extends Activity {
             case Z_MENU:
                 // The ends wrap around on a fresh press: Up from the first row reaches the last one (About, Updates…)
                 // at once. Holding the key stops at the end instead of racing round again.
-                if (up && menuIdx > 0) focusMenu(menuIdx - 1);
-                else if (up && !heldKey && menuItems.size() > 1) focusMenu(menuItems.size() - 1);
-                else if (down && menuIdx < menuItems.size() - 1) focusMenu(menuIdx + 1);
-                else if (down && !heldKey && menuItems.size() > 1) focusMenu(0);
-                else if (left || right) closeMenu();
+                if (up) stepMenu(menuNextLine(menuIdx, -1), menuItems.size() - 1);
+                else if (down) stepMenu(menuNextLine(menuIdx, 1), 0);
+                else if (left || right) {
+                    // Along a line of tiles or cells first; at its ends, and in every single-column menu, out.
+                    int to = menuNextCol(menuIdx, left ? -1 : 1);
+                    if (to >= 0) focusMenu(to);
+                    else closeMenu();
+                }
                 break;
             case Z_TOP:
                 if (left && iconIdx > 0) focusTop(iconIdx - 1);
@@ -2856,6 +2893,112 @@ public class HomeActivity extends Activity {
         t.setVisibility(status == null ? View.GONE : View.VISIBLE);
     }
 
+    /**
+     * A line across the menu that holds several things side by side, made when the first of them arrives and filled
+     * by the rest. {@code max} is how many it takes before the next one starts a fresh line: four for the Control
+     * Center's tiles, two for its cells.
+     */
+    private LinearLayout menuLine(String kind, int max) {
+        View last = menu.getChildCount() == 0 ? null : menu.getChildAt(menu.getChildCount() - 1);
+        if (last != null && kind.equals(last.getTag()) && ((ViewGroup) last).getChildCount() < max) return (LinearLayout) last;
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.HORIZONTAL);
+        box.setTag(kind);
+        menu.addView(box, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        return box;
+    }
+
+    /** A tile: a name, the state under it, and what OK does. Four of these make the Control Center's top line. */
+    private View addTile(int glyph, String label, String status, Runnable action, boolean keepOpen) {
+        View v = addIn(menuLine("tiles", 4), R.layout.item_cc_tile, glyph, label, status, action, keepOpen);
+        v.setTag(R.id.cc_resting, rounded(theme.tileBg, 0, 12));   // a box even unfocused, unlike a cell
+        return v;
+    }
+
+    /** A cell: half a row, for the facts about the TV whose status is a word or two. Two make a line. */
+    private View addCell(String label, String status, Runnable action, boolean keepOpen) {
+        return addIn(menuLine("cells", 2), R.layout.item_cc_cell, 0, label, status, action, keepOpen);
+    }
+
+    /**
+     * A tile or a cell, parked in its line. It registers in the same three lists a row does, so OK, Back and the
+     * parent menu's memory need to know nothing new.
+     */
+    private View addIn(LinearLayout box, int layout, int glyph, String label, String status, Runnable action, boolean keepOpen) {
+        View v = LayoutInflater.from(this).inflate(layout, box, false);
+        ((LinearLayout.LayoutParams) v.getLayoutParams()).setMarginStart(box.getChildCount() == 0 ? 0 : px(8));
+        ImageView g = v.findViewById(R.id.cc_glyph);
+        if (g != null) {
+            if (glyph == 0) g.setVisibility(View.GONE);
+            else g.setImageResource(glyph);
+        }
+        ((TextView) v.findViewById(R.id.input_label)).setText(label);
+        setStatus(v, status);
+        box.addView(v);
+        menuItems.add(v);
+        menuActions.add(action);
+        menuKeepsOpen.add(keepOpen);
+        return v;
+    }
+
+    /** An empty half-line, so a last cell on its own stays half as wide as the line above rather than stretching. */
+    private void padLastCellLine() {
+        View last = menu.getChildCount() == 0 ? null : menu.getChildAt(menu.getChildCount() - 1);
+        if (last == null || !"cells".equals(last.getTag()) || ((ViewGroup) last).getChildCount() != 1) return;
+        View gap = new View(this);
+        gap.setVisibility(View.INVISIBLE);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f);
+        lp.setMarginStart(px(8));
+        ((ViewGroup) last).addView(gap, lp);
+    }
+
+    /** The direct child of the menu an item lives in: the row itself, or the line holding its tiles or cells. */
+    private View menuBox(View item) {
+        View v = item;
+        while (v != null && v.getParent() != menu) v = (View) v.getParent();
+        return v == null ? item : v;
+    }
+
+    /** Which place along its line an item holds: the only place, for a row of its own. */
+    private int menuCol(View item) {
+        View box = menuBox(item);
+        return box == item ? 0 : ((ViewGroup) box).indexOfChild(item);
+    }
+
+    /** Where this line's items are in the three menu lists, so the first of them is the one a step lands on. */
+    private int firstItemIn(View box) {
+        for (int i = 0; i < menuItems.size(); i++) if (menuBox(menuItems.get(i)) == box) return i;
+        return -1;
+    }
+
+    private int itemsIn(View box) {
+        int n = 0;
+        for (int i = 0; i < menuItems.size(); i++) if (menuBox(menuItems.get(i)) == box) n++;
+        return n;
+    }
+
+    /**
+     * The item a line above or below, as far across it as this one - the cell under the tile you were on. -1 past
+     * either end. Lines holding nothing (the title, a heading, a rule, a gap) are passed over.
+     */
+    private int menuNextLine(int i, int dir) {
+        View box = menuBox(menuItems.get(i));
+        int col = menuCol(menuItems.get(i));
+        for (int j = menu.indexOfChild(box) + dir; j >= 0 && j < menu.getChildCount(); j += dir) {
+            View next = menu.getChildAt(j);
+            int first = firstItemIn(next);
+            if (first >= 0) return first + Math.min(col, itemsIn(next) - 1);
+        }
+        return -1;
+    }
+
+    /** The item one place along this line, or -1 at its ends - which is where left and right still close the menu. */
+    private int menuNextCol(int i, int dir) {
+        View box = menuBox(menuItems.get(i));
+        int col = menuCol(menuItems.get(i));
+        return col + dir < 0 || col + dir >= itemsIn(box) ? -1 : firstItemIn(box) + col + dir;
+    }
+
     private void showMenu(int widthDp) {
         RectF a = new RectF(rectOf(menuTile != null ? menuTile : icons[menuAnchor]));
         FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) menuScroll.getLayoutParams();
@@ -2886,6 +3029,12 @@ public class HomeActivity extends Activity {
         focusMenu(0);
     }
 
+    /** One line up or down: to its neighbour if there is one, else to the menu's other end if the key was tapped. */
+    private void stepMenu(int to, int end) {
+        if (to >= 0) focusMenu(to);
+        else if (!heldKey && menuItems.size() > 1) focusMenu(end);
+    }
+
     private void focusMenu(int i) {
         menuIdx = i;
         for (int r = 0; r < menuItems.size(); r++) {
@@ -2897,13 +3046,16 @@ public class HomeActivity extends Activity {
                 ((TextView) row.findViewById(R.id.input_label)).setTextColor(f ? theme.text : theme.text2);
                 continue;
             }
-            row.setBackground(f ? rounded(theme.menuFocusBg, 0, 12) : null);
+            row.setBackground(f ? rounded(theme.menuFocusBg, 0, 12) : (android.graphics.drawable.Drawable) row.getTag(R.id.cc_resting));
             ((TextView) row.findViewById(R.id.input_label)).setTextColor(f ? theme.menuFocusText : theme.text);
             ((TextView) row.findViewById(R.id.input_status)).setTextColor(f ? (theme.menuFocusText & 0x00FFFFFF) | 0x99000000 : theme.text2);
+            ImageView g = row.findViewById(R.id.cc_glyph);
+            if (g != null) g.setColorFilter(f ? theme.menuFocusText : theme.text2, PorterDuff.Mode.SRC_IN);
         }
         View row = menuItems.get(i);
+        View box = menuBox(row);   // a tile's own top is relative to its line, which would scroll to the wrong place
         menuScroll.post(() -> {
-            int top = row.getTop(), bottom = row.getBottom(), y = menuScroll.getScrollY(), h = menuScroll.getHeight();
+            int top = box.getTop(), bottom = box.getBottom(), y = menuScroll.getScrollY(), h = menuScroll.getHeight();
             // The focused row stays clear of the fade at the menu's cut edge.
             if (top - px(40) < y) menuScroll.smoothScrollTo(0, Math.max(0, top - px(52)));
             else if (bottom + px(40) > y + h) menuScroll.smoothScrollTo(0, bottom + px(52) - h);
@@ -4754,51 +4906,59 @@ public class HomeActivity extends Activity {
     // Ported from tv-vibehack's launcher (pr/control-center, MIT); see THIRD_PARTY_NOTICES.md.
     private static final int REQ_BLUETOOTH = 7;
 
+    /**
+     * Half the screen, in three blocks: the four you reach for while watching across the top, what the TV has on
+     * screen right now as full rows, and the facts about the TV as two cells to a row. Wide enough that none of it
+     * needs scrolling, so nothing here is more than a step from the gear.
+     */
     private void openControlCenter() {
         beginMenu(P_CONTROL, getString(R.string.cc_title));
         if (serviceStopped) addRow(getString(R.string.cc_fix_home), getString(R.string.cc_fix_detail), () -> {
             Toast.makeText(this, getString(R.string.cc_fix_toast), Toast.LENGTH_LONG).show();
             start(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
         }, false);
-        addRow(getString(R.string.talkies_settings), null, () -> openTalkiesSettings(P_CONTROL), false);
-        if (ScoreCard.pinnedId(this) != null) addRow(getString(R.string.cc_unpin_score), ScoreCard.pinnedName(this), () -> ScoreCard.unpin(this), false);
-        MediaController playing = NowPlaying.current(this);
-        if (playing != null) addRow(getString(R.string.cc_now_playing), NowPlaying.title(playing), () -> openNowPlaying(playing), false);
-        if (weatherLine != null) addRow(getString(R.string.about_weather), weather.shown(weatherLine), () -> openWeather(false), false);
+        addTile(R.drawable.ic_settings, getString(R.string.talkies_settings), null, () -> openTalkiesSettings(P_CONTROL), false);
+        addTile(R.drawable.ic_apps, getString(R.string.cc_recent_apps), null, this::openRecents, false);
         if (Sleep.SUPPORTED) {
             final View[] timer = new View[1];
-            timer[0] = addRow(getString(R.string.cc_sleep_timer), sleepStatus(), () -> {
+            timer[0] = addTile(R.drawable.ic_wx_moon, getString(R.string.cc_sleep_timer), sleepStatus(), () -> {
                 if (!Sleep.available()) { needsTurnOffSetup(); return; }
                 Sleep.cycle(this);
                 setStatus(timer[0], sleepStatus());
             }, true);
-            addRow(getString(R.string.cc_turn_off_now), null, () -> { if (!Sleep.now()) needsTurnOffSetup(); }, false);
         }
-        addRow(getString(R.string.cc_recent_apps), null, this::openRecents, false);
-        addRow(getString(R.string.cc_storage), storageLine(), () -> { if (!openShortcut("storage")) start(new Intent(Settings.ACTION_INTERNAL_STORAGE_SETTINGS)); }, false);
+        // The TV's own power menu, so it still asks before restarting.
+        addTile(R.drawable.ic_restart, getString(R.string.cc_restart), null, () -> { if (!SleepService.powerMenu()) needsTurnOffSetup(); }, false);
+        addMenuHeading(getString(R.string.heading_on_screen));
+        MediaController playing = NowPlaying.current(this);
+        if (playing != null) addRow(getString(R.string.cc_now_playing), NowPlaying.title(playing), () -> openNowPlaying(playing), false);
+        if (weatherLine != null) addRow(getString(R.string.about_weather), weather.shown(weatherLine), () -> openWeather(false), false);
+        if (ScoreCard.pinnedId(this) != null) addRow(getString(R.string.cc_unpin_score), ScoreCard.pinnedName(this), () -> ScoreCard.unpin(this), false);
+        addMenuHeading(getString(R.string.heading_tv_status));
+        Intent dream = screensaverIntent();
+        if (dream != null) addCell(getString(R.string.row_screensaver), screensaverLabel(), () -> start(dream), false);
+        addCell(getString(R.string.cc_network), networkName(), () -> { if (!openShortcut("network")) start(new Intent(Settings.ACTION_WIFI_SETTINGS)); }, false);
+        addCell(getString(R.string.cc_storage), storageLine(), () -> { if (!openShortcut("storage")) start(new Intent(Settings.ACTION_INTERNAL_STORAGE_SETTINGS)); }, false);
+        final View[] bt = new View[1];
+        bt[0] = addCell(getString(R.string.cc_bluetooth), null, () -> { if (!openShortcut("bluetooth")) openBluetooth(); }, false);
+        bluetoothStatus(st -> { if (bt[0].isAttachedToWindow()) setStatus(bt[0], st); });
         final View[] anim = new View[1];
-        anim[0] = addRow(getString(R.string.cc_animations), animationLabel(), () -> {
+        anim[0] = addCell(getString(R.string.cc_animations), animationLabel(), () -> {
             if (!cycleAnimations()) {
                 Toast.makeText(this, getString(R.string.cc_anim_needs_grant), Toast.LENGTH_LONG).show();
                 return;
             }
             setStatus(anim[0], animationLabel());
         }, true);
-        addRow(getString(R.string.cc_network), networkName(), () -> { if (!openShortcut("network")) start(new Intent(Settings.ACTION_WIFI_SETTINGS)); }, false);
-        final View[] speed = new View[1];
-        speed[0] = addRow(getString(R.string.about_speed_test), lastSpeed, () -> runSpeedTest(speed[0]), true);
-        final View[] bt = new View[1];
-        bt[0] = addRow(getString(R.string.cc_bluetooth), null, () -> { if (!openShortcut("bluetooth")) openBluetooth(); }, false);
-        bluetoothStatus(st -> { if (bt[0].isAttachedToWindow()) setStatus(bt[0], st); });
         // Android tells apps a soundbar is connected (HDMI ARC/eARC), not whether it's playing: say only what's known.
-        addRow(getString(R.string.cc_sound_output), soundbarConnected() ? getString(R.string.cc_soundbar) : getString(R.string.cc_tv_speakers), () -> {
+        addCell(getString(R.string.cc_sound_output), soundbarConnected() ? getString(R.string.cc_soundbar) : getString(R.string.cc_tv_speakers), () -> {
             if (!openShortcut("sound")) start(RemoteKeys.soundSettings(this));
         }, false);
-        Intent dream = screensaverIntent();
-        if (dream != null) addRow(getString(R.string.row_screensaver), null, () -> start(dream), false);
-        // The TV's own power menu, so it still asks before restarting.
-        addRow(getString(R.string.cc_restart), null, () -> { if (!SleepService.powerMenu()) needsTurnOffSetup(); }, false);
-        showMenu(350);
+        final View[] speed = new View[1];
+        speed[0] = addCell(getString(R.string.about_speed_test), lastSpeed, () -> runSpeedTest(speed[0]), true);
+        if (Sleep.SUPPORTED) addCell(getString(R.string.cc_turn_off_now), null, () -> { if (!Sleep.now()) needsTurnOffSetup(); }, false);
+        padLastCellLine();
+        showMenu(480);   // half of Home's 960 dp
     }
 
     /**

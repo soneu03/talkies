@@ -2,4 +2,6 @@
 <resources>
     <!-- Which picture a pick card's image view currently holds (see HomeActivity.updatePickImages). -->
     <item name="img_state" type="id" />
+    <!-- What a Control Center tile or cell looks like when it doesn't have focus (see HomeActivity.focusMenu). -->
+    <item name="cc_resting" type="id" />
 </resources>

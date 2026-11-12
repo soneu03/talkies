@@ -32,6 +32,8 @@
     <string name="heading_apps_inputs">Apps y entradas</string>
     <string name="heading_remote_power">Mando y encendido</string>
     <string name="heading_talkies">Talkies</string>
+    <string name="heading_on_screen">En pantalla</string>
+    <string name="heading_tv_status">Estado de la TV</string>
 
     <string name="row_appearance">Apariencia</string>
     <string name="row_wallpaper">Fondo de pantalla</string>

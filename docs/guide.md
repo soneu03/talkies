@@ -46,26 +46,31 @@ está apagado, como el resto de la TV.
 
 ## Control Center
 
-Sube hasta los botones de iconos y elige el primero (los deslizadores). Tiene lo que usas mientras ves algo; todo lo
-que se ajusta una vez está en **Talkies settings**, arriba.
+Sube hasta los botones de iconos y elige el primero (los deslizadores). Ocupa media pantalla y va en tres bloques:
+cuatro botones grandes arriba para lo que tocas mientras ves algo, debajo **lo que hay en pantalla ahora**, y al final
+**el estado de la TV** en dos columnas. Todo lo que se ajusta una vez está en **Talkies settings**, arriba.
 
-| Fila | Qué hace OK |
-|---|---|
-| Fix Home and Turn off | Solo cuando el servicio de accesibilidad de Talkies se ha parado (mira más abajo): abre Accessibility, donde apagas y vuelves a encender Talkies |
-| Talkies settings | Abre Talkies settings (más abajo) |
-| Now playing | Solo mientras una app reproduce (o ha pausado) algo: la canción o el programa, su imagen, el artista y la app, y después **Pause** / **Play**, **Next**, **Previous** (cuando la app permite saltar) y **Open** la app. Sigue al reproductor cuando cambian las pistas |
-| Weather | El tiempo actual a la derecha; OK muestra las seis horas siguientes, y OK otra vez los seis días siguientes (máxima / mínima y el estado del cielo) |
-| Sleep timer | Pasa de Off → 30 → 60 → 90 min; el tiempo que queda se muestra a la derecha. Un minuto antes, una tarjeta hace la cuenta atrás sobre lo que esté sonando: **OK** da 15 minutos más |
-| Turn off now | Pone la TV en standby |
-| Recent apps | Tarjetas grandes de las apps que abriste con Talkies (dock, All apps, sugerencias, canales, botones del mando) o de las que saliste con Home, la más nueva primero. Una tarjeta muestra lo que viste por última vez en la app cuando Talkies lo sabe (su imagen de Continue); si no, el logo de la app sobre su color. Izquierda y derecha mueven, OK abre, Atrás cierra. Abajo (o Menu, o mantener OK) ofrece **Remove from list** y **App info**, donde Android mantiene Force stop. **Pulsa Home dos veces rápido seguidas** para abrirla, desde Talkies o desde dentro de una app (necesita Remote keys en On). También en un botón del mando: Remote keys → Recent apps |
-| Storage | Muestra el espacio libre ("12.4 GB free of 32 GB"); OK abre los ajustes de almacenamiento de la TV |
-| Animations | Recorre la velocidad de todas las animaciones de la TV: 1× → 0.5× → Off. Más rápido hace que los menús y los cambios de app se noten más ágiles; Off además quieta el movimiento propio de Talkies. Necesita el permiso `WRITE_SECURE_SETTINGS` (mira [Google Assistant](#google-assistant-y-el-launcher-de-google-tv)) |
-| Network | Muestra el nombre de la Wi-Fi (o Ethernet); OK abre los ajustes de Wi-Fi |
-| Speed test | Unos segundos de descarga del speed test de Cloudflare; muestra p. ej. "206 Mbps" |
-| Bluetooth | Muestra el altavoz o los auriculares conectados. OK lista los que emparejaste: OK en uno lo conecta o lo desconecta; **Pair a new device** abre los ajustes de Bluetooth de la TV. Bluetooth no puede apagarse aquí, porque muchos mandos lo usan |
-| Sound output | Muestra *TV speakers*, o *Soundbar connected* cuando hay una barra en HDMI ARC (Android no dice si es ella la que reproduce), y abre los ajustes de sonido de la TV: en Sony, Display & sound, donde Audio output elige los altavoces |
-| Screensaver | Arranca el salvapantallas de la TV enseguida (el de Talkies, si lo elegiste: mira más abajo), igual que Google Assistant (o por el atajo propio de Android). No se muestra en dispositivos que tampoco ofrecen apps |
-| Restart… | Abre el menú de encendido propio de la TV, que pregunta antes de reiniciar. En algunas TVs (OnePlus) ese menú duerme la TV a los 10 segundos si no eliges nada; Atrás lo cierra |
+Izquierda y derecha recorren los botones de arriba y las parejas de celdas; al salir del borde cierran el menú, como
+siempre. Arriba y abajo pasan de línea y recuerdan en qué columna estabas.
+
+| Bloque | Fila | Qué hace OK |
+|---|---|---|
+| (aviso) | Fix Home and Turn off | Solo cuando el servicio de accesibilidad de Talkies se ha parado (mira más abajo): abre Accessibility, donde apagas y vuelves a encender Talkies. Es la única fila entera sobre los botones |
+| Botones | Talkies settings | Abre Talkies settings (más abajo) |
+| Botones | Recent apps | Tarjetas grandes de las apps que abriste con Talkies (dock, All apps, sugerencias, canales, botones del mando) o de las que saliste con Home, la más nueva primero. Una tarjeta muestra lo que viste por última vez en la app cuando Talkies lo sabe (su imagen de Continue); si no, el logo de la app sobre su color. Izquierda y derecha mueven, OK abre, Atrás cierra. Abajo (o Menu, o mantener OK) ofrece **Remove from list** y **App info**, donde Android mantiene Force stop. **Pulsa Home dos veces rápido seguidas** para abrirla, desde Talkies o desde dentro de una app (necesita Remote keys en On). También en un botón del mando: Remote keys → Recent apps |
+| Botones | Sleep timer | Pasa de Off → 30 → 60 → 90 min; el tiempo que queda se muestra debajo del nombre. Un minuto antes, una tarjeta hace la cuenta atrás sobre lo que esté sonando: **OK** da 15 minutos más |
+| Botones | Restart… | Abre el menú de encendido propio de la TV, que pregunta antes de reiniciar. En algunas TVs (OnePlus) ese menú duerme la TV a los 10 segundos si no eliges nada; Atrás lo cierra |
+| En pantalla | Now playing | Solo mientras una app reproduce (o ha pausado) algo: la canción o el programa, su imagen, el artista y la app, y después **Pause** / **Play**, **Next**, **Previous** (cuando la app permite saltar) y **Open** la app. Sigue al reproductor cuando cambian las pistas |
+| En pantalla | Weather | El tiempo actual a la derecha; OK muestra las seis horas siguientes, y OK otra vez los seis días siguientes (máxima / mínima y el estado del cielo) |
+| En pantalla | Unpin score | Solo con un marcador fijado: lo quita |
+| Estado de la TV | Screensaver | Arranca el salvapantallas de la TV enseguida (el de Talkies, si lo elegiste: mira más abajo), igual que Google Assistant (o por el atajo propio de Android). No se muestra en dispositivos que tampoco ofrecen apps |
+| Estado de la TV | Network | Muestra el nombre de la Wi-Fi (o Ethernet); OK abre los ajustes de Wi-Fi |
+| Estado de la TV | Storage | Muestra el espacio libre ("12.4 GB free of 32 GB"); OK abre los ajustes de almacenamiento de la TV |
+| Estado de la TV | Bluetooth | Muestra el altavoz o los auriculares conectados. OK lista los que emparejaste: OK en uno lo conecta o lo desconecta; **Pair a new device** abre los ajustes de Bluetooth de la TV. Bluetooth no puede apagarse aquí, porque muchos mandos lo usan |
+| Estado de la TV | Animations | Recorre la velocidad de todas las animaciones de la TV: 1× → 0.5× → Off. Más rápido hace que los menús y los cambios de app se noten más ágiles; Off además quieta el movimiento propio de Talkies. Necesita el permiso `WRITE_SECURE_SETTINGS` (mira [Google Assistant](#google-assistant-y-el-launcher-de-google-tv)) |
+| Estado de la TV | Sound output | Muestra *TV speakers*, o *Soundbar connected* cuando hay una barra en HDMI ARC (Android no dice si es ella la que reproduce), y abre los ajustes de sonido de la TV: en Sony, Display & sound, donde Audio output elige los altavoces |
+| Estado de la TV | Speed test | Unos segundos de descarga del speed test de Cloudflare; muestra p. ej. "206 Mbps" |
+| Estado de la TV | Turn off now | Pone la TV en standby |
 
 ## Talkies settings
 
@@ -307,9 +312,11 @@ que tenía. Las imágenes se guardan en caché en la TV, en `files/channels/`.
 
 ## El tiempo
 
-El tiempo aparece arriba a la izquierda, por ejemplo "27° SHOWERS", en °C, o en °F donde esa es la costumbre (Estados
-Unidos y unas pocas más, según dónde esté la TV), después de un dibujo pequeño a línea del cielo: sol, luna, sol o
-luna detrás de una nube, nube, lluvia, nieve, tormenta o niebla.
+El tiempo aparece arriba a la izquierda, y es la línea grande: por ejemplo "27° Showers", los grados a 42 sp y la
+condición a un tercio de eso, en °C, o en °F donde esa es la costumbre (Estados Unidos y unas pocas más, según dónde
+esté la TV), después de un dibujo a línea del cielo, alto como los grados: sol, luna, sol o luna detrás de una nube,
+nube, lluvia, nieve, tormenta o niebla. Encima, en la línea pequeña, la hora y la fecha. Y si no hay tiempo que
+mostrar (sin lugar elegido, o la TV sin red antes de la primera lectura), la hora vuelve a ser la línea grande.
 La parte del tiempo combina dos fuentes:
 
 - **La temperatura** se mide en la **estación meteorológica del aeropuerto más cercano**. Los aeropuertos publican

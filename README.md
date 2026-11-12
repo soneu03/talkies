@@ -33,7 +33,7 @@
 - **Tus apps** en un dock de 4 a 10 (siete al empezar), con el resto a un clic de distancia con el botón **All apps** del final. Mantén
   OK en cualquier app para moverla, ocultarla o desinstalarla.
 - **For You:** las Tendencias de *tus* apps de streaming de *tu* país, lo nuevo de ahí, y Continue watching.
-  Solo títulos que se puedan ver con una suscripción que tengas; ocúltalo y tendrás en su lugar un reloj grande y limpio.
+  Solo títulos que se puedan ver con una suscripción que tengas; ocúltalo y tendrás un tiempo y un reloj grandes.
 - **Críquet, fútbol, NBA y NFL en directo** en la pantalla de inicio, con los equipos y las ligas de tu país primero.
 - **El tiempo** a simple vista, con las próximas horas y días en Control Center.
 - **Control Center:** lo que se está reproduciendo (pausa, saltar), temporizador de apagado, apagar, Recent apps, test de velocidad, Bluetooth,
