@@ -133,7 +133,8 @@ screen the same way whatever density the TV reports.
 
 - **Your build** is signed with your computer's debug key. A build from another computer, or the release APK, can't
   install over it: uninstall first (back up your settings before). It can't take updates from Talkies settings →
-  Updates either; it's only told when a new version is out.
+  Updates either, and it never asks for them: a build without the project's key doesn't check GitHub, doesn't show
+  the bell and doesn't even list the Updates row, so new versions reach it by building and installing again.
 - **The release APK** (`talkies.apk` on each release) is signed with the project's key, which only the maintainer
   has (`release.properties`, never in git). Talkies only installs updates signed with that key.
 - **Making a release** (maintainer): bump `versionCode` and `versionName` in `app/build.gradle` and the CHANGELOG,

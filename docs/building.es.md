@@ -137,7 +137,9 @@ que ocupa la pantalla igual sea cual sea la densidad que reporte el TV.
 
 - **Tu compilación** va firmada con la clave de depuración de tu ordenador. Una compilación de otro ordenador, o el
   APK de la release, no se puede instalar encima: desinstala primero (antes guarda tus ajustes). Tampoco puede
-  recibir actualizaciones desde Talkies settings → Updates; solo se le avisa cuando sale una versión nueva.
+  recibir actualizaciones desde Talkies settings → Updates, y tampoco las pide: una compilación sin la clave del
+  proyecto no comprueba GitHub, no muestra la campana y ni siquiera lista la fila Updates, así que las versiones
+  nuevas le llegan volviendo a compilar e instalar.
 - **El APK de la versión publicada** (`talkies.apk` en cada release) va firmado con la clave del proyecto, que solo
   tiene el mantenedor (`release.properties`, nunca en git). Talkies solo instala actualizaciones firmadas con esa
   clave.

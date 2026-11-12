@@ -4532,6 +4532,9 @@ public class HomeActivity extends Activity {
 
     /** Talkies settings → Updates (and the top of What's new): the latest version; OK checks again and installs it. */
     private void addUpdatesRow() {
+        // A build with another key (a computer's debug one) can't install a release, so the row would only ever
+        // answer "build it again": personal builds don't see it.
+        if (!SelfUpdate.takesReleases(this)) return;
         final View[] up = new View[1];
         up[0] = addRow("Updates", SelfUpdate.summary(this), () -> SelfUpdate.checkAndInstall(this, st -> runOnUiThread(() -> {
             if (up[0].isAttachedToWindow()) setStatus(up[0], st);

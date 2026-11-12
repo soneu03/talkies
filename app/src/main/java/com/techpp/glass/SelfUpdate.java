@@ -97,6 +97,8 @@ final class SelfUpdate {
 
     /** The daily check (no download): true when it found a newer version it hadn't mentioned yet. Background thread. */
     static boolean checkIfStale(Context c) {
+        // Not the project's key, so an update could never be installed: don't ask for one, don't promise the bell.
+        if (!takesReleases(c)) return false;
         if (System.currentTimeMillis() - prefs(c).getLong("checked", 0) < DAY) return false;
         try {
             latest(c);

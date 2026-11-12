@@ -24,6 +24,9 @@ features, a new fix number only fixes. The version shows in Talkies settings →
   else the app's logo as before. The focused card's colours glow softly behind everything, the app's name sits on the
   card's top edge, and OK grows the card to fill the screen as its app opens. The layout is after
   [Flow launcher](https://github.com/sghmire/flow-launcher-tv)'s.
+- **A build that isn't signed with the project's key stays out of the update story.** It no longer asks GitHub once a
+  day, so it never shows the notice about a version its own installer would refuse, and Talkies settings no longer
+  lists the Updates row: for a build from a computer, new versions come from building and installing again.
 - **An update is checked the same way every time.** GitHub's SHA-256 is now required before a byte is downloaded, and
   an APK signed by more than one key is refused; either check could quietly not happen before.
 - **Nothing leaves the TV unencrypted** on Android 8 either, which allowed it unless told otherwise (the newer ones
