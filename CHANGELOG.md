@@ -68,6 +68,13 @@ features, a new fix number only fixes. The version shows in Talkies settings →
 - **`./restore.sh` asks before uninstalling Talkies** (`--yes` for scripts and AI assistants), and the scripts no
   longer define a function called `sh`, which used to hide the shell itself.
 
+### Fixed
+- **A card no longer stays empty forever when the picture behind it is large.** Provider artwork was decoded at its
+  full size before being shrunk, so a 4000 px fanart asked for more memory than a TV has, the decoder answered with
+  nothing, and that card never tried the address again. The bytes now land on disk first, get measured, and are read
+  at a sample size: the same picture at the same size on disk, and about a third of the memory while it is made
+  (4096 px asked for 41 MB, it now asks for 13 MB).
+
 ## 1.3.0 — 12 November 2026
 
 ### Added

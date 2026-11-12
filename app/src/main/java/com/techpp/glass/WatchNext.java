@@ -222,22 +222,66 @@ final class WatchNext {
         if (f.isFile()) return f;
         if (png.isFile()) return png;
         if (!dir.isDirectory() && !dir.mkdirs()) return null;
+        File raw = new File(dir, base + ".raw");
         try (InputStream in = open(c.getContentResolver(), uri)) {
             if (in == null) return null;
+            // The bytes land on disk before anything is decoded, so the picture can be measured and then read at a
+            // sample size. Decoding whole is how a 4000 px fanart asked for more memory than a TV has, the decoder
+            // answered null, and that card stayed empty for good: nothing tried the address again.
+            try (OutputStream out = new FileOutputStream(raw)) {
+                byte[] b = new byte[16384];
+                for (int n; (n = in.read(b)) > 0; ) out.write(b, 0, n);
+            }
             BitmapFactory.Options o = new BitmapFactory.Options();
-            Bitmap b = BitmapFactory.decodeStream(in, null, o);
-            if (b == null) return null;
+            o.inJustDecodeBounds = true;
+            BitmapFactory.decodeFile(raw.getPath(), o);
+            if (o.outWidth <= 0 || o.outHeight <= 0) {
+                Log.w(TAG, "Artwork failed: not a picture we can read from " + shortOf(uri));
+                return null;
+            }
+            int sample = 1;
+            while (o.outWidth / (sample * 2) >= width) sample *= 2;
+            o.inJustDecodeBounds = false;
+            o.inSampleSize = sample;
+            Bitmap b = BitmapFactory.decodeFile(raw.getPath(), o);
+            if (b == null) {
+                Log.w(TAG, "Artwork failed: nothing to decode from " + shortOf(uri));
+                return null;
+            }
             if (b.getWidth() > width) b = Bitmap.createScaledBitmap(b, width, Math.max(1, b.getHeight() * width / b.getWidth()), true);
             boolean alpha = b.hasAlpha();
             File done = alpha ? png : f, tmp = new File(dir, done.getName() + ".part");
             try (OutputStream out = new FileOutputStream(tmp)) {
                 b.compress(alpha ? Bitmap.CompressFormat.PNG : Bitmap.CompressFormat.JPEG, 85, out);
             }
-            return tmp.renameTo(done) ? done : null;
+            // One line per artwork fetched (a warm cache logs nothing): where it came from, how big it really was,
+            // and the file it became. Enough to tell a provider that reuses one picture from a name that collided.
+            if (!tmp.renameTo(done)) {
+                Log.w(TAG, "Artwork failed: could not keep " + done.getName());
+                return null;
+            }
+            Log.i(TAG, "art " + shortOf(uri) + " " + o.outWidth + "x" + o.outHeight + " -> " + done.getName());
+            return done;
         } catch (Exception e) {
             Uri u = Uri.parse(uri);
             Log.w(TAG, "Artwork failed: " + e.getClass().getSimpleName() + " from " + u.getScheme() + "://" + u.getHost());
             return null;
+        } finally {
+            raw.delete();
+        }
+    }
+
+    /**
+     * Where an artwork address came from, without its secrets: providers put tokens in the query, and logcat is
+     * readable over the network on some TVs.
+     */
+    private static String shortOf(String uri) {
+        try {
+            Uri u = Uri.parse(uri);
+            String path = u.getPath() == null ? "" : u.getPath();
+            return u.getScheme() + "://" + u.getAuthority() + (path.length() > 90 ? path.substring(path.length() - 90) : path);
+        } catch (Exception e) {
+            return "an address that will not parse";
         }
     }
 
