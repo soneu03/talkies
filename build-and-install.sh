@@ -42,8 +42,8 @@ adb -s "$DEV" shell -n pm grant $PKG android.permission.READ_TV_LISTINGS || true
 
 # Trending picks: put back the TMDB key saved by set-tmdb-key.sh (e.g. after a fresh install).
 if [ -f "$HERE/tmdb_key.txt" ]; then
-  adb -s "$DEV" shell -n mkdir -p /sdcard/Android/data/$PKG/files
-  adb -s "$DEV" push "$HERE/tmdb_key.txt" /sdcard/Android/data/$PKG/files/tmdb_key.txt >/dev/null
+  adb -s "$DEV" shell -n mkdir -p //sdcard/Android/data/$PKG/files
+  adb -s "$DEV" push "$HERE/tmdb_key.txt" //sdcard/Android/data/$PKG/files/tmdb_key.txt >/dev/null
 fi
 
 echo "== Setting as home"

@@ -4087,44 +4087,39 @@ public class HomeActivity extends Activity {
 
     /**
      * Network debugging (ADB over Wi-Fi) lets a computer on your network control the TV; it's how this launcher was
-     * installed. "On · port 5555" when the TV answers on that port, "USB only", or "Off". Idea from CleanYourTV's
-     * Remote Access add-on.
+     * installed. "On · Wi-Fi" for the Android 11+ switch, "On · port 5555" when the TV answers on that port,
+     * "USB only", or "Off". Idea from CleanYourTV's Remote Access add-on.
      */
     private void checkNetworkDebugging(java.util.function.Consumer<String> done) {
         background.execute(() -> {
-            String st;
-            if (Settings.Global.getInt(getContentResolver(), Settings.Global.ADB_ENABLED, 0) == 0) {
-                st = "Off";
-            } else {
-                boolean listening;
-                try (java.net.Socket sock = new java.net.Socket()) {
-                    sock.connect(new java.net.InetSocketAddress("127.0.0.1", 5555), 400);
-                    listening = true;
-                } catch (Exception e) {
-                    listening = false;
-                }
-                st = listening ? "On · port 5555" : "USB only";
-            }
-            final String r = st;
+            final String r = DebugState.wirelessText(this);
             runOnUiThread(() -> done.accept(r));
         });
     }
 
     private void openNetworkDebugging() {
         beginMenu(settingsAt, "Network debugging lets a computer on your network control this TV");
-        boolean on = Settings.Global.getInt(getContentResolver(), Settings.Global.ADB_ENABLED, 0) != 0;
-        if (on && ServiceRepair.canRepair(this)) {
-            addRow("Turn off", "computers lose access", () -> {
-                try {
-                    Settings.Global.putInt(getContentResolver(), Settings.Global.ADB_ENABLED, 0);
-                    Toast.makeText(this, "Network debugging is off. Turn it on again in Developer options.", Toast.LENGTH_LONG).show();
-                } catch (RuntimeException e) {
-                    Log.w(TAG, "Couldn't turn off debugging: " + e);
-                    start(new Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS));
-                }
-            }, false);
+        boolean adbOn = DebugState.adbOn(this);
+        // Both switches, each with what it is doing. OK goes to Android's screen either way; with the adb-granted
+        // permission the first one also switches developer options on before opening it, which is the part a person
+        // pressing this row usually wants. Wireless debugging is left to the screen: pairing needs its code.
+        addRow("Developer options", DebugState.devOptions(this) ? "On" : "Off", () -> {
+            if (DebugState.switchOnDevOptions(this))
+                Toast.makeText(this, "Developer options are on. The debugging switches are inside them.", Toast.LENGTH_LONG).show();
+            start(new Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS));
+        }, false);
+        final View[] wd = new View[1];
+        wd[0] = addRow("Wireless debugging", "Checking…", () -> {
+            Toast.makeText(this, adbOn ? "Switch Wireless debugging (or Network debugging) on here"
+                    : "Switch developer options on, then the debugging switch, here", Toast.LENGTH_LONG).show();
+            start(new Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS));
+        }, false);
+        checkNetworkDebugging(st -> { if (wd[0].isAttachedToWindow()) setStatus(wd[0], st); });
+        if (adbOn && ServiceRepair.canRepair(this)) {
+            addRow("Turn off", "computers lose access", () -> Toast.makeText(this, DebugState.switchOffAdb(this)
+                    ? "Network debugging is off. Turn it on again in Developer options."
+                    : "Android kept it on: turn it off in Developer options", Toast.LENGTH_LONG).show(), false);
         }
-        addRow("Developer options", null, () -> start(new Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS)), false);
         showMenu(460);
     }
 

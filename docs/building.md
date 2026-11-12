@@ -40,6 +40,9 @@ Gradle, so it takes a few minutes.
    then **USB debugging** / **Network debugging** in Developer options. Note the TV's IP address
    (Settings → Network & Internet → your Wi-Fi network), something like `192.168.0.105`.
 
+   Talkies settings → Network debugging shows both switches with what they are doing, so you can read this on the TV
+   itself: whether developer options are on, and whether debugging is reachable over the network.
+
    **No Network debugging, only Wireless debugging?** Newer TVs (Android 11 and later) may only offer *Wireless
    debugging*, which needs pairing once. Open it on the TV, choose **Pair device with pairing code**, and on the
    computer run `adb pair` with the address and code it shows (the pairing port is different from the connect
@@ -162,5 +165,9 @@ wherever you keep it — and writes `local.properties` when it's missing. Anythi
   makes it listen).
 - `restore.sh` asks before uninstalling (`--yes` for scripts and AI assistants), and `switch-home.sh` and `restore.sh`
   no longer define a function called `sh`, which used to hide the real shell under Git Bash.
+- Paths *on the TV* are written `//sdcard/…` in these scripts. Git Bash rewrites an argument starting with a single `/`
+  into a Windows path before the program sees it, so `adb pull /sdcard/Android/data/…` was looking in
+  `C:\Program Files\Git\sdcard\…` and `./backup-settings.sh` said Talkies hadn't written a backup when it had.
+  `tv-address.sh` says why, and local paths keep the single slash — those are the ones the rewrite is for.
 - The CI in `.github/workflows/build.yml` builds the debug APK and the minified release one, and checks the version
   and the CHANGELOG agree. It runs only when you start it (Actions → build → *Run workflow*), never on a push.

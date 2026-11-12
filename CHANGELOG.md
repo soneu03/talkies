@@ -6,6 +6,14 @@ features, a new fix number only fixes. The version shows in Talkies settings →
 ## Unreleased
 
 ### New
+- **Talkies settings → Network debugging reads the TV's own switches.** The row says what a computer can do with this
+  TV right now - *On · Wi-Fi* on Android 11 and later, *On · port 5555* on Android TV's older Network debugging,
+  *USB only*, *Off*, *Off · dev options off* - and inside, **Developer options** and **Wireless debugging** each show
+  their state. OK opens Android's screen, and with the `WRITE_SECURE_SETTINGS` permission granted over adb it switches
+  developer options on first; **Turn off** now puts both switches down, not only the old one. The Android 11+ switch is
+  read first, because on current TVs it is the only one that is on (measured on a MiTV, where the classic
+  `adb_enabled` stays at 0 while the TV answers on 5555). What
+  [docs/building.md](docs/building.md#connect-to-the-tv) asks you to turn on can now be checked on the TV itself.
 - **Talkies settings → Language**: Auto, English or Español. Following the TV is not enough on its own, because many
   TVs stay on "English (United States)" wherever they are sold. The first things to move into resources are the menu
   hold-OK opens on an app, the All apps button and Android's own warning about the accessibility service; the rest
@@ -14,7 +22,10 @@ features, a new fix number only fixes. The version shows in Talkies settings →
   [docs/building.es.md](docs/building.es.md) and [docs/l10n.es.md](docs/l10n.es.md), each with a link back to the
   English.
 - **Building on Windows**: the scripts keep LF endings through `.gitattributes`, and `android-env.sh` finds JDK 17
-  and the SDK wherever the machine keeps them instead of assuming Homebrew paths.
+  and the SDK wherever the machine keeps them instead of assuming Homebrew paths. Paths on the TV are written
+  `//sdcard/…` from now on: Git Bash rewrites an argument that starts with one `/` into a Windows path, so
+  `adb pull /sdcard/…` came back empty and `./backup-settings.sh` reported that Talkies "didn't write a backup" while
+  the backup was sitting on the TV.
 - **A GitHub Actions workflow** builds the minified release as well as the debug one, **by hand only** (it no longer
   runs on a push), and says so when `versionName`, `versionCode` and CHANGELOG.md stop agreeing.
 

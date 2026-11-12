@@ -119,7 +119,7 @@ la TV).
 | **Talkies** | |
 | Keys and location | Tu clave de TMDB (las sugerencias) y el área del tiempo. **Send from your phone** muestra un código QR: escanéalo con un teléfono en la misma Wi-Fi y pega ambas en la página que abre (funciona una vez, durante 5 minutos, solo en tu red de casa, y las claves se quedan en la TV). O escribe o pega cada una; las claves se prueban primero con el servicio y solo se guardan si lo acepta. **Remove** borra una |
 | Updates | La versión instalada, y si hay una release más nueva (se comprueba una vez al día mientras Talkies está en primer plano). OK comprueba ahora y, con el APK de las releases, descarga el nuevo, lo comprueba (el tamaño y el SHA-256 de GitHub, que sea más nuevo, firmado con la clave del proyecto) y se lo pasa al instalador de Android, que pregunta primero; la primera vez Android también pide permitir que Talkies instale apps. Un Talkies compilado en un ordenador no hace la comprobación diaria ni muestra la campana, y en sus Talkies settings no aparece la fila Updates, porque con otra clave una actualización no se instalaría |
-| Network debugging | "On · port 5555" mientras los ordenadores de tu red pueden controlar la TV por ADB (así se instaló Talkies). **Turn off** (necesita el permiso de más abajo) o abre Developer options; volver a encenderlo se hace en Developer options |
+| Network debugging | Si esta TV deja que un ordenador la mire, se lee en la propia fila: *On · Wi-Fi* (el interruptor de Android 11 o posterior, cuyo puerto cambia cada vez), *On · port 5555* (el Network debugging propio de Android TV), *USB only*, *Off* o *Off · dev options off*. Dentro, **Developer options** dice *On* u *Off*, y OK abre la pantalla de Android; con el permiso de más abajo además enciende primero las opciones de desarrollador. **Wireless debugging** dice lo mismo que la fila y abre la pantalla donde está su interruptor; **Turn off** (también necesita el permiso de más abajo) quita la depuración a todos los ordenadores de la red |
 | About | Créditos de los datos y del código que usa Talkies. **What's new** lista en notas cortas lo que cambió esta versión, con Updates arriba; tras una actualización Home muestra los primeros, una sola vez, con **See all changes**. **Report a problem** muestra un código QR que abre en tu teléfono un reporte de errores de GitHub con el modelo de la TV, las versiones de Android y de Talkies, la memoria y los ajustes de Accessibility y de Remote keys ya rellenados; desde la TV no se envía nada |
 
 **Configuración única de Turn off now, el Sleep timer y la búsqueda de cricket:** esta TV no admite "device admin", así
@@ -586,8 +586,8 @@ adb -s "$TALKIES_TV" shell pm grant com.techpp.glass android.permission.WRITE_SE
 
 Así, si una parada forzada apaga el servicio, Talkies lo vuelve a encender la siguiente vez que arranca (lo abres desde
 las apps de Google TV, la TV se reinicia, o se actualiza). Solo hace eso si el servicio estaba encendido cuando lo
-mataron; si lo apagas tú, se queda apagado. El mismo permiso deja que Talkies settings → Network debugging apague la
-depuración, y que Control Center → Animations cambie la velocidad de animación de la TV. Es un permiso potente (una app
+mataron; si lo apagas tú, se queda apagado. El mismo permiso deja que Talkies settings → Network debugging encienda
+las opciones de desarrollador y apague la depuración, y que Control Center → Animations cambie la velocidad de animación de la TV. Es un permiso potente (una app
 que lo tiene puede cambiar ajustes del sistema), así que decide tú;
 `adb shell pm revoke com.techpp.glass android.permission.WRITE_SECURE_SETTINGS` lo devuelve.
 

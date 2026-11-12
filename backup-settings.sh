@@ -8,7 +8,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 . ./tv-address.sh
 DEV="${1:-$(tv_default)}"; need_tv
-DIR=/sdcard/Android/data/com.techpp.glass/files
+DIR=//sdcard/Android/data/com.techpp.glass/files
 adb connect "$DEV" >/dev/null 2>&1 || true
 adb -s "$DEV" shell -n rm -f "$DIR/talkies-backup.json"
 adb -s "$DEV" shell -n am start -n com.techpp.glass/.HomeActivity --ez talkies_backup true >/dev/null 2>&1

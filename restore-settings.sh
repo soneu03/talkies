@@ -8,7 +8,7 @@ cd "$(dirname "$0")"
 [ -s talkies-backup.json ] || { echo "No talkies-backup.json here: run ./backup-settings.sh first."; exit 1; }
 . ./tv-address.sh
 DEV="${1:-$(tv_default)}"; need_tv
-DIR=/sdcard/Android/data/com.techpp.glass/files
+DIR=//sdcard/Android/data/com.techpp.glass/files
 adb connect "$DEV" >/dev/null 2>&1 || true
 adb -s "$DEV" shell -n "test -d $DIR" \
   || { echo "Talkies' folder isn't on the TV yet: open Talkies once (press Home), then run this again."; exit 1; }

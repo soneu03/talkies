@@ -7,7 +7,7 @@
 set -euo pipefail
 . "$(dirname "$0")/tv-address.sh"
 DEV="${2:-$(tv_default)}"; need_tv
-F=/sdcard/Android/data/com.techpp.glass/files/region.txt
+F=//sdcard/Android/data/com.techpp.glass/files/region.txt
 adb connect "$DEV" >/dev/null 2>&1 || true
 if [ "${1:-}" = "--remove" ]; then
   adb -s "$DEV" shell -n rm -f "$F"

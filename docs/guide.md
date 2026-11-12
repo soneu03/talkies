@@ -116,7 +116,7 @@ Control Center → **Talkies settings**, or **hold OK on the ⚙ icon** (a press
 | **Talkies** | |
 | Keys and location | Your TMDB key (picks) and weather area. **Send from your phone** shows a QR code: scan it with a phone on the same Wi-Fi and paste them into the page it opens (it works once, for 5 minutes, only on your home network, and the keys stay on the TV). Or type or paste each one; keys are tried with the service first and only saved if it accepts them. **Remove** clears one |
 | Updates | The installed version, and whether a newer release is out (checked once a day while Talkies is in front). OK checks now and, on the APK from the releases, downloads the new one, checks it (GitHub's size and SHA-256, newer, signed with the project's key) and hands it to Android's installer, which asks first; the first time Android also asks to allow Talkies to install apps. A Talkies built on a computer never makes the daily check and never shows the bell, and its Talkies settings has no Updates row at all, since with another key an update couldn't install |
-| Network debugging | "On · port 5555" while computers on your network can control the TV over ADB (how Talkies was installed). **Turn off** (needs the permission below) or open Developer options; turning it on again is done in Developer options |
+| Network debugging | Whether this TV lets a computer look at it, on the row itself: *On · Wi-Fi* (the Android 11+ switch, whose port changes every time), *On · port 5555* (Android TV's own Network debugging), *USB only*, *Off*, or *Off · dev options off*. Inside, **Developer options** says *On* or *Off* and OK opens Android's screen - with the permission below it switches developer options on first. **Wireless debugging** says the same thing the row says and opens the screen where its switch is; **Turn off** (also needs the permission below) takes debugging away from every computer on the network |
 | About | Credits for the data and code Talkies uses. **What's new** lists what this version changed, in short notes, with Updates at the top; after an update Home shows the first few once, with **See all changes**. **Report a problem** shows a QR code that opens a GitHub bug report on your phone with the TV's model, Android and Talkies versions, memory, and the Accessibility and Remote keys settings filled in; nothing is sent from the TV |
 
 **One-time setup for Turn off now, the sleep timer and cricket search:** this TV has no "device admin" support, so the
@@ -540,8 +540,8 @@ adb -s "$TALKIES_TV" shell pm grant com.techpp.glass android.permission.WRITE_SE
 
 Then, if a force stop switches the service off, Talkies switches it back on the next time it starts (you open it
 from Google TV's apps, the TV restarts, or it's updated). It only does that if the service was on when it was killed;
-if you switch it off yourself, it stays off. The same permission lets Talkies settings → Network debugging turn
-debugging off, and Control Center → Animations change the TV's animation speed. It's a powerful permission (an app holding it can change system settings), so it's your call;
+if you switch it off yourself, it stays off. The same permission lets Talkies settings → Network debugging switch
+developer options on and turn debugging off, and Control Center → Animations change the TV's animation speed. It's a powerful permission (an app holding it can change system settings), so it's your call;
 `adb shell pm revoke com.techpp.glass android.permission.WRITE_SECURE_SETTINGS` takes it back.
 
 Remote buttons and Home are seen by the service only from a real remote: keys sent with `adb shell input keyevent`

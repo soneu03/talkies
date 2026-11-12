@@ -40,6 +40,9 @@ primera compilación descarga Gradle, así que tarda unos minutos.
    siete veces) y después **USB debugging** / **Network debugging** en Developer options. Apunta la dirección IP
    del TV (Settings → Network & Internet → tu red Wi-Fi), algo como `192.168.0.105`.
 
+   Talkies settings → Network debugging enseña los dos interruptores con lo que están haciendo, así que eso se puede
+   leer en la propia TV: si las opciones de desarrollador están activas y si la depuración es accesible por la red.
+
    **¿Sin Network debugging, solo Wireless debugging?** Los TV más recientes (Android 11 o posterior) a veces solo
    ofrecen *Wireless debugging*, que hay que emparejar una vez. Ábrelo en el TV, elige **Pair device with pairing
    code** y, en el ordenador, ejecuta `adb pair` con la dirección y el código que muestra (el puerto de emparejamiento
@@ -167,5 +170,10 @@ pongas en `JAVA_HOME` / `ANDROID_HOME` manda sobre todo eso.
   (`--force` para saltarse esos comprobadores).
 - `restore.sh` pregunta antes de desinstalar (`--yes` para scripts) y `switch-home.sh` / `restore.sh` ya no definen
   una función llamada `sh`, que en Git Bash tapaba la real.
+- Las rutas *dentro de la TV* se escriben `//sdcard/…` en estos scripts. Git Bash convierte un argumento que empieza
+  por una sola `/` en una ruta de Windows antes de que el programa lo vea, así que `adb pull /sdcard/Android/data/…`
+  buscaba en `C:\Program Files\Git\sdcard\…` y `./backup-settings.sh` decía que Talkies no había escrito un respaldo
+  cuando sí lo había. `tv-address.sh` explica el porqué, y las rutas locales mantienen una sola barra: para esas es
+  para lo que existe la conversión.
 - La CI de `.github/workflows/build.yml` compila la debug y la release (la de minificación) y comprueba la versión
   y el CHANGELOG. Solo corre cuando la arrancas tú (Actions → build → *Run workflow*), nunca con un push.
