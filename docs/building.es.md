@@ -166,4 +166,4 @@ pongas en `JAVA_HOME` / `ANDROID_HOME` manda sobre todo eso.
 - `restore.sh` pregunta antes de desinstalar (`--yes` para scripts) y `switch-home.sh` / `restore.sh` ya no definen
   una función llamada `sh`, que en Git Bash tapaba la real.
 - La CI de `.github/workflows/build.yml` compila la debug y la release (la de minificación) y comprueba la versión
-  y el CHANGELOG.
+  y el CHANGELOG. Solo corre cuando la arrancas tú (Actions → build → *Run workflow*), nunca con un push.

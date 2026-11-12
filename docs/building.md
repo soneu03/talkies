@@ -162,4 +162,4 @@ wherever you keep it — and writes `local.properties` when it's missing. Anythi
 - `restore.sh` asks before uninstalling (`--yes` for scripts and AI assistants), and `switch-home.sh` and `restore.sh`
   no longer define a function called `sh`, which used to hide the real shell under Git Bash.
 - The CI in `.github/workflows/build.yml` builds the debug APK and the minified release one, and checks the version
-  and the CHANGELOG agree.
+  and the CHANGELOG agree. It runs only when you start it (Actions → build → *Run workflow*), never on a push.

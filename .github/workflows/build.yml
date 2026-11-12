@@ -1,11 +1,12 @@
 name: build
-# What this proves, and what it can't: every push builds the app, and builds it twice. The release build is the one
-# that matters here - minification and resource shrinking only break in that configuration, and with no tests they are
-# the changes a person can't see coming. It can't check the signing key (release.properties never comes to CI), so the
-# release build here carries the debug key on purpose; ./release-apk.sh is what refuses to publish anything else.
+# What this proves, and what it can't: it builds the app twice, and only when someone runs it by hand. The release
+# build is the one that matters here - minification and resource shrinking only break in that configuration, and with
+# no tests they are the changes a person can't see coming. It can't check the signing key (release.properties never
+# comes to CI), so the release build here carries the debug key on purpose; ./release-apk.sh is what refuses to
+# publish anything else.
 on:
-  push:
-  pull_request:
+  # Only by hand, from Actions → build → "Run workflow": this is a personal build, so nothing builds itself on a push.
+  # To put it back on every push, add a `push:` and a `pull_request:` line above.
   workflow_dispatch:
 
 jobs:

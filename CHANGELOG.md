@@ -15,8 +15,8 @@ features, a new fix number only fixes. The version shows in Talkies settings →
   English.
 - **Building on Windows**: the scripts keep LF endings through `.gitattributes`, and `android-env.sh` finds JDK 17
   and the SDK wherever the machine keeps them instead of assuming Homebrew paths.
-- **GitHub Actions builds every push**, the minified release as well as the debug one, and says so when `versionName`,
-  `versionCode` and CHANGELOG.md stop agreeing.
+- **A GitHub Actions workflow** builds the minified release as well as the debug one, **by hand only** (it no longer
+  runs on a push), and says so when `versionName`, `versionCode` and CHANGELOG.md stop agreeing.
 
 ### Changed
 - **Recent apps, redone.** The focused card is much bigger, with its neighbours peeking in at each side. A card shows
