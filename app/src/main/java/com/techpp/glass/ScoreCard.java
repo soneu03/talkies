@@ -138,7 +138,6 @@ final class ScoreCard {
 
     private boolean add() {
         float dp = service.getResources().getDisplayMetrics().density;
-        Typeface font = service.getResources().getFont(R.font.figtree);
         card = new LinearLayout(service);
         card.setOrientation(LinearLayout.VERTICAL);
         card.setPadding(Math.round(16 * dp), Math.round(10 * dp), Math.round(16 * dp), Math.round(10 * dp));
@@ -147,9 +146,9 @@ final class ScoreCard {
         bg.setCornerRadius(14 * dp);
         bg.setStroke(Math.round(dp), 0x33FFFFFF);
         card.setBackground(bg);
-        team1 = line(font, 17, 600, 0xFFF5F5F7);
-        team2 = line(font, 17, 600, 0xFFF5F5F7);
-        status = line(font, 12, 400, 0xFFA1A1A6);
+        team1 = line(Fonts.title(service, 700), 17, 0xFFF5F5F7);
+        team2 = line(Fonts.title(service, 700), 17, 0xFFF5F5F7);
+        status = line(Fonts.body(service, 400), 12, 0xFFA1A1A6);
         status.setMaxWidth(Math.round(300 * dp));
         status.setEllipsize(android.text.TextUtils.TruncateAt.END);
         card.addView(team1);
@@ -175,10 +174,9 @@ final class ScoreCard {
         }
     }
 
-    private TextView line(Typeface font, int sp, int weight, int color) {
+    private TextView line(Typeface face, int sp, int color) {
         TextView t = new TextView(service);
-        t.setTypeface(font);
-        t.setFontVariationSettings("'wght' " + weight);
+        t.setTypeface(face);
         t.setFontFeatureSettings("tnum");
         t.setTextSize(sp);
         t.setTextColor(color);

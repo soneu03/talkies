@@ -99,9 +99,10 @@ public class Screensaver extends DreamService {
         root = new FrameLayout(this);
         root.setBackgroundColor(Color.BLACK);
         root.setAlpha(quiet(this) ? QUIET_ALPHA : 1f);
-        Typeface figtree = getResources().getFont(R.font.figtree);
+        Typeface big = Fonts.title(this, 500);      // the clock, the date, the board's words
+        Typeface small = Fonts.body(this, 400);   // the weather line and the caption, read like a menu
         if (mode.equals("board")) {
-            board = new FlapBoard(this, figtree);
+            board = new FlapBoard(this, big);
             root.addView(board, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
         } else if (!mode.equals("clock")) {
             art = new ImageView[]{new ImageView(this), new ImageView(this)};
@@ -116,12 +117,12 @@ public class Screensaver extends DreamService {
         }
         block = new LinearLayout(this);
         block.setOrientation(LinearLayout.VERTICAL);
-        clock = text(figtree, 96, 300, 0xB3FFFFFF);
+        clock = text(big, 96, 0xB3FFFFFF);
         clock.setFontFeatureSettings("tnum");   // even-width digits: the seconds don't jiggle the line
-        date = text(figtree, 22, 500, 0x80FFFFFF);
+        date = text(big, 22, 0x80FFFFFF);
         date.setLetterSpacing(0.12f);
-        weather = text(figtree, 20, 400, 0x66FFFFFF);
-        caption = text(figtree, 18, 400, 0x66FFFFFF);
+        weather = text(small, 20, 0x66FFFFFF);
+        caption = text(small, 18, 0x66FFFFFF);
         caption.setPadding(0, 16, 0, 0);
         caption.setSingleLine(false);   // your message's two lines stay two lines
         caption.setMaxLines(2);
@@ -155,10 +156,9 @@ public class Screensaver extends DreamService {
         super.onDreamingStopped();
     }
 
-    private TextView text(Typeface font, int sp, int weight, int color) {
+    private TextView text(Typeface face, int sp, int color) {
         TextView t = new TextView(this);
-        t.setTypeface(font);
-        t.setFontVariationSettings("'wght' " + weight);
+        t.setTypeface(face);
         t.setTextSize(sp);
         t.setTextColor(color);
         t.setSingleLine(true);

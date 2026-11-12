@@ -330,7 +330,9 @@ Ideas (no code; Talkies' own implementation):
   [Departures](https://github.com/0xdravyn/departures).
 - A backup weather source, and a rough location from the internet address: tvOS Launcher, Aerial and Plume.
 
-The Figtree typeface is © The Figtree Project Authors, licensed under the SIL Open Font License 1.1 (`FIGTREE-OFL.txt`).
+The typefaces are [Plus Jakarta Sans](https://fonts.google.com/specimen/Plus+Jakarta+Sans) for names and titles and
+[Inter Tight](https://fonts.google.com/specimen/Inter+Tight) for menus and lists, both from Google Fonts under the SIL
+Open Font License 1.1 (`PLUS_JAKARTA_SANS-OFL.txt` and `INTER_TIGHT-OFL.txt`).
 
 ## License
 

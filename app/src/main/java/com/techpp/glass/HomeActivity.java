@@ -268,8 +268,8 @@ public class HomeActivity extends Activity {
         if (Backup.restoreIfPresent(this)) Toast.makeText(this, getString(R.string.backup_restored_toast), Toast.LENGTH_LONG).show();
         else if (getIntent().getBooleanExtra("talkies_backup", false)) Backup.save(this);  // asked before Talkies was running
         setContentView(R.layout.activity_home);
-        weigh(this::findViewById, R.id.title, 600, R.id.info, 400, R.id.score, 500, R.id.big_weather, 500, R.id.big_time, 400,
-                R.id.big_ampm, 500, R.id.big_date, 500, R.id.all_apps_label, 600, R.id.move_hint, 450);
+        weigh(this::findViewById, R.id.title, 700, R.id.score, 500, R.id.big_weather, 500, R.id.big_time, 500,
+                R.id.big_ampm, 500, R.id.big_date, 500, R.id.all_apps_label, 700);
         dp = getResources().getDisplayMetrics().density;
         prefs = getSharedPreferences("home", MODE_PRIVATE);
         pm = getPackageManager();
@@ -483,7 +483,7 @@ public class HomeActivity extends Activity {
             boolean selected = i == tabIdx, f = zone == Z_TABS && selected;
             tabs[i].setVisibility(picksFor(i).isEmpty() ? View.GONE : View.VISIBLE);
             tabs[i].setTextColor(f ? theme.iconFocusFg : selected ? theme.text : theme.text2);
-            tabs[i].setTypeface(Fonts.figtree(this, selected ? 600 : 400));
+            tabs[i].setTypeface(Fonts.body(this, selected ? 700 : 400));
             tabs[i].setBackground(f ? rounded(theme.iconFocusBg, 0, 15) : null);
         }
         credit.setVisibility(!forYou || tabIdx == 0 || rowPicks.isEmpty() ? View.GONE : View.VISIBLE);
@@ -857,7 +857,7 @@ public class HomeActivity extends Activity {
             t.setText(line);
             t.setTextSize(15);
             t.setTextColor(theme.text);
-            t.setTypeface(getResources().getFont(R.font.figtree));
+            t.setTypeface(Fonts.body(this, 400));
             t.setPadding(px(14), px(5), px(14), px(5));
             menu.addView(t);
         }
@@ -1406,7 +1406,7 @@ public class HomeActivity extends Activity {
             title.setTag("chanTitle");
             title.setText(ch.title);
             title.setTextSize(16);
-            title.setTypeface(Fonts.figtree(this, 550));
+            title.setTypeface(Fonts.title(this, 700));
             header.addView(title);
             row.addView(header, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, px(28)));
 
@@ -1446,14 +1446,14 @@ public class HomeActivity extends Activity {
             name.setSingleLine(true);
             name.setEllipsize(android.text.TextUtils.TruncateAt.END);
             name.setTextSize(15);
-            name.setTypeface(Fonts.figtree(this, 600));
+            name.setTypeface(Fonts.title(this, 700));
             caption.addView(name);
             TextView meta = new TextView(this);
             meta.setTag("meta");
             meta.setSingleLine(true);
             meta.setEllipsize(android.text.TextUtils.TruncateAt.END);
             meta.setTextSize(12.5f);
-            meta.setTypeface(getResources().getFont(R.font.figtree));
+            meta.setTypeface(Fonts.body(this, 400));
             caption.addView(meta);
             row.addView(caption, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, px(52)));
 
@@ -1530,7 +1530,7 @@ public class HomeActivity extends Activity {
         st.setSingleLine(true);
         st.setEllipsize(android.text.TextUtils.TruncateAt.END);
         st.setTextSize(12);
-        st.setTypeface(getResources().getFont(R.font.figtree));
+        st.setTypeface(Fonts.body(this, 400));
         st.setTextColor(day ? theme.text2 : 0xFFC7C7CC);
         LinearLayout.LayoutParams sl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1);
         st.setGravity(android.view.Gravity.BOTTOM);
@@ -1562,7 +1562,7 @@ public class HomeActivity extends Activity {
         name.setTag("cricketText");
         name.setText(team);
         name.setTextSize(15);
-        name.setTypeface(Fonts.figtree(this, 600));
+        name.setTypeface(Fonts.title(this, 700));
         name.setTextColor(theme.text);
         line.addView(name, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
         TextView sc = new TextView(this);
@@ -1570,7 +1570,7 @@ public class HomeActivity extends Activity {
         sc.setText(runs);
         sc.setSingleLine(true);
         sc.setTextSize(15);
-        sc.setTypeface(Fonts.figtree(this, 600));
+        sc.setTypeface(Fonts.title(this, 500));
         sc.setTextColor(theme.text);
         line.addView(sc);
         LinearLayout.LayoutParams ll = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, px(26));
@@ -1790,7 +1790,7 @@ public class HomeActivity extends Activity {
         name.setSingleLine(true);
         name.setEllipsize(android.text.TextUtils.TruncateAt.END);
         name.setTextSize(16);
-        name.setTypeface(Fonts.figtree(this, 600));
+        name.setTypeface(Fonts.title(this, 700));
         LinearLayout.LayoutParams nl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         nl.topMargin = px(9);
         nl.leftMargin = px(2);
@@ -1801,7 +1801,7 @@ public class HomeActivity extends Activity {
         meta.setSingleLine(true);
         meta.setEllipsize(android.text.TextUtils.TruncateAt.END);
         meta.setTextSize(12.5f);
-        meta.setTypeface(Fonts.figtree(this, 400));
+        meta.setTypeface(Fonts.body(this, 400));
         meta.setAlpha(0f);
         LinearLayout.LayoutParams ml = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         ml.topMargin = px(2);
@@ -2811,15 +2811,17 @@ public class HomeActivity extends Activity {
             h.setTag("menuTitle");
             h.setTextSize(14);
             h.setTextColor(theme.text);
-            h.setTypeface(Fonts.figtree(this, 600));
+            h.setTypeface(Fonts.title(this, 700));
             h.setPadding(px(14), px(8), px(14), px(6));
             menu.addView(h);
         }
     }
 
     /**
-     * Figtree's weights for the layouts' text, as (view id, weight) pairs. They're set here rather than in the layouts
-     * because the layout attribute only works from Android 9, while this call works from Android 8.
+     * The weights the layouts' text wants, as (view id, weight) pairs, on the face each view already carries in the
+     * layout. Set here rather than in the layouts because the layout attribute only works from Android 9, while this
+     * call works from Android 8; and only weights above 400 appear, since 400 is what a variable font draws when
+     * nothing asks it for more.
      */
     private static void weigh(java.util.function.IntFunction<View> find, int... idWeight) {
         for (int i = 0; i < idWeight.length; i += 2)
@@ -2849,7 +2851,6 @@ public class HomeActivity extends Activity {
     /** A row with a label, an optional status on the right, and what OK does. */
     private View addRow(String label, String status, Runnable action, boolean keepOpen) {
         View row = LayoutInflater.from(this).inflate(R.layout.item_input, menu, false);
-        weigh(row::findViewById, R.id.input_label, 450, R.id.input_status, 400);
         ((TextView) row.findViewById(R.id.input_label)).setText(label);
         row.findViewById(R.id.input_dot).setVisibility(View.GONE);
         setStatus(row, status);
@@ -3319,7 +3320,8 @@ public class HomeActivity extends Activity {
         LinearLayout words = new LinearLayout(this);
         words.setOrientation(LinearLayout.VERTICAL);
         words.setPadding(px(14), 0, 0, 0);
-        TextView title = menuText(17, theme.text, 600), artist = menuText(14, theme.text2, 400);
+        TextView title = menuText(Fonts.title(this, 700), 17, theme.text);
+        TextView artist = menuText(Fonts.body(this, 400), 14, theme.text2);
         words.addView(title);
         words.addView(artist);
         head.addView(words, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
@@ -3360,13 +3362,13 @@ public class HomeActivity extends Activity {
         showMenu(380);
     }
 
-    private TextView menuText(int sp, int color, int weight) {
+    private TextView menuText(Typeface face, int sp, int color) {
         TextView t = new TextView(this);
         t.setTextSize(sp);
         t.setTextColor(color);
         t.setSingleLine(true);
         t.setEllipsize(android.text.TextUtils.TruncateAt.END);
-        t.setTypeface(Fonts.figtree(this, weight));
+        t.setTypeface(face);
         return t;
     }
 
@@ -4087,7 +4089,7 @@ public class HomeActivity extends Activity {
         t.setText(getString(R.string.welcome_note));
         t.setTextSize(16);
         t.setTextColor(theme.text);
-        t.setTypeface(getResources().getFont(R.font.figtree));
+        t.setTypeface(Fonts.body(this, 400));
         t.setPadding(px(14), px(5), px(14), px(5));
         menu.addView(t);
         menu.addView(new View(this), new LinearLayout.LayoutParams(1, px(12)));
@@ -4643,7 +4645,7 @@ public class HomeActivity extends Activity {
         h.setTextSize(11);
         h.setLetterSpacing(0.12f);
         h.setTextColor(theme.text2);
-        h.setTypeface(Fonts.figtree(this, 600));
+        h.setTypeface(Fonts.title(this, 700));
         h.setPadding(px(14), px(12), px(14), px(4));
         menu.addView(h);
     }
@@ -4653,7 +4655,7 @@ public class HomeActivity extends Activity {
         t.setText(text);
         t.setTextSize(21);
         t.setTextColor(theme.text);
-        t.setTypeface(Fonts.figtree(this, 600));
+        t.setTypeface(Fonts.title(this, 700));
         t.setPadding(px(14), px(10), px(14), px(8));
         menu.addView(t);
         return t;
@@ -4670,7 +4672,7 @@ public class HomeActivity extends Activity {
         List<WhatsNew.Section> all = WhatsNew.read(this);
         for (WhatsNew.Section sec : all) {
             addMenuHeading(sec.title);
-            for (String it : sec.items) addNote(WhatsNew.styled(it), 14);
+            for (String it : sec.items) addNote(WhatsNew.styled(it, Fonts.title(this, 700)), 14);
         }
         setFocus(null, 1f, 0);  // from the card, the dock's ring would show behind it
         showMenu(400);
@@ -4697,10 +4699,10 @@ public class HomeActivity extends Activity {
         menuTitle(getString(R.string.whats_new_in, "Talkies " + versionName()));
         for (String it : items) {
             TextView t = new TextView(this);
-            t.setText(WhatsNew.styled("•  " + it));
+            t.setText(WhatsNew.styled("•  " + it, Fonts.title(this, 700)));
             t.setTextSize(16);
             t.setTextColor(theme.text);
-            t.setTypeface(getResources().getFont(R.font.figtree));
+            t.setTypeface(Fonts.body(this, 400));
             t.setPadding(px(14), px(5), px(14), px(5));
             menu.addView(t);
         }
@@ -5555,7 +5557,7 @@ public class HomeActivity extends Activity {
                 {getString(R.string.about_scores), "ESPN (public scoreboard)"},
                 {getString(R.string.about_speed_test), "Cloudflare"},
                 {getString(R.string.about_code_from), "tv-vibehack, CleanYourTV, Free My TV, Matinee, Luma, GlassLauncher"},
-                {getString(R.string.about_font), "Figtree (SIL OFL)"},
+                {getString(R.string.about_font), "Plus Jakarta Sans + Inter Tight (SIL OFL)"},
         };
         addRow(getString(R.string.about_whats_new), null, this::openWhatsNew, false);
         addRow(getString(R.string.about_made_by), getString(R.string.about_made_by_value), () -> { }, true);
@@ -6281,7 +6283,7 @@ public class HomeActivity extends Activity {
             serviceNote = new TextView(this);
             serviceNote.setText(getString(R.string.service_note));
             serviceNote.setTextSize(13);
-            serviceNote.setTypeface(getResources().getFont(R.font.figtree));
+            serviceNote.setTypeface(Fonts.body(this, 400));
             serviceNote.setGravity(android.view.Gravity.CENTER);
             serviceNote.setPadding(px(16), 0, px(16), 0);
             FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, px(28),

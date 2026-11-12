@@ -3,6 +3,7 @@ package com.techpp.glass;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Outline;
+import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
@@ -79,7 +80,8 @@ final class RecentsCards extends FrameLayout {
         scrim.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, new int[]{0xD60A0A0E, 0xB30A0A0E, 0xE00A0A0E}));
         addView(scrim, new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
-        TextView title = text(c, c.getString(R.string.cc_recent_apps).toUpperCase(java.util.Locale.ROOT), 13, 600);
+        TextView title = text(c, c.getString(R.string.cc_recent_apps).toUpperCase(java.util.Locale.ROOT), 13,
+                    Fonts.title(c, 700));
         title.setLetterSpacing(0.12f);
         title.setTextColor(0xB3F5F5F7);
         LayoutParams titleLp = new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.START);
@@ -109,7 +111,7 @@ final class RecentsCards extends FrameLayout {
             LinearLayout.LayoutParams chipLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             chipLp.rightMargin = px(10);
             header.addView(chip, chipLp);
-            TextView label = text(c, e.label, 20, 600);
+            TextView label = text(c, e.label, 20, Fonts.title(c, 700));
             label.setTextColor(0xFFF5F5F7);
             label.setSingleLine(true);
             header.addView(label);
@@ -152,7 +154,8 @@ final class RecentsCards extends FrameLayout {
             frame.addView(shade, new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
             card.addView(frame, new LinearLayout.LayoutParams(cardW, cardH));
 
-            TextView caption = text(c, e.watched != null && e.still != null ? c.getString(R.string.recents_last_watched, e.watched) : " ", 15, 400);
+            TextView caption = text(c, e.watched != null && e.still != null
+                            ? c.getString(R.string.recents_last_watched, e.watched) : " ", 15, Fonts.body(c, 400));
             caption.setTextColor(0xFFC7C7CC);
             caption.setSingleLine(true);
             caption.setEllipsize(android.text.TextUtils.TruncateAt.END);
@@ -176,7 +179,7 @@ final class RecentsCards extends FrameLayout {
             ambient.add(null);
         }
         if (entries.isEmpty()) {
-            TextView none = text(c, c.getString(R.string.recents_empty), 20, 400);
+            TextView none = text(c, c.getString(R.string.recents_empty), 20, Fonts.body(c, 400));
             none.setTextColor(0xFFA1A1A6);
             addView(none, new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
         }
@@ -185,7 +188,7 @@ final class RecentsCards extends FrameLayout {
         actions = new LinearLayout(c);
         actions.setOrientation(LinearLayout.HORIZONTAL);
         for (int name : ACTIONS) {
-            TextView b = text(c, c.getString(name), 16, 500);
+            TextView b = text(c, c.getString(name), 16, Fonts.body(c, 700));
             b.setPadding(px(18), px(9), px(18), px(9));
             LinearLayout.LayoutParams bl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             bl.leftMargin = bl.rightMargin = px(6);
@@ -195,7 +198,7 @@ final class RecentsCards extends FrameLayout {
         LayoutParams al = new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL | Gravity.TOP);
         al.topMargin = under;
         addView(actions, al);
-        hint = text(c, c.getString(R.string.recents_hint), 14, 400);
+        hint = text(c, c.getString(R.string.recents_hint), 14, Fonts.body(c, 400));
         hint.setTextColor(0xFF9A9AA0);
         LayoutParams hl = new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL | Gravity.TOP);
         hl.topMargin = under + px(9);
@@ -220,11 +223,11 @@ final class RecentsCards extends FrameLayout {
         return v;
     }
 
-    private TextView text(Context c, String s, float sp, int weight) {
+    private TextView text(Context c, String s, float sp, Typeface face) {
         TextView t = new TextView(c);
         t.setText(s);
         t.setTextSize(sp);
-        t.setTypeface(Fonts.figtree(c, weight));
+        t.setTypeface(face);
         return t;
     }
 

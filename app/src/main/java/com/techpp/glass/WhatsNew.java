@@ -86,18 +86,18 @@ final class WhatsNew {
     }
 
     /**
-     * Bold for Figtree, a variable font: its weight is a setting of the font (StyleSpan's bold doesn't reach it).
-     * Text after the span keeps the TextView's own weight.
+     * A phrase in its own face. StyleSpan's bold doesn't reach a variable font's weight, so the face arrives with
+     * its weight already made (Fonts.title) and this only swaps it in; the text after it keeps the TextView's own.
      */
-    static final class Weight extends android.text.style.MetricAffectingSpan {
-        private final int weight;
-        Weight(int weight) { this.weight = weight; }
-        @Override public void updateDrawState(android.text.TextPaint p) { p.setFontVariationSettings("'wght' " + weight); }
-        @Override public void updateMeasureState(android.text.TextPaint p) { p.setFontVariationSettings("'wght' " + weight); }
+    static final class Face extends android.text.style.MetricAffectingSpan {
+        private final Typeface face;
+        Face(Typeface face) { this.face = face; }
+        @Override public void updateDrawState(android.text.TextPaint p) { p.setTypeface(face); }
+        @Override public void updateMeasureState(android.text.TextPaint p) { p.setTypeface(face); }
     }
 
     /** Markdown's **bold**, *italic*, `code` and [links](…) as styled text (the link keeps only its words). */
-    static CharSequence styled(String md) {
+    static CharSequence styled(String md, Typeface strong) {
         SpannableStringBuilder b = new SpannableStringBuilder();
         Matcher m = MARKUP.matcher(md);
         int at = 0;
@@ -106,7 +106,7 @@ final class WhatsNew {
             int start = b.length();
             if (m.group(1) != null) {
                 b.append(m.group(1));
-                b.setSpan(new Weight(650), start, b.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                b.setSpan(new Face(strong), start, b.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             } else if (m.group(2) != null) {
                 b.append(m.group(2));
                 b.setSpan(new StyleSpan(Typeface.ITALIC), start, b.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);

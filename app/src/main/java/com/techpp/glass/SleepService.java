@@ -344,13 +344,12 @@ public class SleepService extends AccessibilityService {
             warningText = new TextView(this);
             warningText.setTextColor(0xFFF5F5F7);
             warningText.setTextSize(20);
-            warningText.setTypeface(getResources().getFont(R.font.figtree));
-            warningText.setFontVariationSettings("'wght' 600");
+            warningText.setTypeface(Fonts.body(this, 700));
             TextView hint = new TextView(this);
             hint.setText(getString(R.string.sleep_ok_hint));
             hint.setTextColor(0xFFA1A1A6);
             hint.setTextSize(14);
-            hint.setTypeface(getResources().getFont(R.font.figtree));
+            hint.setTypeface(Fonts.body(this, 400));
             warning.addView(warningText);
             warning.addView(hint);
             WindowManager.LayoutParams lp = new WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT,

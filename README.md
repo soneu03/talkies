@@ -332,7 +332,9 @@ Ideas (sin código; la implementación de Talkies es propia):
   [Departures](https://github.com/0xdravyn/departures).
 - Una fuente de respaldo del tiempo, y una ubicación aproximada a partir de la dirección de internet: tvOS Launcher, Aerial y Plume.
 
-La tipografía Figtree es © The Figtree Project Authors, con licencia SIL Open Font License 1.1 (`FIGTREE-OFL.txt`).
+Las tipografías son [Plus Jakarta Sans](https://fonts.google.com/specimen/Plus+Jakarta+Sans), para los nombres y los
+títulos, e [Inter Tight](https://fonts.google.com/specimen/Inter+Tight), para los menús y las listas. Ambas de Google
+Fonts, con licencia SIL Open Font License 1.1 (`PLUS_JAKARTA_SANS-OFL.txt` e `INTER_TIGHT-OFL.txt`).
 
 ## Licencia
 

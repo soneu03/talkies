@@ -5,7 +5,6 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.RectF;
-import android.graphics.Typeface;
 import android.os.Environment;
 import android.os.StatFs;
 import android.util.AttributeSet;
@@ -31,12 +30,9 @@ public class Meters extends View {
         super(c, a);
         dp = getResources().getDisplayMetrics().density;
         float sp = getResources().getDisplayMetrics().scaledDensity;
-        Typeface figtree = getResources().getFont(R.font.figtree);
-        label.setTypeface(figtree);
-        label.setFontVariationSettings("'wght' 500");
+        label.setTypeface(Fonts.title(c, 500));   // what the number means
         label.setTextSize(10 * sp);
-        value.setTypeface(figtree);
-        value.setFontVariationSettings("'wght' 400");
+        value.setTypeface(Fonts.body(c, 400));
         value.setTextSize(10 * sp);
         value.setTextAlign(Paint.Align.RIGHT);
     }

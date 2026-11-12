@@ -33,9 +33,15 @@ The Outfit Project Authors and licensed under the SIL Open Font License 1.1,
 see launcher/FONT-LICENSE-OFL.txt.
 ```
 
-This fork ships **Figtree** in place of Outfit: `app/src/main/res/font/figtree.ttf`, copyright The Figtree Project
-Authors, licensed under the SIL Open Font License 1.1, whose full text is in `FIGTREE-OFL.txt`. Outfit is not in this
-build; the paragraph above says what the launcher it comes from ships.
+This fork ships two typefaces in place of Outfit, both from Google Fonts, both variable, both subsetted to the Latin
+letters, the Spanish accents and the few marks the interface draws (`·` `→` `…` `«»` `–`) with their hinting dropped:
+
+- `app/src/main/res/font/plus_jakarta_sans.ttf` - Plus Jakarta Sans, copyright The Plus Jakarta Sans Project Authors,
+  SIL Open Font License 1.1, full text in `PLUS_JAKARTA_SANS-OFL.txt`. It carries names and titles.
+- `app/src/main/res/font/inter_tight.ttf` - Inter Tight, copyright The Inter Project Authors, SIL Open Font License
+  1.1, full text in `INTER_TIGHT-OFL.txt`. It carries menus, lists and every line read while moving through them.
+
+Outfit is not in this build; the paragraph above says what the launcher this fork comes from ships.
 
 ---
 

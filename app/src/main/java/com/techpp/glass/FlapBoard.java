@@ -41,15 +41,14 @@ final class FlapBoard extends View {
     private final RectF cell = new RectF();
     private float tileW, tileH, gap, left, top;
 
-    FlapBoard(Context c, Typeface font) {
+    FlapBoard(Context c, Typeface face) {
         super(c);
         for (String[] r : shown) java.util.Arrays.fill(r, " ");
         java.util.Arrays.fill(rowColor, 0xFFEDEDED);
         tile.setColor(0xFF1B1B1D);
         flap.setColor(0xFF232326);
         hinge.setColor(0xFF000000);
-        text.setTypeface(font);
-        text.setFontVariationSettings("'wght' 560");
+        text.setTypeface(face);
         text.setTextAlign(Paint.Align.CENTER);
         emoji.setTextAlign(Paint.Align.CENTER);
     }
