@@ -330,7 +330,7 @@ Ideas (no code; Talkies' own implementation):
   [Departures](https://github.com/0xdravyn/departures).
 - A backup weather source, and a rough location from the internet address: tvOS Launcher, Aerial and Plume.
 
-The Outfit typeface is © The Outfit Project Authors, licensed under the SIL Open Font License 1.1 (`OUTFIT-OFL.txt`).
+The Figtree typeface is © The Figtree Project Authors, licensed under the SIL Open Font License 1.1 (`FIGTREE-OFL.txt`).
 
 ## License
 

@@ -31,11 +31,11 @@ public class Meters extends View {
         super(c, a);
         dp = getResources().getDisplayMetrics().density;
         float sp = getResources().getDisplayMetrics().scaledDensity;
-        Typeface outfit = getResources().getFont(R.font.outfit);
-        label.setTypeface(outfit);
+        Typeface figtree = getResources().getFont(R.font.figtree);
+        label.setTypeface(figtree);
         label.setFontVariationSettings("'wght' 500");
         label.setTextSize(10 * sp);
-        value.setTypeface(outfit);
+        value.setTypeface(figtree);
         value.setFontVariationSettings("'wght' 400");
         value.setTextSize(10 * sp);
         value.setTextAlign(Paint.Align.RIGHT);

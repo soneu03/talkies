@@ -86,7 +86,7 @@ final class WhatsNew {
     }
 
     /**
-     * Bold for Outfit, a variable font: its weight is a setting of the font (StyleSpan's bold doesn't reach it).
+     * Bold for Figtree, a variable font: its weight is a setting of the font (StyleSpan's bold doesn't reach it).
      * Text after the span keeps the TextView's own weight.
      */
     static final class Weight extends android.text.style.MetricAffectingSpan {

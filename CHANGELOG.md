@@ -36,6 +36,9 @@ features, a new fix number only fixes. The version shows in Talkies settings →
   runs on a push), and says so when `versionName`, `versionCode` and CHANGELOG.md stop agreeing.
 
 ### Changed
+- **Figtree replaces Outfit.** Every word Talkies draws - Home, the settings menus, the screensaver - now comes from
+  [Figtree](https://fonts.google.com/specimen/Figtree). It is one variable file like the one it replaces, so the weights
+  between 400 and 600 still come from a single font, and the release APK is 21 KB smaller. See `FIGTREE-OFL.txt`.
 - **Recent apps, redone.** The focused card is much bigger, with its neighbours peeking in at each side. A card shows
   what you last watched in the app when Talkies knows it (the Continue picture, with its title and how far in you are),
   else the app's logo as before. The focused card's colours glow softly behind everything, the app's name sits on the

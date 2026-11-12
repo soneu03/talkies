@@ -33,7 +33,9 @@ The Outfit Project Authors and licensed under the SIL Open Font License 1.1,
 see launcher/FONT-LICENSE-OFL.txt.
 ```
 
-(In this project the Outfit font is `app/src/main/res/font/outfit.ttf`, and its license is `OUTFIT-OFL.txt`.)
+This fork ships **Figtree** in place of Outfit: `app/src/main/res/font/figtree.ttf`, copyright The Figtree Project
+Authors, licensed under the SIL Open Font License 1.1, whose full text is in `FIGTREE-OFL.txt`. Outfit is not in this
+build; the paragraph above says what the launcher it comes from ships.
 
 ---
 
