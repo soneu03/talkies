@@ -29,7 +29,7 @@ El clima (**#21**, **#22**, **#23**) es independiente y puede ir en paralelo. El
   **Decidir:** si se normaliza el marco para que un gran servicio y un canal suelto pesen lo mismo, y
   si las filas de canales (`channelCard`, `HomeActivity.java:1476`, ya cuadradas) comparten el lenguaje.
 - **#20 · Una sola escala de separaciones y radios.** Hoy: `PicksRow.java:16`
-  (440/134/186/18/40/48), `HomeActivity.java:98` (548/212/200/112/280) y los radios que quedan, 11 y 16
+  (331/134/186/18/40/48), `HomeActivity.java:98` (548/212/200/112/280) y los radios que quedan, 11 y 16
   (`appTile`, `HomeActivity.java:1062`, y `RecentsCards.java:126`): las filas de contenido ya son
   cuadradas. Sin cambiar el aspecto: es el suelo que necesitan #18 y #19.
 - **#24 · Modo compacto.** Caben 2 filas de recomendaciones y 3 canales apilados

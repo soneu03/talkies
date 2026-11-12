@@ -13,7 +13,9 @@ import java.util.List;
  * Each child is one pick's view (card on top, title and description below); the card is the child's first child.
  */
 public class PicksRow extends ViewGroup {
-    static final int LARGE_W = 440, SMALL_W = 134, CARD_H = 186, GAP = 18, LEFT = 40, TEXT_H = 48;
+    // 331 is 186 at 16:9, the landscape picture's own ratio: the large card shows the whole picture instead of a strip
+    // of its middle, with its top and bottom cropped away.
+    static final int LARGE_W = 331, SMALL_W = 134, CARD_H = 186, GAP = 18, LEFT = 40, TEXT_H = 48;
 
     private final float dp;
     private float[] curX = new float[0], curW = new float[0], toX, toW;

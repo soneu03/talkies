@@ -82,6 +82,9 @@ features, a new fix number only fixes. The version shows in Talkies settings →
   longer define a function called `sh`, which used to hide the shell itself.
 
 ### Fixed
+- **The focused card of a row showed only a strip of its picture.** It was 440 × 186, wider than any landscape
+  picture the providers send (16:9), so the artwork lost its top and bottom and what was left read as a thin band.
+  It is now 331 × 186 - the picture's own ratio - so the whole frame shows, and a fourth card peeks in beside it.
 - **A card no longer stays empty forever when the picture behind it is large.** Provider artwork was decoded at its
   full size before being shrunk, so a 4000 px fanart asked for more memory than a TV has, the decoder answered with
   nothing, and that card never tried the address again. The bytes now land on disk first, get measured, and are read
