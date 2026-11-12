@@ -1476,12 +1476,7 @@ public class HomeActivity extends Activity {
     private View channelCard(Trending.Pick p) {
         if (p.extra instanceof Cricket.Match) return cricketCard((Cricket.Match) p.extra);
         FrameLayout card = new FrameLayout(this);
-        card.setBackground(rounded(theme.tileBg, 0, 10));
-        final float r = px(10);
-        card.setOutlineProvider(new ViewOutlineProvider() {
-            @Override public void getOutline(View v, Outline o) { o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), r); }
-        });
-        card.setClipToOutline(true);
+        card.setBackgroundColor(theme.tileBg);
         ImageView img = new ImageView(this);
         img.setScaleType(ImageView.ScaleType.CENTER_CROP);
         card.addView(img, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
@@ -1578,10 +1573,10 @@ public class HomeActivity extends Activity {
         return line;
     }
 
-    /** A match card's glass: the dock's, a little stronger, and brighter with focus. */
+    /** A match card's glass: the dock's colours, a little stronger, brighter with focus, and square like its row. */
     private GradientDrawable glassCard(boolean focused) {
-        if (day) return rounded(focused ? 0xF2FFFFFF : 0xB3FFFFFF, 0xF2FFFFFF, 10);
-        return rounded(focused ? 0x33FFFFFF : 0x1AFFFFFF, focused ? 0x55FFFFFF : 0x2EFFFFFF, 10);
+        if (day) return rounded(focused ? 0xF2FFFFFF : 0xB3FFFFFF, 0xF2FFFFFF, 0);
+        return rounded(focused ? 0x33FFFFFF : 0x1AFFFFFF, focused ? 0x55FFFFFF : 0x2EFFFFFF, 0);
     }
 
     /**
@@ -1750,12 +1745,8 @@ public class HomeActivity extends Activity {
         item.setOrientation(LinearLayout.VERTICAL);
         item.setClipChildren(false);
         FrameLayout card = new FrameLayout(this);
-        card.setBackground(rounded(theme.tileBg, 0, 14));
-        final float r = px(14);
-        card.setOutlineProvider(new ViewOutlineProvider() {
-            @Override public void getOutline(View v, Outline o) { o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), r); }
-        });
-        card.setClipToOutline(true);
+        // Square, unlike the dock and the app tiles: a rounded corner cuts pixels off a picture that is the whole card.
+        card.setBackgroundColor(theme.tileBg);
         // Two layers: the landscape picture (large card) and the poster on top (small cards); see updatePickImages.
         ImageView back = new ImageView(this);
         back.setTag("backdrop");
@@ -1861,12 +1852,10 @@ public class HomeActivity extends Activity {
             android.graphics.drawable.BitmapDrawable back = new android.graphics.drawable.BitmapDrawable(getResources(), blur);
             back.setFilterBitmap(true);
             card.setBackground(back);
-            card.setClipToOutline(true);
         } else {
             int c = a != null ? a.glowColor(pm) : 0xFF3A3A3C;
             GradientDrawable g = new GradientDrawable(GradientDrawable.Orientation.TL_BR,
                     new int[]{blend(c, 0xFF000000, 0.45f), blend(c, 0xFF000000, 0.8f)});
-            g.setCornerRadius(px(14));
             card.setBackground(g);
         }
         v.setScaleType(ImageView.ScaleType.FIT_CENTER);
@@ -2255,7 +2244,7 @@ public class HomeActivity extends Activity {
         picksRow.setAnchor(i, moved);
         updatePickImages(i);
         updateAmbient();
-        setFocus(picksRow.anchorCard(), 1.04f, 14);
+        setFocus(picksRow.anchorCard(), 1.04f, 0);
         styleTop();
         followRing(moved ? 360 : 220);
     }
@@ -2320,7 +2309,7 @@ public class HomeActivity extends Activity {
             }
             caption.animate().alpha(i == chanIdx ? 1f : 0f).setDuration(160).start();
         }
-        setFocus(chanCards.get(chanIdx).get(col), 1.06f, 10);
+        setFocus(chanCards.get(chanIdx).get(col), 1.06f, 0);
         updateAmbient();
         styleTop();
         followRing(440);

@@ -43,6 +43,9 @@ features, a new fix number only fixes. The version shows in Talkies settings →
   runs on a push), and says so when `versionName`, `versionCode` and CHANGELOG.md stop agreeing.
 
 ### Changed
+- **Content rows are square.** The Continue cards and the channel rows' pictures keep their corners: a rounded one cut
+  pixels off a picture that is the whole card, and the focus line follows the square now too. The dock, the app tiles
+  and the menus keep their rounding.
 - **Two faces instead of one.** Names and titles are set in
   [Plus Jakarta Sans](https://fonts.google.com/specimen/Plus+Jakarta+Sans), Medium 500 as its regular and Bold 700 for
   what stands out; menus and lists in [Inter Tight](https://fonts.google.com/specimen/Inter+Tight), 400 and 700. The

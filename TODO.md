@@ -12,26 +12,26 @@ El clima (**#21**, **#22**, **#23**) es independiente y puede ir en paralelo. El
 
 ## Diseño de carteles
 
-- **#18 · Fila de Continuar (cartel grande).** Se dibuja en `HomeActivity.java:1748`
-  (`pickView`): dos `ImageView` apilados con `CENTER_CROP` (`HomeActivity.java:1760-1769`), barra de
-  progreso (`:1770-1785`), y debajo título de 16 sp en Plus Jakarta Sans 700 (`:1787-1797`) y meta de
-  12.5 sp (`:1798-1809`). Radio 14 (`:1755`), elevación 14 al enfocar (`:2090`), escala 1.04 (`:2258`).
-  Qué arte se muestra según el tamaño lo decide `updatePickImages` (`HomeActivity.java:1819`).
+- **#18 · Fila de Continuar (cartel grande).** Se dibuja en `HomeActivity.java:1743`
+  (`pickView`): dos `ImageView` apilados con `CENTER_CROP` (`:1751-1760`), barra de progreso
+  (`:1761-1776`), y debajo título de 16 sp en Plus Jakarta Sans 700 (`:1778-1788`) y meta de
+  12.5 sp (`:1789-1800`). Esquinas cuadradas (`:1749`), elevación 14 al enfocar (`:2079`), escala 1.04
+  (`:2247`). Qué arte se muestra según el tamaño lo decide `updatePickImages` (`HomeActivity.java:1810`).
   **Decidir antes de programar:** reparto 16:9 / 2:3; si el nombre va sobre el arte con degradado (hoy
-  no hay scrim: el texto vive fuera) o sigue debajo; qué se ilumina (el anillo es `HighlightView`,
-  `HomeActivity.java:2104-2149`).
+  no hay scrim: el texto vive fuera) o sigue debajo; qué se ilumina (el anillo es `HighlightView`, con
+  `snapRing` en `:2138` y `followRing` en `:2145`).
 - **#19 · Filas de servicios y apps.** No hay logotipos propios: `AppEntry.load`
   (`AppEntry.java:143-171`) prueba un jpg en `files/tiles/<paquete>.jpg` (`:204`), los glifos de
   entrada del TV, el banner del launcher a la máxima densidad (`sharpBanner`, `:178`) y, si no, el
   icono. Se dibuja en `appTile` (`HomeActivity.java:1062-1078`, radio 11, icono de respaldo al 60% de
-  la altura) y `showAppLogo` (`:1852-1869`, con el desenfoque de `RecentsCards.blurOf`). La cabecera de
+  la altura) y `showAppLogo` (`:1843-1860`, con el desenfoque de `RecentsCards.blurOf`). La cabecera de
   fila es el icono del launcher metido en un bitmap de 20 dp (`HomeActivity.java:1392-1403`).
   **Decidir:** si se normaliza el marco para que un gran servicio y un canal suelto pesen lo mismo, y
-  si las filas de canales (`channelCard`, `HomeActivity.java:1476`, radio 10) comparten el lenguaje.
+  si las filas de canales (`channelCard`, `HomeActivity.java:1476`, ya cuadradas) comparten el lenguaje.
 - **#20 · Una sola escala de separaciones y radios.** Hoy: `PicksRow.java:16`
-  (440/134/186/18/40/48), `HomeActivity.java:98` (548/212/200/112/280) y radios 14, 11, 10 y 16
-  (`HomeActivity.java:1755`, `:1062`, `:1476`, `RecentsCards.java:126`). Sin cambiar el aspecto: es el
-  suelo que necesitan #18 y #19.
+  (440/134/186/18/40/48), `HomeActivity.java:98` (548/212/200/112/280) y los radios que quedan, 11 y 16
+  (`appTile`, `HomeActivity.java:1062`, y `RecentsCards.java:126`): las filas de contenido ya son
+  cuadradas. Sin cambiar el aspecto: es el suelo que necesitan #18 y #19.
 - **#24 · Modo compacto.** Caben 2 filas de recomendaciones y 3 canales apilados
   (`HomeActivity.java:1443-1460`); dos carruseles, uno de apps vistas y otro de recomendaciones. Opciones:
   que los canales ocupen el hueco de las recomendaciones, o sacar las apps ocultas del carrusel y dejarlas
@@ -44,7 +44,7 @@ Síntomas que cuenta él de memoria, con su explicación en el código:
 - **Continuar sale recortado, con fragmentos del título.** Bug de montaje, no de red: a las entradas de Continuar
   solo se les guarda la miniatura horizontal del proveedor (`WatchNext.java:107`); el póster vertical se pone en el
   único camino de ocultar spoilers (`:104`). El hueco pequeño es vertical (268x372 px) y se rellena con la horizontal
-  a `CENTER_CROP` (`HomeActivity.java:1819-1846`): se pierden ~2 de cada 5 px de ancho. Si el proveedor trae el título
+  a `CENTER_CROP` (`HomeActivity.java:1810-1837`): se pierden ~2 de cada 5 px de ancho. Si el proveedor trae el título
   quemado en la imagen, sale cortado.
 - **TVE repite imágenes.** Dos causas posibles, hoy indistinguibles: el proveedor publica la misma URI de arte para
   varios episodios (una imagen por serie), o el archivo se nombra con el hash de la cadena URI
