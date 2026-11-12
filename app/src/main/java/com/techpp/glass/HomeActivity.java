@@ -265,7 +265,7 @@ public class HomeActivity extends Activity {
     protected void onCreate(Bundle state) {
         super.onCreate(state);
         // restore-settings.sh pushed a backup: apply it before anything reads the settings.
-        if (Backup.restoreIfPresent(this)) Toast.makeText(this, "Settings restored from the backup", Toast.LENGTH_LONG).show();
+        if (Backup.restoreIfPresent(this)) Toast.makeText(this, getString(R.string.backup_restored_toast), Toast.LENGTH_LONG).show();
         else if (getIntent().getBooleanExtra("talkies_backup", false)) Backup.save(this);  // asked before Talkies was running
         setContentView(R.layout.activity_home);
         weigh(this::findViewById, R.id.title, 600, R.id.info, 400, R.id.score, 500, R.id.big_weather, 500, R.id.big_time, 400,
@@ -483,7 +483,7 @@ public class HomeActivity extends Activity {
             boolean selected = i == tabIdx, f = zone == Z_TABS && selected;
             tabs[i].setVisibility(picksFor(i).isEmpty() ? View.GONE : View.VISIBLE);
             tabs[i].setTextColor(f ? theme.iconFocusFg : selected ? theme.text : theme.text2);
-            tabs[i].setTypeface(Fonts.outfit(this, selected ? 600 : 400));
+            tabs[i].setTypeface(Fonts.figtree(this, selected ? 600 : 400));
             tabs[i].setBackground(f ? rounded(theme.iconFocusBg, 0, 15) : null);
         }
         credit.setVisibility(!forYou || tabIdx == 0 || rowPicks.isEmpty() ? View.GONE : View.VISIBLE);
@@ -534,7 +534,7 @@ public class HomeActivity extends Activity {
         b.setSpan(new ForegroundColorSpan(theme.text), 0, time.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         b.setSpan(new StyleSpan(Typeface.BOLD), 0, time.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         b.append("  ·  ").append(DateFormat.format("EEE d MMM", now));
-        if (weatherLine != null) b.append("  ·  ").append(weatherLine);
+        if (weatherLine != null) b.append("  ·  ").append(weather.shown(weatherLine));
         info.setTextColor(theme.text2);
         info.setText(b);
         boolean h24 = DateFormat.is24HourFormat(this);
@@ -542,7 +542,7 @@ public class HomeActivity extends Activity {
         bigAmPm.setText(h24 ? "" : DateFormat.format("a", now));
         bigAmPm.setVisibility(h24 ? View.GONE : View.VISIBLE);
         bigDate.setText(DateFormat.format("EEEE  d MMMM", now));
-        bigWeather.setText(weatherLine == null ? "" : weatherLine);
+        bigWeather.setText(weatherLine == null ? "" : weather.shown(weatherLine));
         weatherIcon();
         if (meters.getVisibility() == View.VISIBLE) meters.update();
         bigWeather.setVisibility(weatherLine == null ? View.GONE : View.VISIBLE);
@@ -561,7 +561,13 @@ public class HomeActivity extends Activity {
     private String soccer = "Football";
 
     /** A sport's name as shown here: football is soccer in North America. */
-    private String sportName(String[] sp) { return sp[0].equals("football") ? soccer : sp[1]; }
+    private String sportName(String[] sp) {
+        switch (sp[0]) {
+            case "football": return soccer;
+            case "cricket": return getString(R.string.sport_cricket);
+            default: return sp[1];
+        }
+    }
 
     /** The sports whose scores show (Talkies settings → Sports); worked out in applySports. */
     private final Set<String> sportsOn = new java.util.LinkedHashSet<>();
@@ -572,7 +578,7 @@ public class HomeActivity extends Activity {
     private void applySports() {
         sportsOn.clear();
         String cc = Region.country(this);
-        soccer = cc.equals("US") || cc.equals("CA") ? "Soccer" : "Football";
+        soccer = getString(cc.equals("US") || cc.equals("CA") ? R.string.sport_soccer : R.string.sport_football);
         sportsOn.addAll(Football.sportsOn(this));
         football.setSports(sportsOn.contains("football"), sportsOn.contains("nfl"), sportsOn.contains("nba"));
     }
@@ -596,12 +602,13 @@ public class HomeActivity extends Activity {
             return;
         }
         SpannableStringBuilder b = new SpannableStringBuilder();
+        String livePill = "● " + getString(R.string.score_live) + "  ";
         if (m.football) {
             // League first, like cricket's match type: "● LIVE  Serie A · 52' · SAS 2–4 LAZ".
             String result = m.short1 + " " + m.s1 + "–" + m.s2 + " " + m.short2;
             if (m.live) {
-                b.append("● LIVE  ");
-                b.setSpan(new ForegroundColorSpan(0xFFFF453A), 0, 6, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                b.append(livePill);
+                b.setSpan(new ForegroundColorSpan(0xFFFF453A), 0, livePill.length() - 2, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                 b.append(m.league).append("  ·  ").append(m.status).append("  ·  ").append(result);
             } else if (!m.ended) {
                 b.append(m.league).append("  ·  ").append(m.short1).append(" ").append(m.vs).append(" ").append(m.short2)
@@ -616,8 +623,8 @@ public class HomeActivity extends Activity {
             b.append(m.t1).append(m.s1.isEmpty() ? "" : " " + m.s1).append("  v  ").append(m.t2).append(m.s2.isEmpty() ? "" : " " + m.s2)
                     .append("  ·  ").append(why);
         } else if (m.live) {
-            b.append("● LIVE  ");
-            b.setSpan(new ForegroundColorSpan(0xFFFF453A), 0, 6, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            b.append(livePill);
+            b.setSpan(new ForegroundColorSpan(0xFFFF453A), 0, livePill.length() - 2, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             if (!m.kind.isEmpty()) b.append(m.kind).append("  ·  ");
             b.append(m.t1).append(m.s1.isEmpty() ? "" : " " + m.s1).append("  v  ").append(m.t2).append(m.s2.isEmpty() ? "" : " " + m.s2);
         } else if (!m.ended) {
@@ -720,16 +727,18 @@ public class HomeActivity extends Activity {
     private String screensaverLabel() {
         String m = prefs.getString("screensaver", "clock");
         // One note at most, the one that matters most, so the row's name still fits.
-        if (m.equals("wallpaper") && wallpaperLabel().equals("Off")) return "Wallpaper  ·  none set";
-        if (m.equals("picks") && lowMemory()) return "Picks  ·  may be slow";
-        String l = m.equals("picks") ? "Picks" : m.equals("wallpaper") ? "Wallpaper" : m.equals("board") ? "Board" : "Clock";
-        return screensaverChosen() ? l : l + "  ·  not in use";
+        if (m.equals("wallpaper") && wallpaperLabel().equals(getString(R.string.state_off))) return getString(R.string.screensaver_wallpaper_none);
+        if (m.equals("picks") && lowMemory()) return getString(R.string.screensaver_picks_slow);
+        String l = m.equals("picks") ? getString(R.string.screensaver_picks)
+                : m.equals("wallpaper") ? getString(R.string.screensaver_wallpaper_short)
+                : m.equals("board") ? getString(R.string.screensaver_board) : getString(R.string.screensaver_clock);
+        return screensaverChosen() ? l : l + getString(R.string.screensaver_not_in_use);
     }
 
     /** The screensaver message's first words ("Dinner at 8…"), short enough for the row's name to fit; or "None". */
     private String messageLabel() {
         String m = Screensaver.message(this);
-        if (m == null) return "None";
+        if (m == null) return getString(R.string.state_none);
         String first = m.split("\n")[0].trim();
         return first.length() > 14 || m.contains("\n") ? first.substring(0, Math.min(14, first.length())).trim() + "…" : first;
     }
@@ -737,10 +746,10 @@ public class HomeActivity extends Activity {
     /** When the screensaver dims: "11 PM – 7 AM", or "Off". */
     private String quietLabel() {
         switch (prefs.getString("quiet_hours", "23-7")) {
-            case "22-6": return "10 PM – 6 AM  ·  dimmer";
-            case "0-7": return "Midnight – 7 AM  ·  dimmer";
-            case "off": return "Off";
-            default: return "11 PM – 7 AM  ·  dimmer";
+            case "22-6": return getString(R.string.quiet_10_6);
+            case "0-7": return getString(R.string.quiet_midnight_7);
+            case "off": return getString(R.string.state_off);
+            default: return getString(R.string.quiet_11_7);
         }
     }
 
@@ -748,7 +757,7 @@ public class HomeActivity extends Activity {
     private void openPhoneMessage() {
         java.net.InetAddress lan = PhonePage.lanAddress(this);
         if (lan == null) {
-            Toast.makeText(this, "The TV isn't on a home Wi-Fi or Ethernet network, so the phone can't reach it", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, getString(R.string.phone_no_network_toast), Toast.LENGTH_LONG).show();
             return;
         }
         TextView status = new TextView(this);
@@ -762,7 +771,7 @@ public class HomeActivity extends Activity {
                     String m = (fields.get("line1") + "\n" + fields.get("line2")).trim();
                     if (m.isEmpty()) prefs.edit().remove("board_message").apply();
                     else prefs.edit().putString("board_message", m).apply();
-                    String said = m.isEmpty() ? "Message removed." : "Done: it shows on the screensaver now.";
+                    String said = getString(m.isEmpty() ? R.string.msg_removed_toast : R.string.msg_saved_toast);
                     runOnUiThread(() -> {
                         if (dialog[0] != null) dialog[0].dismiss();
                         Toast.makeText(HomeActivity.this, said, Toast.LENGTH_SHORT).show();
@@ -776,11 +785,11 @@ public class HomeActivity extends Activity {
                 }
 
                 @Override public void closed(boolean expired) {
-                    if (expired) runOnUiThread(() -> status.setText("This code has expired. Close it and open Screensaver message again."));
+                    if (expired) runOnUiThread(() -> status.setText(getString(R.string.phone_expired_note, getString(R.string.row_screensaver_message))));
                 }
             });
         } catch (java.io.IOException e) {
-            Toast.makeText(this, "Couldn't open the page for your phone", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.page_open_failed_toast), Toast.LENGTH_SHORT).show();
             return;
         }
         LinearLayout box = new LinearLayout(this);
@@ -793,14 +802,14 @@ public class HomeActivity extends Activity {
         where.setTextSize(12);
         where.setPadding(0, px(8), 0, 0);
         box.addView(where);
-        status.setText("Waiting for your phone… The page works once, for 5 minutes.");
+        status.setText(getString(R.string.phone_waiting_note));
         status.setPadding(0, px(6), 0, 0);
         box.addView(status);
         dialog[0] = new android.app.AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                .setTitle("Screensaver message")
-                .setMessage("Scan this with your phone's camera (on the same Wi-Fi as the TV), then type up to two short lines.")
+                .setTitle(getString(R.string.row_screensaver_message))
+                .setMessage(getString(R.string.phone_message_note))
                 .setView(box)
-                .setNegativeButton("Close", null)
+                .setNegativeButton(getString(R.string.dialog_close), null)
                 .setOnDismissListener(d -> page.close())
                 .create();
         dialog[0].show();
@@ -808,8 +817,8 @@ public class HomeActivity extends Activity {
 
     /** "App colour" or "Blurred art"; "· not in use" where a wallpaper or Lite effects take its place. */
     private String backgroundLabel() {
-        String l = prefs.getBoolean("blurred_art", false) ? "Blurred art" : "App colour";
-        return hasWallpaper || lite ? l + "  ·  not in use" : l;
+        String l = state(prefs.getBoolean("blurred_art", false), R.string.background_blurred_art, R.string.background_app_colour);
+        return hasWallpaper || lite ? l + getString(R.string.background_not_in_use) : l;
     }
 
     /** Whether the TV's screensaver is Talkies' (Settings → Device Preferences → Screen saver). */
@@ -840,21 +849,21 @@ public class HomeActivity extends Activity {
 
     /** Without the grant: where it's chosen on the TV, and the one command for a TV that doesn't list Talkies there. */
     private void openScreensaverHelp() {
-        beginMenu(settingsAt, "TV's screensaver");
-        String[] lines = {"Choose Talkies in the TV's screen saver settings. If they don't list it, run this once from a computer:",
+        beginMenu(settingsAt, getString(R.string.screensaver_help_title));
+        String[] lines = {getString(R.string.screensaver_help_note),
                 "adb shell settings put secure screensaver_components " + getPackageName() + "/.Screensaver"};
         for (String line : lines) {
             TextView t = new TextView(this);
             t.setText(line);
             t.setTextSize(15);
             t.setTextColor(theme.text);
-            t.setTypeface(getResources().getFont(R.font.outfit));
+            t.setTypeface(getResources().getFont(R.font.figtree));
             t.setPadding(px(14), px(5), px(14), px(5));
             menu.addView(t);
         }
         Intent settings = new Intent(Settings.ACTION_DREAM_SETTINGS);
-        if (pm.resolveActivity(settings, 0) != null) addRow("Open the TV's settings", null, () -> start(settings), false);
-        else addRow("OK", null, () -> { }, false);
+        if (pm.resolveActivity(settings, 0) != null) addRow(getString(R.string.open_tv_settings_row), null, () -> start(settings), false);
+        else addRow(getString(R.string.row_ok), null, () -> { }, false);
         showMenu(640);
     }
 
@@ -914,7 +923,9 @@ public class HomeActivity extends Activity {
 
     private String effectsLabel() {
         String e = prefs.getString("effects", "auto");
-        return e.equals("full") ? "Full" : e.equals("lite") ? "Lite" : liteEffects() ? "Auto · Lite" : "Auto · Full";
+        return e.equals("full") ? getString(R.string.effects_full)
+                : e.equals("lite") ? getString(R.string.effects_lite)
+                : liteEffects() ? getString(R.string.effects_auto_lite) : getString(R.string.effects_auto_full);
     }
     /** How All apps is arranged (Talkies settings → All apps order). The dock always keeps your order. */
     private static final String[] APPS_ORDER = {"Your order", "Recently opened", "A to Z"};
@@ -1271,7 +1282,7 @@ public class HomeActivity extends Activity {
                 && (cricketRow.isEmpty() || !cricketRow.get(0).live);
         String sports = sportsTitle(footballRow);
         if (footballFirst) list.add(scoresRow("football", sports, footballRow));
-        if (!cricketRow.isEmpty()) list.add(scoresRow("cricket", "Cricket", cricketRow));
+        if (!cricketRow.isEmpty()) list.add(scoresRow("cricket", getString(R.string.sport_cricket), cricketRow));
         if (!footballRow.isEmpty() && !footballFirst) list.add(scoresRow("football", sports, footballRow));
         list.addAll(apps);
         {
@@ -1318,7 +1329,7 @@ public class HomeActivity extends Activity {
     private String sportsTitle(List<Cricket.Match> list) {
         Set<String> kinds = new HashSet<>();
         for (Cricket.Match m : list) kinds.add("at".equals(m.vs) ? m.kind : soccer);
-        return kinds.size() == 1 ? kinds.iterator().next() : "Sports";
+        return kinds.size() == 1 ? kinds.iterator().next() : getString(R.string.row_sports);
     }
 
     /** What a card shows, unchanged by a new score: the match, or the pick itself. */
@@ -1395,7 +1406,7 @@ public class HomeActivity extends Activity {
             title.setTag("chanTitle");
             title.setText(ch.title);
             title.setTextSize(16);
-            title.setTypeface(Fonts.outfit(this, 550));
+            title.setTypeface(Fonts.figtree(this, 550));
             header.addView(title);
             row.addView(header, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, px(28)));
 
@@ -1435,14 +1446,14 @@ public class HomeActivity extends Activity {
             name.setSingleLine(true);
             name.setEllipsize(android.text.TextUtils.TruncateAt.END);
             name.setTextSize(15);
-            name.setTypeface(Fonts.outfit(this, 600));
+            name.setTypeface(Fonts.figtree(this, 600));
             caption.addView(name);
             TextView meta = new TextView(this);
             meta.setTag("meta");
             meta.setSingleLine(true);
             meta.setEllipsize(android.text.TextUtils.TruncateAt.END);
             meta.setTextSize(12.5f);
-            meta.setTypeface(getResources().getFont(R.font.outfit));
+            meta.setTypeface(getResources().getFont(R.font.figtree));
             caption.addView(meta);
             row.addView(caption, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, px(52)));
 
@@ -1511,14 +1522,15 @@ public class HomeActivity extends Activity {
         TextView st = new TextView(this);
         st.setTag("cricketText");
         String kind = m.kind.isEmpty() ? "" : m.kind + "  ·  ";
-        String status = m.live ? "LIVE  " + kind + m.status : !m.ended && m.start != null ? kind + "starts " + m.start : kind + m.status;
+        String live = getString(R.string.score_live);
+        String status = m.live ? live + "  " + kind + m.status : !m.ended && m.start != null ? kind + getString(R.string.score_starts_at, m.start) : kind + m.status;
         SpannableStringBuilder sb = new SpannableStringBuilder(status);
-        if (m.live) sb.setSpan(new PillSpan("LIVE", 0xFFE5383B, 0xFFFFFFFF, px(7), px(6)), 0, 4, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        if (m.live) sb.setSpan(new PillSpan(live, 0xFFE5383B, 0xFFFFFFFF, px(7), px(6)), 0, live.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         st.setText(sb);
         st.setSingleLine(true);
         st.setEllipsize(android.text.TextUtils.TruncateAt.END);
         st.setTextSize(12);
-        st.setTypeface(getResources().getFont(R.font.outfit));
+        st.setTypeface(getResources().getFont(R.font.figtree));
         st.setTextColor(day ? theme.text2 : 0xFFC7C7CC);
         LinearLayout.LayoutParams sl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1);
         st.setGravity(android.view.Gravity.BOTTOM);
@@ -1550,7 +1562,7 @@ public class HomeActivity extends Activity {
         name.setTag("cricketText");
         name.setText(team);
         name.setTextSize(15);
-        name.setTypeface(Fonts.outfit(this, 600));
+        name.setTypeface(Fonts.figtree(this, 600));
         name.setTextColor(theme.text);
         line.addView(name, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
         TextView sc = new TextView(this);
@@ -1558,7 +1570,7 @@ public class HomeActivity extends Activity {
         sc.setText(runs);
         sc.setSingleLine(true);
         sc.setTextSize(15);
-        sc.setTypeface(Fonts.outfit(this, 600));
+        sc.setTypeface(Fonts.figtree(this, 600));
         sc.setTextColor(theme.text);
         line.addView(sc);
         LinearLayout.LayoutParams ll = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, px(26));
@@ -1724,13 +1736,12 @@ public class HomeActivity extends Activity {
         if (!show) return;
         boolean radar = Trending.RADAR.equals(trending.source());
         picksHint.setText(trending.source() == null
-                ? "Trending and new picks need a free TMDB key: Control Center → Talkies settings → Keys and location"
+                ? getString(R.string.hint_needs_key)
                 : trending.matchedApps() == 0
-                ? "Trending shows what's on your streaming apps, and none Talkies knows is installed."
-                        + (radar ? "" : " With YouTube installed, it shows trailers instead.")
+                ? getString(R.string.hint_no_apps) + (radar ? "" : " " + getString(R.string.hint_trailers))
                 : !trending.languages().isEmpty()
-                ? "Nothing in " + languagesLabel() + " on your apps here right now. More languages: Talkies settings → Picks languages."
-                : "Picks appear here once Talkies is online. Shows you watch show up under Continue.");
+                ? getString(R.string.hint_no_language, languagesLabel())
+                : getString(R.string.hint_offline));
     }
 
     /** A pick: the image card (with a progress bar when the app shares one), its title, and a description line. */
@@ -1779,7 +1790,7 @@ public class HomeActivity extends Activity {
         name.setSingleLine(true);
         name.setEllipsize(android.text.TextUtils.TruncateAt.END);
         name.setTextSize(16);
-        name.setTypeface(Fonts.outfit(this, 600));
+        name.setTypeface(Fonts.figtree(this, 600));
         LinearLayout.LayoutParams nl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         nl.topMargin = px(9);
         nl.leftMargin = px(2);
@@ -1790,7 +1801,7 @@ public class HomeActivity extends Activity {
         meta.setSingleLine(true);
         meta.setEllipsize(android.text.TextUtils.TruncateAt.END);
         meta.setTextSize(12.5f);
-        meta.setTypeface(Fonts.outfit(this, 400));
+        meta.setTypeface(Fonts.figtree(this, 400));
         meta.setAlpha(0f);
         LinearLayout.LayoutParams ml = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         ml.topMargin = px(2);
@@ -2589,8 +2600,10 @@ public class HomeActivity extends Activity {
         }
         Intent i = p.pkg == null ? null : pm.getLeanbackLaunchIntentForPackage(p.pkg);
         if (i != null) startFromTile(i);
-        else if (p.extra instanceof Cricket.Match && ((Cricket.Match) p.extra).football) Toast.makeText(this, "Talkies doesn't know where to watch " + ("at".equals(((Cricket.Match) p.extra).vs) ? "this game" : soccer.toLowerCase(Locale.ROOT)) + " yet", Toast.LENGTH_SHORT).show();
-        else if (p.extra instanceof Cricket.Match) Toast.makeText(this, "None of your apps has a card for this match", Toast.LENGTH_SHORT).show();
+        else if (p.extra instanceof Cricket.Match && ((Cricket.Match) p.extra).football) Toast.makeText(this,
+                getString(R.string.match_no_app_football, "at".equals(((Cricket.Match) p.extra).vs) ? getString(R.string.this_game)
+                        : soccer.toLowerCase(Locale.ROOT)), Toast.LENGTH_SHORT).show();
+        else if (p.extra instanceof Cricket.Match) Toast.makeText(this, getString(R.string.match_no_app_cricket), Toast.LENGTH_SHORT).show();
     }
 
     private void back() {
@@ -2615,7 +2628,7 @@ public class HomeActivity extends Activity {
         if (pm.resolveActivity(i, 0) == null) {
             Intent tv = new Intent(Intent.ACTION_MAIN).setClassName("com.android.tv.settings", "com.android.tv.settings.MainSettings");
             if (pm.resolveActivity(tv, 0) != null) i = tv;
-            else Toast.makeText(this, "This TV has no settings app Talkies can open", Toast.LENGTH_SHORT).show();
+            else Toast.makeText(this, getString(R.string.no_settings_app_toast), Toast.LENGTH_SHORT).show();
         }
         start(i);
     }
@@ -2691,7 +2704,7 @@ public class HomeActivity extends Activity {
         beforeMove = new ArrayList<>(apps);
         ring.setMoving(true);
         refocusMoving();
-        moveHint.setText("Moving " + apps.get(ai).label + "  ·  OK to place  ·  Back to cancel");
+        moveHint.setText(getString(R.string.move_hint, apps.get(ai).label));
         moveHint.setAlpha(0f);
         moveHint.setVisibility(View.VISIBLE);
         moveHint.animate().alpha(1f).setDuration(150).start();
@@ -2798,19 +2811,39 @@ public class HomeActivity extends Activity {
             h.setTag("menuTitle");
             h.setTextSize(14);
             h.setTextColor(theme.text);
-            h.setTypeface(Fonts.outfit(this, 600));
+            h.setTypeface(Fonts.figtree(this, 600));
             h.setPadding(px(14), px(8), px(14), px(6));
             menu.addView(h);
         }
     }
 
     /**
-     * Outfit's weights for the layouts' text, as (view id, weight) pairs. They're set here rather than in the layouts
+     * Figtree's weights for the layouts' text, as (view id, weight) pairs. They're set here rather than in the layouts
      * because the layout attribute only works from Android 9, while this call works from Android 8.
      */
     private static void weigh(java.util.function.IntFunction<View> find, int... idWeight) {
         for (int i = 0; i < idWeight.length; i += 2)
             ((TextView) find.apply(idWeight[i])).setFontVariationSettings("'wght' " + idWeight[i + 1]);
+    }
+
+    /** What a switch is doing, in the language the app speaks. */
+    private String onOff(boolean on) {
+        return getString(on ? R.string.state_on : R.string.state_off);
+    }
+
+    /** What a part of Home is doing, in the language the app speaks. */
+    private String shownHidden(boolean shown) {
+        return getString(shown ? R.string.state_shown : R.string.state_hidden);
+    }
+
+    /** One of two states a row can be in, in the language the app speaks. */
+    private String state(boolean yes, int yesRes, int noRes) {
+        return getString(yes ? yesRes : noRes);
+    }
+
+    /** One of the choices a row cycles through, in the language the app speaks. */
+    private String choice(int array, int index) {
+        return getResources().getStringArray(array)[index];
     }
 
     /** A row with a label, an optional status on the right, and what OK does. */
@@ -2947,7 +2980,7 @@ public class HomeActivity extends Activity {
             addInput(name, tim, i, passthrough(i));
         }
         final TvInputInfo tunerInfo = tuner;
-        if (!inputHidden(LIVE_TV)) addRow(inputName(LIVE_TV, "Live TV"), null, () -> {
+        if (!inputHidden(LIVE_TV)) addRow(inputName(LIVE_TV, getString(R.string.live_tv_name)), null, () -> {
             if (tunerInfo != null) {
                 Intent v = new Intent(Intent.ACTION_VIEW);
                 v.setDataAndType(TvContract.buildChannelsUriForInput(tunerInfo.getId()), "vnd.android.cursor.dir/channel");
@@ -2958,7 +2991,7 @@ public class HomeActivity extends Activity {
             tv.setDataAndType(TvContract.Channels.CONTENT_URI, "vnd.android.cursor.dir/channel");
             start(tv);
         }, false);
-        if (hidden > 0) addRow("More inputs", String.valueOf(hidden), () -> openInputs(true), false);
+        if (hidden > 0) addRow(getString(R.string.more_inputs_row), String.valueOf(hidden), () -> openInputs(true), false);
         showMenu(named ? 340 : 220);
         // Opened from More inputs: start on the first port it brought back.
         if (all && firstEmpty > 0 && prefs.getBoolean("inputs_connected_only", false)) focusMenu(firstEmpty);
@@ -3013,7 +3046,7 @@ public class HomeActivity extends Activity {
             Devices d = cecStatus(tim, behind) != null ? identify(behind) : null;
             // A name you gave it wins over the device's own ("Living room box", not "Set-top box").
             String own = inputNames().optString(i.getId(), null);
-            out.add(new Port(i.getId(), own != null ? own : name, own != null || d == null ? null : d.name,
+            out.add(new Port(i.getId(), own != null ? own : name, own != null || d == null ? null : d.label(this),
                     d == null ? Devices.PLAIN : d.color));
         }
         n = 1;
@@ -3104,9 +3137,9 @@ public class HomeActivity extends Activity {
         if (info == null) return;
         Log.i(TAG, "Incoming: " + port.row());
         beginMenu(P_INPUTS, null);
-        menuTitle((port.device != null ? port.device : port.name) + " is on");
-        addRow("Switch to " + port.name, null, passthrough(info), false);
-        addRow("Not now", null, () -> { }, false);
+        menuTitle(getString(R.string.incoming_title, port.device != null ? port.device : port.name));
+        addRow(getString(R.string.switch_to_input, port.name), null, passthrough(info), false);
+        addRow(getString(R.string.not_now), null, () -> { }, false);
         menuClosed = () -> focusDock(dockIdx);
         setFocus(null, 1f, 0);
         showMenu(360);
@@ -3150,28 +3183,30 @@ public class HomeActivity extends Activity {
      * card. An idea from Home Deck (MIT).
      */
     private void openEditInputs() {
-        beginMenu(settingsAt, "Edit inputs  ·  name or hide");
-        for (Port p : ports()) addRow(p.row(), inputHidden(p.id) ? "Hidden" : null, () -> openEditInput(p.id, p.row()), false);
-        addRow(inputName(LIVE_TV, "Live TV"), inputHidden(LIVE_TV) ? "Hidden" : null, () -> openEditInput(LIVE_TV, inputName(LIVE_TV, "Live TV")), false);
+        beginMenu(settingsAt, getString(R.string.edit_inputs_title));
+        for (Port p : ports()) addRow(p.row(), inputHidden(p.id) ? getString(R.string.state_hidden) : null, () -> openEditInput(p.id, p.row()), false);
+        addRow(inputName(LIVE_TV, getString(R.string.live_tv_name)), inputHidden(LIVE_TV) ? getString(R.string.state_hidden) : null,
+                () -> openEditInput(LIVE_TV, inputName(LIVE_TV, getString(R.string.live_tv_name))), false);
         showMenu(360);
     }
 
     private void openEditInput(String id, String title) {
         beginMenu(settingsAt, title);
         String own = inputNames().optString(id, null);
-        addRow("Name", own != null ? own : "Its own", () -> askText("Name for " + title,
-                "What Inputs and its tile on Home call it, like \"Living room box\". Remove goes back to its own name.",
-                own, false, own != null, text -> {
+        addRow(getString(R.string.row_name), own != null ? own : getString(R.string.its_own_name),
+                () -> askText(getString(R.string.name_for_title, title), getString(R.string.name_for_detail),
+                        own, false, own != null, text -> {
                     setInputName(id, text);
-                    Toast.makeText(this, text.isEmpty() ? "Back to its own name" : "Named " + text, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(text.isEmpty() ? R.string.name_reset_toast : R.string.name_set_toast, text),
+                            Toast.LENGTH_SHORT).show();
                     reloadApps();
                     back();
                 }), true);
         final View[] shown = new View[1];
-        shown[0] = addRow("In Inputs", inputHidden(id) ? "Hidden" : "Shown", () -> {
+        shown[0] = addRow(getString(R.string.row_in_inputs), state(!inputHidden(id), R.string.state_shown, R.string.state_hidden), () -> {
             boolean hide = !inputHidden(id);
             setInputHidden(id, hide);
-            setStatus(shown[0], hide ? "Hidden" : "Shown");
+            setStatus(shown[0], state(!hide, R.string.state_shown, R.string.state_hidden));
             reloadApps();
         }, true);
         showMenu(360);
@@ -3188,14 +3223,14 @@ public class HomeActivity extends Activity {
      * set-top box on it is one press away; OK again takes it off. An idea from Aerial (aerial-tv, MIT).
      */
     private void openHomeInputs() {
-        beginMenu(settingsAt, "Inputs on Home  ·  OK puts one in the dock");
+        beginMenu(settingsAt, getString(R.string.inputs_on_home_title));
         Set<String> on = homeInputs();
         for (Port port : shownPorts()) {
             final View[] row = new View[1];
-            row[0] = addRow(port.row(), on.contains(port.id) ? "On Home" : null, () -> {
+            row[0] = addRow(port.row(), on.contains(port.id) ? getString(R.string.on_home) : null, () -> {
                 int at = menuIdx;
                 setHomeInput(port.id, !homeInputs().contains(port.id));
-                setStatus(row[0], homeInputs().contains(port.id) ? "On Home" : null);
+                setStatus(row[0], homeInputs().contains(port.id) ? getString(R.string.on_home) : null);
                 focusMenu(at);
             }, true);
         }
@@ -3251,11 +3286,11 @@ public class HomeActivity extends Activity {
         if (tim == null || device == null) return null;
         String raw = label(device).trim();
         if (raw.isEmpty() || raw.contains("HW") || raw.contains("/")) return null;
-        String name = identify(device).name;
+        String name = identify(device).label(this);
         int state;
         try { state = tim.getInputState(device.getId()); } catch (Exception e) { return name; }
-        if (state == TvInputManager.INPUT_STATE_CONNECTED) return name + "  ·  On";
-        if (state == TvInputManager.INPUT_STATE_CONNECTED_STANDBY) return name + "  ·  Standby";
+        if (state == TvInputManager.INPUT_STATE_CONNECTED) return name + "  ·  " + getString(R.string.state_on);
+        if (state == TvInputManager.INPUT_STATE_CONNECTED_STANDBY) return name + "  ·  " + getString(R.string.state_standby);
         return name;
     }
 
@@ -3264,15 +3299,15 @@ public class HomeActivity extends Activity {
     /** The next hours, or the next days; OK on any row switches. */
     private void openWeather(boolean days) {
         List<String[]> rows = weather.forecast(days);
-        beginMenu(P_CONTROL, rows.isEmpty() ? "Weather  ·  the forecast arrives with the next update"
-                : (days ? "Next days" : "Next hours") + "  ·  OK shows the " + (days ? "hours" : "days"));
+        beginMenu(P_CONTROL, rows.isEmpty() ? getString(R.string.weather_no_forecast_note)
+                : (days ? getString(R.string.weather_days_title) : getString(R.string.weather_hours_title)));
         for (String[] r : rows) addRow(r[0], r[1], () -> openWeather(!days), false);
         showMenu(340);
     }
 
     /** The song (or show), its artwork and app, then Play or Pause, Next, Previous and Open. Follows the player live. */
     private void openNowPlaying(MediaController s) {
-        beginMenu(P_CONTROL, "Now playing  ·  " + appLabel(s.getPackageName()));
+        beginMenu(P_CONTROL, getString(R.string.now_playing_title, appLabel(s.getPackageName())));
         LinearLayout head = new LinearLayout(this);
         head.setGravity(Gravity.CENTER_VERTICAL);
         head.setPadding(px(14), px(4), px(14), px(10));
@@ -3292,9 +3327,9 @@ public class HomeActivity extends Activity {
 
         MediaController.TransportControls go = s.getTransportControls();
         View play = addRow("", null, () -> { if (NowPlaying.playing(s)) go.pause(); else go.play(); }, true);
-        if (NowPlaying.can(s, PlaybackState.ACTION_SKIP_TO_NEXT)) addRow("Next", null, go::skipToNext, true);
-        if (NowPlaying.can(s, PlaybackState.ACTION_SKIP_TO_PREVIOUS)) addRow("Previous", null, go::skipToPrevious, true);
-        addRow("Open " + appLabel(s.getPackageName()), null, () -> {
+        if (NowPlaying.can(s, PlaybackState.ACTION_SKIP_TO_NEXT)) addRow(getString(R.string.np_next), null, go::skipToNext, true);
+        if (NowPlaying.can(s, PlaybackState.ACTION_SKIP_TO_PREVIOUS)) addRow(getString(R.string.np_previous), null, go::skipToPrevious, true);
+        addRow(getString(R.string.np_open_app, appLabel(s.getPackageName())), null, () -> {
             android.app.PendingIntent player = s.getSessionActivity();
             try {
                 if (player != null) { player.send(); return; }
@@ -3309,7 +3344,7 @@ public class HomeActivity extends Activity {
             artist.setText(a);
             artist.setVisibility(a.isEmpty() ? View.GONE : View.VISIBLE);
             art.setImageBitmap(NowPlaying.art(s));
-            ((TextView) play.findViewById(R.id.input_label)).setText(NowPlaying.playing(s) ? "Pause" : "Play");
+            ((TextView) play.findViewById(R.id.input_label)).setText(getString(NowPlaying.playing(s) ? R.string.np_pause : R.string.np_play));
         };
         fill.run();
         MediaController.Callback follow = new MediaController.Callback() {
@@ -3331,7 +3366,7 @@ public class HomeActivity extends Activity {
         t.setTextColor(color);
         t.setSingleLine(true);
         t.setEllipsize(android.text.TextUtils.TruncateAt.END);
-        t.setTypeface(Fonts.outfit(this, weight));
+        t.setTypeface(Fonts.figtree(this, weight));
         return t;
     }
 
@@ -3350,7 +3385,8 @@ public class HomeActivity extends Activity {
     /** "Automatic (India)", or the country you chose. */
     private String countryLabel() {
         String chosen = Region.chosen(this);
-        return chosen == null ? "Automatic (" + Region.fullName(Region.here(this)) + ")" : Region.fullName(chosen);
+        return chosen == null ? getString(R.string.country_automatic, Region.fullName(Region.here(this)))
+                : Region.fullName(chosen);
     }
 
     /**
@@ -3360,20 +3396,20 @@ public class HomeActivity extends Activity {
      */
     private void openCountry() {
         countryDepth = menuParents.size();  // Talkies settings is pushed just after: choosing a country goes back there
-        beginMenu(settingsAt, "Country for picks and scores");
+        beginMenu(settingsAt, getString(R.string.country_menu_title));
         String chosen = Region.chosen(this);
-        addRow("Automatic", Region.fullName(Region.here(this)) + (chosen == null ? "  ·  On" : ""), () -> setCountry(null), true);
-        for (String cc : COUNTRIES) addRow(Region.fullName(cc), cc.equals(chosen) ? "On" : null, () -> setCountry(cc), true);
-        addRow("More countries", "A to Z", this::openAllCountries, false);
+        addRow(getString(R.string.country_automatic_row), Region.fullName(Region.here(this)) + (chosen == null ? getString(R.string.state_on_suffix) : ""), () -> setCountry(null), true);
+        for (String cc : COUNTRIES) addRow(Region.fullName(cc), cc.equals(chosen) ? getString(R.string.state_on) : null, () -> setCountry(cc), true);
+        addRow(getString(R.string.more_countries), getString(R.string.order_az), this::openAllCountries, false);
         showMenu(360);
     }
 
     private void openAllCountries() {
-        beginMenu(settingsAt, "Country for picks and scores");
+        beginMenu(settingsAt, getString(R.string.country_menu_title));
         String chosen = Region.chosen(this);
         List<String> all = new ArrayList<>(Arrays.asList(Locale.getISOCountries()));
         all.sort((a, b) -> Region.fullName(a).compareToIgnoreCase(Region.fullName(b)));
-        for (String cc : all) addRow(Region.fullName(cc), cc.equals(chosen) ? "On" : null, () -> setCountry(cc), true);
+        for (String cc : all) addRow(Region.fullName(cc), cc.equals(chosen) ? getString(R.string.state_on) : null, () -> setCountry(cc), true);
         showMenu(360);
     }
 
@@ -3381,8 +3417,8 @@ public class HomeActivity extends Activity {
     private void setCountry(String cc) {
         Region.choose(this, cc);
         applySports();
-        tabs[2].setText("New in " + Region.name(Region.country(this)));
-        Toast.makeText(this, "Country: " + countryLabel(), Toast.LENGTH_SHORT).show();
+        tabs[2].setText(getString(R.string.new_in_country, Region.name(Region.country(this))));
+        Toast.makeText(this, getString(R.string.country_toast, countryLabel()), Toast.LENGTH_SHORT).show();
         onPicks(null);
         reloadScores();
         // Back to Talkies settings, on the Country row, as Back would from the first list.
@@ -3392,8 +3428,8 @@ public class HomeActivity extends Activity {
 
     /** "Cricket, Football", "All", "Off". */
     private String sportsLabel() {
-        if (sportsOn.isEmpty()) return "Off";
-        if (sportsOn.size() == SPORTS.length) return "All";
+        if (sportsOn.isEmpty()) return getString(R.string.state_off);
+        if (sportsOn.size() == SPORTS.length) return getString(R.string.state_all);
         List<String> names = new ArrayList<>();
         for (String[] sp : SPORTS) if (sportsOn.contains(sp[0])) names.add(sportName(sp));
         return String.join(", ", names);
@@ -3404,15 +3440,15 @@ public class HomeActivity extends Activity {
      * new set and fetches what's newly on; Football leagues appears in settings only while football is on.
      */
     private void openSports() {
-        beginMenu(settingsAt, "Sports");
+        beginMenu(settingsAt, getString(R.string.row_sports));
         for (String[] sp : SPORTS) {
             final View[] row = new View[1];
-            row[0] = addRow(sportName(sp), sportsOn.contains(sp[0]) ? "On" : null, () -> {
+            row[0] = addRow(sportName(sp), sportsOn.contains(sp[0]) ? getString(R.string.state_on) : null, () -> {
                 Set<String> next = new java.util.LinkedHashSet<>();
                 for (String[] x : SPORTS) if (sportsOn.contains(x[0]) != x[0].equals(sp[0])) next.add(x[0]);
                 prefs.edit().putString("sports", String.join(",", next)).apply();
                 applySports();
-                setStatus(row[0], sportsOn.contains(sp[0]) ? "On" : null);
+                setStatus(row[0], sportsOn.contains(sp[0]) ? getString(R.string.state_on) : null);
             }, true);
         }
         menuClosed = () -> {
@@ -3444,19 +3480,19 @@ public class HomeActivity extends Activity {
 
     /** One row per league, On when it's shown; OK turns it on or off. Leaving the menu fetches the new set. */
     private void openFootballLeagues(int focus) {
-        beginMenu(settingsAt, football.customLeagues() ? soccer + " leagues"
-                : soccer + " leagues  ·  defaults for " + Region.name(Region.country(this)));
+        beginMenu(settingsAt, football.customLeagues() ? getString(R.string.row_football_leagues, soccer)
+                : getString(R.string.football_leagues_defaults, soccer) + Region.name(Region.country(this)));
         List<String> on = football.footballLeagues();
         for (String[] l : Football.LEAGUES) {
             final View[] row = new View[1];
-            row[0] = addRow(l[1], on.contains(l[0]) ? "On" : null, () -> {
+            row[0] = addRow(l[1], on.contains(l[0]) ? getString(R.string.state_on) : null, () -> {
                 football.toggle(l[0]);
-                setStatus(row[0], football.footballLeagues().contains(l[0]) ? "On" : null);
+                setStatus(row[0], football.footballLeagues().contains(l[0]) ? getString(R.string.state_on) : null);
                 View heading = menu.getChildAt(0);
-                if (heading instanceof TextView && !menuItems.contains(heading)) ((TextView) heading).setText(soccer + " leagues");
+                if (heading instanceof TextView && !menuItems.contains(heading)) ((TextView) heading).setText(getString(R.string.row_football_leagues, soccer));
             }, true);
         }
-        if (football.customLeagues()) addRow("Back to the defaults", null, () -> {
+        if (football.customLeagues()) addRow(getString(R.string.back_to_defaults), null, () -> {
             football.useDefaults();
             openFootballLeagues(0);
         }, true);
@@ -3479,21 +3515,23 @@ public class HomeActivity extends Activity {
      * They go in the same files the set-*.sh scripts push over adb (see Keys).
      */
     private void openKeysAndLocation(int focus) {
-        beginMenu(settingsAt, "Keys and location");
+        beginMenu(settingsAt, getString(R.string.row_keys_location));
         String tmdb = Keys.read(this, Keys.TMDB), area = Keys.read(this, Keys.LOCATION);
-        String paste = "\n\nTip: Send from your phone (above) is easier, or the Google TV app's keyboard on your phone can paste it.";
-        addRow("Send from your phone", "QR code", this::openPhonePage, true);
-        addRow("TMDB key", tmdb == null ? "Not set" : Keys.masked(tmdb), () -> askText("TMDB key",
-                "For the Trending and New picks. Free at themoviedb.org → Settings → API: the API Key or the API Read "
-                        + "Access Token." + paste, null, true, tmdb != null, text -> saveKey(Keys.TMDB, "TMDB", text, 1)), true);
+        String paste = getString(R.string.keys_paste_tip);
+        addRow(getString(R.string.phone_page_title), getString(R.string.qr_code), this::openPhonePage, true);
+        addRow(getString(R.string.tmdb_key_row), tmdb == null ? getString(R.string.state_not_set) : Keys.masked(tmdb),
+                () -> askText(getString(R.string.tmdb_key_row), getString(R.string.tmdb_key_help) + paste, null, true,
+                        tmdb != null, text -> saveKey(Keys.TMDB, "TMDB", text, 1)), true);
         // Coordinates pinpoint a home, so the row (and any screenshot of it) just says so; place names show as typed.
         String near = weather.autoCity();   // no location set: roughly where the internet address says
-        String where = area == null ? (near == null ? "Not set" : near.isEmpty() ? "Approximate" : "Near " + near) : area.matches("[-+0-9.,\\s]+") ? "Coordinates"
+        String where = area == null ? (near == null ? getString(R.string.state_not_set)
+                : near.isEmpty() ? getString(R.string.where_approximate) : getString(R.string.where_near, near))
+                : area.matches("[-+0-9.,\\s]+") ? getString(R.string.where_coordinates)
                 : area.length() > 22 ? area.substring(0, 21) + "…" : area;
-        addRow("Weather location", where,
-                () -> askText("Weather location", "A town or area, like \"Camden, London\", or latitude,longitude, like "
-                        + "\"51.54,-0.14\"."
-                        + (near != null ? " For now the weather goes by your internet address, which can be off by a city. Remove turns that off." : ""),
+        addRow(getString(R.string.weather_location_row), where,
+                () -> askText(getString(R.string.weather_location_row),
+                        getString(R.string.weather_location_help)
+                                + (near != null ? getString(R.string.weather_location_auto_note) : ""),
                         area, false, area != null || near != null, this::saveLocation), true);
         showMenu(420);
         focusMenu(focus);
@@ -3515,9 +3553,9 @@ public class HomeActivity extends Activity {
         box.addView(field);
         android.app.AlertDialog.Builder b = new android.app.AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
                 .setTitle(title).setMessage(help).setView(box)
-                .setPositiveButton("Save", (d, w) -> onSave.accept(field.getText().toString().trim()))
-                .setNegativeButton("Cancel", null);
-        if (canRemove) b.setNeutralButton("Remove", (d, w) -> onSave.accept(""));
+                .setPositiveButton(getString(R.string.dialog_save), (d, w) -> onSave.accept(field.getText().toString().trim()))
+                .setNegativeButton(getString(R.string.dialog_cancel), null);
+        if (canRemove) b.setNeutralButton(getString(R.string.dialog_remove), (d, w) -> onSave.accept(""));
         android.app.AlertDialog dialog = b.create();
         if (dialog.getWindow() != null) {
             dialog.getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
@@ -3530,26 +3568,25 @@ public class HomeActivity extends Activity {
     private void saveKey(String file, String service, String text, int row) {
         if (text.isEmpty()) {
             Keys.write(this, file, null);
-            Toast.makeText(this, service + " key removed", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.key_removed_toast, service), Toast.LENGTH_SHORT).show();
             if (zone == Z_MENU) openKeysAndLocation(row);
             return;
         }
         String key = text.replaceAll("\\s", "");
-        Toast.makeText(this, "Checking the key with " + service + "…", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, getString(R.string.key_checking_toast, service), Toast.LENGTH_SHORT).show();
         new Thread(() -> {
             int result = Trending.check(key);
             runOnUiThread(() -> {
                 if (result == Keys.REJECTED) {
-                    Toast.makeText(this, service + " didn't accept that key, so it wasn't saved", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, getString(R.string.key_rejected_toast, service), Toast.LENGTH_LONG).show();
                     return;
                 }
                 if (!Keys.write(this, file, key)) {
-                    Toast.makeText(this, "Couldn't save the key", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.key_save_failed_toast), Toast.LENGTH_SHORT).show();
                     return;
                 }
-                Toast.makeText(this, result == Keys.OK
-                        ? "The key works. Picks arrive in a minute"
-                        : "Couldn't reach " + service + " to check it. Saved; Talkies will try it later", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, result == Keys.OK ? getString(R.string.key_ok_toast)
+                        : getString(R.string.key_unverified_toast, service), Toast.LENGTH_LONG).show();
                 if (zone == Z_MENU) openKeysAndLocation(row);
                 refreshOnline();
             });
@@ -3558,7 +3595,7 @@ public class HomeActivity extends Activity {
 
     private void saveLocation(String text) {
         if (!Keys.write(this, Keys.LOCATION, text)) {
-            Toast.makeText(this, "Couldn't save the location", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.loc_save_failed_toast), Toast.LENGTH_SHORT).show();
             return;
         }
         weather.stopAuto();   // your choice from now on: a place, or no weather
@@ -3566,7 +3603,7 @@ public class HomeActivity extends Activity {
             weatherLine = null;
             updateInfo();
         }
-        Toast.makeText(this, text.isEmpty() ? "Weather location removed" : "Saved. The weather appears in a moment",
+        Toast.makeText(this, getString(text.isEmpty() ? R.string.loc_removed_toast : R.string.loc_saved_toast),
                 Toast.LENGTH_SHORT).show();
         if (zone == Z_MENU) openKeysAndLocation(2);
         refreshOnline();
@@ -3579,7 +3616,7 @@ public class HomeActivity extends Activity {
     private void openPhonePage() {
         java.net.InetAddress lan = PhonePage.lanAddress(this);
         if (lan == null) {
-            Toast.makeText(this, "The TV isn't on a home Wi-Fi or Ethernet network, so the phone can't reach it", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, getString(R.string.phone_no_network_toast), Toast.LENGTH_LONG).show();
             return;
         }
         TextView status = new TextView(this);
@@ -3588,14 +3625,14 @@ public class HomeActivity extends Activity {
         try {
             page = new PhonePage(lan, new PhonePage.Listener() {
                 @Override public void checking() {
-                    runOnUiThread(() -> status.setText("Checking with TMDB…"));
+                    runOnUiThread(() -> status.setText(getString(R.string.phone_checking_note)));
                 }
 
                 @Override public List<String> accept(Map<String, String> fields) {
                     List<String> lines = new ArrayList<>();
                     if (fields.containsKey("tmdb")) lines.add(acceptKey(Keys.TMDB, "TMDB", fields.get("tmdb")));
                     if (fields.containsKey("location")) lines.add(Keys.write(HomeActivity.this, Keys.LOCATION, fields.get("location"))
-                            ? "Weather location saved." : "Couldn't save the weather location.");
+                            ? getString(R.string.phone_loc_saved) : getString(R.string.phone_loc_failed));
                     runOnUiThread(() -> {
                         if (dialog[0] != null) dialog[0].dismiss();
                         Toast.makeText(HomeActivity.this, String.join("\n", lines), Toast.LENGTH_LONG).show();
@@ -3606,11 +3643,11 @@ public class HomeActivity extends Activity {
                 }
 
                 @Override public void closed(boolean expired) {
-                    if (expired) runOnUiThread(() -> status.setText("This code has expired. Close it and open Send from your phone again."));
+                    if (expired) runOnUiThread(() -> status.setText(getString(R.string.phone_expired_note, getString(R.string.phone_page_title))));
                 }
             });
         } catch (java.io.IOException e) {
-            Toast.makeText(this, "Couldn't open the page for your phone", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.page_open_failed_toast), Toast.LENGTH_SHORT).show();
             return;
         }
         ImageView code = qrCode(page.url);
@@ -3624,15 +3661,14 @@ public class HomeActivity extends Activity {
         where.setTextSize(12);
         where.setPadding(0, px(8), 0, 0);
         box.addView(where);
-        status.setText("Waiting for your phone… The page works once, for 5 minutes.");
+        status.setText(getString(R.string.phone_waiting_note));
         status.setPadding(0, px(6), 0, 0);
         box.addView(status);
         dialog[0] = new android.app.AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                .setTitle("Send from your phone")
-                .setMessage("Scan this with your phone's camera (on the same Wi-Fi as the TV), then paste your TMDB key "
-                        + "and weather area there.")
+                .setTitle(getString(R.string.phone_page_title))
+                .setMessage(getString(R.string.phone_page_note))
                 .setView(box)
-                .setNegativeButton("Close", null)
+                .setNegativeButton(getString(R.string.dialog_close), null)
                 .setOnDismissListener(d -> page.close())
                 .create();
         dialog[0].show();
@@ -3666,11 +3702,10 @@ public class HomeActivity extends Activity {
         where.setPadding(0, px(8), 0, 0);
         box.addView(where);
         new android.app.AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                .setTitle("Support Talkies")
-                .setMessage("Talkies is free, with no ads or tracking, and built in my spare time. If you enjoy it, "
-                        + "scan this with your phone to buy me a popcorn. Thank you!")
+                .setTitle(getString(R.string.about_support))
+                .setMessage(getString(R.string.support_note))
                 .setView(box)
-                .setNegativeButton("Close", null)
+                .setNegativeButton(getString(R.string.dialog_close), null)
                 .show();
     }
 
@@ -3689,9 +3724,11 @@ public class HomeActivity extends Activity {
         am.getMemoryInfo(mi);
         String device = (Build.MODEL.toLowerCase(Locale.ROOT).startsWith(Build.MANUFACTURER.toLowerCase(Locale.ROOT)) ? ""
                 : Build.MANUFACTURER + " ") + Build.MODEL;
-        String details = (ports().isEmpty() ? "Box" : "TV") + String.format(Locale.ROOT, ", %.1f GB RAM", mi.totalMem / 1073741824.0)
-                + ", Accessibility " + (SleepService.isRunning() ? "On" : "Off")
-                + ", Remote keys " + (SleepService.watchButtons(this) ? "On" : "Off") + (lite ? ", Lite effects" : "");
+        String details = getString(ports().isEmpty() ? R.string.report_box : R.string.report_tv)
+                + String.format(Locale.ROOT, ", %.1f GB RAM", mi.totalMem / 1073741824.0)
+                + ", " + getString(R.string.report_accessibility) + " " + onOff(SleepService.isRunning())
+                + ", " + getString(R.string.report_remote_keys) + " " + onOff(SleepService.watchButtons(this))
+                + (lite ? ", " + getString(R.string.report_lite) : "");
         // The same, in characters a link carries as they are, so it fits in the QR code: TV_1.9GB_access-on_keys-off.
         String compact = (ports().isEmpty() ? "Box" : "TV") + String.format(Locale.ROOT, "_%.1fGB", mi.totalMem / 1073741824.0)
                 + "_access-" + (SleepService.isRunning() ? "on" : "off") + "_keys-" + (SleepService.watchButtons(this) ? "on" : "off")
@@ -3713,11 +3750,10 @@ public class HomeActivity extends Activity {
         what.setPadding(0, px(8), 0, 0);
         box.addView(what);
         new android.app.AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                .setTitle("Report a problem")
-                .setMessage("Scan this with your phone: it opens a bug report on GitHub with these details filled in. "
-                        + "Say what happened, and add a photo of the screen if you can.")
+                .setTitle(getString(R.string.about_report_problem))
+                .setMessage(getString(R.string.report_note))
                 .setView(box)
-                .setNegativeButton("Close", null)
+                .setNegativeButton(getString(R.string.dialog_close), null)
                 .show();
     }
 
@@ -3725,10 +3761,10 @@ public class HomeActivity extends Activity {
     private String acceptKey(String file, String service, String text) {
         String key = text.replaceAll("\\s", "");
         int result = Trending.check(key);
-        if (result == Keys.REJECTED) return service + " didn't accept that key, so it wasn't saved.";
-        if (!Keys.write(this, file, key)) return "Couldn't save the " + service + " key.";
-        return result == Keys.OK ? service + " key saved, and it works." : service + " key saved. The TV couldn't reach "
-                + service + " to check it, so it'll try later.";
+        if (result == Keys.REJECTED) return getString(R.string.accept_key_rejected, service);
+        if (!Keys.write(this, file, key)) return getString(R.string.accept_key_save_failed, service);
+        return result == Keys.OK ? getString(R.string.accept_key_ok, service)
+                : getString(R.string.accept_key_unverified, service);
     }
 
     // ---------------------------------------------------------------- remote keys
@@ -3736,14 +3772,14 @@ public class HomeActivity extends Activity {
     /** One row per button with a job ("Prog Red → Open JioHotstar"), then Add a key. */
     private String remoteKeysLabel() {
         int n = RemoteKeys.all(this).size();
-        return !SleepService.watchButtons(this) ? "Off" : n == 0 ? "On" : "On · " + n + " set";
+        return !SleepService.watchButtons(this) ? getString(R.string.state_off)
+                : n == 0 ? getString(R.string.state_on) : getString(R.string.remote_keys_set, n);
     }
 
     private void openRemoteKeys() {
         boolean on = SleepService.watchButtons(this);
-        beginMenu(settingsAt, on ? "Remote keys  ·  On: Home goes straight to Talkies. Some TVs then change volume one step per press"
-                : "Remote keys  ·  Off: holding Volume works on every TV. Home shows Google TV for a moment first");
-        addRow("Remote keys", on ? "On" : "Off", () -> {
+        beginMenu(settingsAt, getString(on ? R.string.remote_keys_menu_on : R.string.remote_keys_menu_off));
+        addRow(getString(R.string.row_remote_keys), onOff(on), () -> {
             prefs.edit().putBoolean("remote_keys_on", !on).apply();
             SleepService.applyButtonWatching();
             openRemoteKeys();
@@ -3751,10 +3787,10 @@ public class HomeActivity extends Activity {
         for (Map.Entry<Integer, String> e : RemoteKeys.all(this).entrySet()) {
             int code = e.getKey();
             String hold = RemoteKeys.holdAction(this, code);
-            addRow(RemoteKeys.keyName(code), RemoteKeys.describe(this, e.getValue())
+            addRow(RemoteKeys.keyName(this, code), RemoteKeys.describe(this, e.getValue())
                     + (hold == null ? "" : "  ·  hold: " + RemoteKeys.describe(this, hold)), () -> openKeyActions(code), false);
         }
-        addRow("Add a key", null, this::learnKey, false);
+        addRow(getString(R.string.add_key_row), null, this::learnKey, false);
         showMenu(540);  // wide enough for a key's name beside "Open … · hold: Open …"
     }
 
@@ -3764,11 +3800,10 @@ public class HomeActivity extends Activity {
         if (!SleepService.watchButtons(this)) {
             prefs.edit().putBoolean("remote_keys_on", true).apply();
             SleepService.applyButtonWatching();
-            Toast.makeText(this, "Remote keys are on. On some TVs, holding Volume then changes it one step per press",
-                    Toast.LENGTH_LONG).show();
+            Toast.makeText(this, getString(R.string.remote_on_toast), Toast.LENGTH_LONG).show();
         }
-        beginMenu(settingsAt, "Press the button on your remote");
-        addRow("Waiting for a button…", "Back cancels", () -> { }, true);
+        beginMenu(settingsAt, getString(R.string.learn_title));
+        addRow(getString(R.string.learn_waiting), getString(R.string.learn_back_cancels), () -> { }, true);
         menuClosed = () -> { SleepService.learn(null); focusTop(settingsAt); };
         showMenu(360);
         SleepService.learn(code -> {
@@ -3779,13 +3814,15 @@ public class HomeActivity extends Activity {
     /** What the button does: an app, Inputs, Talkies, nothing, or its normal job. */
     private void openKeyActions(int code) {
         menuClosed = null;
-        beginMenu(settingsAt, RemoteKeys.keyName(code) + "  ·  now: " + RemoteKeys.describe(this, RemoteKeys.action(this, code)));
+        beginMenu(settingsAt, getString(R.string.key_now_title, RemoteKeys.keyName(this, code),
+                RemoteKeys.describe(this, RemoteKeys.action(this, code))));
         addKeyJobs(code, false);
-        addRow("Do nothing", null, () -> setKey(code, RemoteKeys.NONE), false);
+        addRow(getString(R.string.do_nothing), null, () -> setKey(code, RemoteKeys.NONE), false);
         if (RemoteKeys.action(this, code) != null) {
             String hold = RemoteKeys.holdAction(this, code);
-            addRow("When held", hold == null ? "same as a press" : RemoteKeys.describe(this, hold), () -> openHoldActions(code), false);
-            addRow("Back to normal", null, () -> setKey(code, null), false);
+            addRow(getString(R.string.when_held), hold == null ? getString(R.string.same_as_press) : RemoteKeys.describe(this, hold),
+                    () -> openHoldActions(code), false);
+            addRow(getString(R.string.back_to_normal), null, () -> setKey(code, null), false);
         }
         showMenu(420);
     }
@@ -3793,25 +3830,29 @@ public class HomeActivity extends Activity {
     /** A second job for holding the button (only for buttons with a press job: see RemoteKeys). */
     private void openHoldActions(int code) {
         String hold = RemoteKeys.holdAction(this, code);
-        beginMenu(settingsAt, "Hold " + RemoteKeys.keyName(code) + "  ·  now: " + (hold == null ? "same as a press" : RemoteKeys.describe(this, hold)));
+        beginMenu(settingsAt, getString(R.string.hold_now_title, RemoteKeys.keyName(this, code),
+                hold == null ? getString(R.string.same_as_press) : RemoteKeys.describe(this, hold)));
         addKeyJobs(code, true);
-        if (hold != null) addRow("Same as a press", null, () -> setHold(code, null), false);
+        if (hold != null) addRow(getString(R.string.same_as_press), null, () -> setHold(code, null), false);
         showMenu(420);
     }
 
     private void addKeyJobs(int code, boolean hold) {
-        addRow("Open an app", null, () -> openKeyApps(code, hold), false);
-        if (!shownPorts().isEmpty()) addRow("Go to an input", null, () -> openKeyInputs(code, hold), false);
-        String[][] jobs = {{"Previous app", RemoteKeys.PREVIOUS}, {"Resume watching", RemoteKeys.RESUME}, {"Inputs", RemoteKeys.INPUTS},
-                {"Recent apps", RemoteKeys.RECENTS}, {"Control Center", RemoteKeys.CONTROL}, {"Talkies settings", RemoteKeys.TALKIES_SETTINGS},
-                {"TV settings", RemoteKeys.SETTINGS}, {"Wi-Fi", RemoteKeys.WIFI}, {"Sound output", RemoteKeys.SOUND},
-                {"Bluetooth", RemoteKeys.BLUETOOTH}, {"Play / pause", RemoteKeys.PLAY_PAUSE}, {"Mute", RemoteKeys.MUTE},
-                {"Screensaver", RemoteKeys.SCREENSAVER}, {"Turn off", RemoteKeys.TURN_OFF}, {"Talkies", RemoteKeys.HOME}};
+        addRow(getString(R.string.open_an_app), null, () -> openKeyApps(code, hold), false);
+        if (!shownPorts().isEmpty()) addRow(getString(R.string.go_to_an_input), null, () -> openKeyInputs(code, hold), false);
+        String[][] jobs = {{getString(R.string.job_previous_app), RemoteKeys.PREVIOUS},
+                {getString(R.string.job_resume), RemoteKeys.RESUME}, {getString(R.string.job_inputs), RemoteKeys.INPUTS},
+                {getString(R.string.job_recent_apps), RemoteKeys.RECENTS}, {getString(R.string.job_control_center), RemoteKeys.CONTROL},
+                {getString(R.string.job_talkies_settings), RemoteKeys.TALKIES_SETTINGS}, {getString(R.string.job_tv_settings), RemoteKeys.SETTINGS},
+                {getString(R.string.job_wifi), RemoteKeys.WIFI}, {getString(R.string.job_sound_output), RemoteKeys.SOUND},
+                {getString(R.string.job_bluetooth), RemoteKeys.BLUETOOTH}, {getString(R.string.job_play_pause), RemoteKeys.PLAY_PAUSE},
+                {getString(R.string.job_mute), RemoteKeys.MUTE}, {getString(R.string.job_screensaver), RemoteKeys.SCREENSAVER},
+                {getString(R.string.job_turn_off), RemoteKeys.TURN_OFF}, {getString(R.string.job_talkies), RemoteKeys.HOME}};
         for (String[] j : jobs) addRow(j[0], null, () -> { if (hold) setHold(code, j[1]); else setKey(code, j[1]); }, false);
     }
 
     private void openKeyInputs(int code, boolean hold) {
-        beginMenu(settingsAt, "Go to which input?");
+        beginMenu(settingsAt, getString(R.string.pick_input_title));
         for (Port p : shownPorts()) addRow(p.row(), null, () -> {
             String action = RemoteKeys.INPUT + p.id;
             RemoteKeys.nameInput(this, action, p.tile());
@@ -3821,7 +3862,7 @@ public class HomeActivity extends Activity {
     }
 
     private void openKeyApps(int code, boolean hold) {
-        beginMenu(settingsAt, "Open which app?");
+        beginMenu(settingsAt, getString(R.string.pick_app_title));
         for (AppEntry a : apps) if (a.input == null) addRow(a.label, null, () -> {
             if (hold) setHold(code, RemoteKeys.APP + a.pkg); else setKey(code, RemoteKeys.APP + a.pkg);
         }, false);
@@ -3831,14 +3872,15 @@ public class HomeActivity extends Activity {
     private void setKey(int code, String action) {
         RemoteKeys.set(this, code, action);
         SleepService.applyButtonWatching();  // the first key, or the last one gone, can change whether it's on
-        Toast.makeText(this, RemoteKeys.keyName(code) + ": " + RemoteKeys.describe(this, action), Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, getString(R.string.key_set_toast, RemoteKeys.keyName(this, code), RemoteKeys.describe(this, action)),
+                Toast.LENGTH_SHORT).show();
         openRemoteKeys();
     }
 
     private void setHold(int code, String action) {
         RemoteKeys.setHold(this, code, action);
-        Toast.makeText(this, "Hold " + RemoteKeys.keyName(code) + ": " + (action == null ? "same as a press"
-                : RemoteKeys.describe(this, action)), Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, getString(R.string.hold_set_toast, RemoteKeys.keyName(this, code),
+                action == null ? getString(R.string.same_as_press) : RemoteKeys.describe(this, action)), Toast.LENGTH_SHORT).show();
         openRemoteKeys();
     }
 
@@ -3847,14 +3889,14 @@ public class HomeActivity extends Activity {
     /** "Off", "Sony WH-1000XM4" (connected), "2 paired" or "None paired", for Control Center's Bluetooth row. */
     private void bluetoothStatus(java.util.function.Consumer<String> done) {
         if (!Bluetooth.allowed(this)) { done.accept(null); return; }
-        if (!Bluetooth.on(this)) { done.accept("Off"); return; }
+        if (!Bluetooth.on(this)) { done.accept(getString(R.string.state_off)); return; }
         List<android.bluetooth.BluetoothDevice> paired = Bluetooth.speakers(this);
-        if (paired.isEmpty()) { done.accept("None paired"); return; }
+        if (paired.isEmpty()) { done.accept(getString(R.string.bt_none_paired)); return; }
         Bluetooth.audio(this, a2dp -> {
             for (android.bluetooth.BluetoothDevice d : paired) {
                 if (Bluetooth.state(a2dp, d) == android.bluetooth.BluetoothProfile.STATE_CONNECTED) { done.accept(Bluetooth.name(d)); return; }
             }
-            done.accept(paired.size() + " paired");
+            done.accept(getResources().getQuantityString(R.plurals.bt_paired_count, paired.size(), paired.size()));
         });
     }
 
@@ -3865,7 +3907,7 @@ public class HomeActivity extends Activity {
             return;
         }
         if (Bluetooth.adapter(this) == null) {
-            Toast.makeText(this, "This TV has no Bluetooth", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.bt_no_bluetooth_toast), Toast.LENGTH_SHORT).show();
             return;
         }
         if (!Bluetooth.on(this)) {
@@ -3875,8 +3917,7 @@ public class HomeActivity extends Activity {
         }
         Bluetooth.audio(this, a2dp -> {
             List<android.bluetooth.BluetoothDevice> speakers = Bluetooth.speakers(this);
-            beginMenu(P_CONTROL, speakers.isEmpty() ? "Bluetooth  ·  no speakers or headphones paired"
-                    : "Bluetooth  ·  OK connects or disconnects");
+            beginMenu(P_CONTROL, getString(speakers.isEmpty() ? R.string.bt_menu_empty : R.string.bt_menu_title));
             for (android.bluetooth.BluetoothDevice d : speakers) {
                 final View[] row = new View[1];
                 row[0] = addRow(Bluetooth.name(d), btLabel(Bluetooth.state(a2dp, d)), () -> {
@@ -3886,11 +3927,11 @@ public class HomeActivity extends Activity {
                         start(new Intent(Settings.ACTION_BLUETOOTH_SETTINGS));
                         return;
                     }
-                    setStatus(row[0], connect ? "Connecting…" : "Disconnecting…");
+                    setStatus(row[0], getString(connect ? R.string.bt_connecting : R.string.bt_disconnecting));
                     watchBluetooth(row[0], a2dp, d, 0);
                 }, true);
             }
-            addRow("Pair a new device", null, () -> start(new Intent(Settings.ACTION_BLUETOOTH_SETTINGS)), false);
+            addRow(getString(R.string.bt_pair_new), null, () -> start(new Intent(Settings.ACTION_BLUETOOTH_SETTINGS)), false);
             showMenu(400);
         });
     }
@@ -3913,12 +3954,12 @@ public class HomeActivity extends Activity {
         }, 1000);
     }
 
-    private static String btLabel(int state) {
+    private String btLabel(int state) {
         switch (state) {
-            case android.bluetooth.BluetoothProfile.STATE_CONNECTED: return "Connected";
-            case android.bluetooth.BluetoothProfile.STATE_CONNECTING: return "Connecting…";
-            case android.bluetooth.BluetoothProfile.STATE_DISCONNECTING: return "Disconnecting…";
-            default: return "Not connected";
+            case android.bluetooth.BluetoothProfile.STATE_CONNECTED: return getString(R.string.bt_connected);
+            case android.bluetooth.BluetoothProfile.STATE_CONNECTING: return getString(R.string.bt_connecting);
+            case android.bluetooth.BluetoothProfile.STATE_DISCONNECTING: return getString(R.string.bt_disconnecting);
+            default: return getString(R.string.bt_not_connected);
         }
     }
 
@@ -3985,12 +4026,10 @@ public class HomeActivity extends Activity {
         cmd.setTextIsSelectable(true);
         cmd.setPadding(px(24), px(8), px(24), 0);
         new android.app.AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                .setTitle("Notification access")
-                .setMessage("This TV's settings have no Notification access screen, so it can't be switched on here. "
-                        + "It's optional: only Continue watching, Now playing and the update bell need it. From a computer "
-                        + "connected with adb, this one command switches it on:")
+                .setTitle(getString(R.string.notif_access_title))
+                .setMessage(getString(R.string.notif_access_note))
                 .setView(cmd)
-                .setNegativeButton("Close", null)
+                .setNegativeButton(getString(R.string.dialog_close), null)
                 .show();
     }
 
@@ -4012,15 +4051,14 @@ public class HomeActivity extends Activity {
 
     /** The screen with the switch that keeps the Home button on Talkies. */
     private void openHomeButtonSwitch() {
-        Toast.makeText(this, "Switch on Talkies here: it keeps the Home button on Talkies", Toast.LENGTH_LONG).show();
+        Toast.makeText(this, getString(R.string.home_switch_toast), Toast.LENGTH_LONG).show();
         Intent i = new Intent().setClassName("com.android.tv.settings", "com.android.tv.settings.oemlink.AccessibilitySettingsActivity");
         if (pm.resolveActivity(i, 0) == null) i = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
         start(i);
     }
 
     private void openRestrictedSettings() {
-        Toast.makeText(this, "Look for Allow restricted settings here. Not there? The README's Questions and fixes "
-                + "has the one command that allows it", Toast.LENGTH_LONG).show();
+        Toast.makeText(this, getString(R.string.restricted_settings_toast), Toast.LENGTH_LONG).show();
         start(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + getPackageName())));
     }
 
@@ -4044,42 +4082,42 @@ public class HomeActivity extends Activity {
         if (!inFront || zone == Z_MENU || moving || !welcomeDue()) return;
         prefs.edit().putBoolean("welcome_seen", true).apply();
         beginMenu(P_SETTINGS, null);
-        menuTitle("Welcome to Talkies");
+        menuTitle(getString(R.string.welcome_title));
         TextView t = new TextView(this);
-        t.setText("One step left, so the Home button stays here.");
+        t.setText(getString(R.string.welcome_note));
         t.setTextSize(16);
         t.setTextColor(theme.text);
-        t.setTypeface(getResources().getFont(R.font.outfit));
+        t.setTypeface(getResources().getFont(R.font.figtree));
         t.setPadding(px(14), px(5), px(14), px(5));
         menu.addView(t);
         menu.addView(new View(this), new LinearLayout.LayoutParams(1, px(12)));
-        addRow("Set up Home button", null, this::openHomeButtonSwitch, false);
-        if (Build.VERSION.SDK_INT >= 33) addRow("Switch greyed out?", "App info", this::openRestrictedSettings, false);
-        addRow("Later", null, () -> { }, false);
+        addRow(getString(R.string.row_home_button), null, this::openHomeButtonSwitch, false);
+        if (Build.VERSION.SDK_INT >= 33) addRow(getString(R.string.row_switch_greyed), getString(R.string.row_app_info), this::openRestrictedSettings, false);
+        addRow(getString(R.string.row_later), null, () -> { }, false);
         showCentredCard();
     }
 
     /** Talkies settings → Finish setup: one row per step still to do; OK opens the place it's done. */
     private void openFinishSetup() {
-        beginMenu(settingsAt, "Finish setup");
-        if (!SleepService.isRunning()) addRow("Home button", "Accessibility → Talkies", this::openHomeButtonSwitch, false);
+        beginMenu(settingsAt, getString(R.string.row_finish_setup));
+        if (!SleepService.isRunning()) addRow(getString(R.string.row_home_button), getString(R.string.row_accessibility_talkies), this::openHomeButtonSwitch, false);
         // Android 13 and later grey out these switches for an app installed from an APK, until allowed in App info
         // (or with one adb command where the TV's App info doesn't offer it: README → Questions and fixes).
         if (Build.VERSION.SDK_INT >= 33 && (!SleepService.isRunning() || !notificationAccess()))
-            addRow("Switch greyed out?", "App info → Allow restricted settings", this::openRestrictedSettings, false);
-        if (!notificationAccess() && notificationScreen()) addRow("Notification access", "Continue, Now playing, the bell", () -> {
-            Toast.makeText(this, "Switch on Talkies here", Toast.LENGTH_LONG).show();
+            addRow(getString(R.string.row_switch_greyed), getString(R.string.row_app_info_restricted), this::openRestrictedSettings, false);
+        if (!notificationAccess() && notificationScreen()) addRow(getString(R.string.row_notification_access), getString(R.string.notification_bell_note), () -> {
+            Toast.makeText(this, getString(R.string.notif_switch_on_toast), Toast.LENGTH_LONG).show();
             start(new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS));
         }, false);
-        else if (!notificationAccess() && ServiceRepair.canRepair(this)) addRow("Notification access", "OK switches it on", () ->
-            Toast.makeText(this, allowNotifications() ? "Notification access is on: Continue fills in a moment"
-                    : "Couldn't switch it on", Toast.LENGTH_LONG).show(), false);
-        else if (!notificationAccess()) addRow("Notification access", "Optional · no switch on this TV", this::showNotificationCommand, true);
-        if (permissionsMissing()) addRow("Wi-Fi name and Watch Next", "OK asks", () -> {
+        else if (!notificationAccess() && ServiceRepair.canRepair(this)) addRow(getString(R.string.row_notification_access), getString(R.string.state_ok_switches), () ->
+            Toast.makeText(this, getString(allowNotifications() ? R.string.notif_on_continue : R.string.notif_couldnt_switch),
+                    Toast.LENGTH_LONG).show(), false);
+        else if (!notificationAccess()) addRow(getString(R.string.row_notification_access), getString(R.string.state_optional_no_switch), this::showNotificationCommand, true);
+        if (permissionsMissing()) addRow(getString(R.string.row_wifi_watch_next), getString(R.string.state_ok_asks), () -> {
             closeMenu();
             requestPermissions(SETUP_PERMISSIONS, REQ_SETUP);
         }, false);
-        if (menuItems.isEmpty()) addRow("All done", null, () -> { }, true);
+        if (menuItems.isEmpty()) addRow(getString(R.string.row_all_done), null, () -> { }, true);
         showMenu(420);
     }
 
@@ -4113,43 +4151,44 @@ public class HomeActivity extends Activity {
     private void setDebugDot(boolean devOn, boolean reachable) {
         if (!devOn && !reachable) {
             icons[P_SETTINGS].setForeground(null);
-            icons[P_SETTINGS].setContentDescription("Settings");
+            icons[P_SETTINGS].setContentDescription(getString(R.string.settings_desc));
             return;
         }
         android.graphics.drawable.Drawable d = getDrawable(R.drawable.dot).mutate();   // the menu rows' dot, tinted
         d.setTint(reachable ? 0xFFFF453A : 0x99FFFFFF);
         icons[P_SETTINGS].setForeground(d);
         icons[P_SETTINGS].setForegroundGravity(android.view.Gravity.TOP | android.view.Gravity.END);
-        icons[P_SETTINGS].setContentDescription("Settings · developer options " + (devOn ? "on" : "off")
-                + ", network debugging " + (reachable ? "on" : "off"));
+        icons[P_SETTINGS].setContentDescription(getString(R.string.settings_desc_debug,
+                getString(devOn ? R.string.state_on : R.string.state_off),
+                getString(reachable ? R.string.state_on : R.string.state_off)));
     }
 
     private void openNetworkDebugging() {
-        beginMenu(settingsAt, "Network debugging lets a computer on your network control this TV");
+        beginMenu(settingsAt, getString(R.string.network_debugging_title));
         boolean adbOn = DebugState.adbOn(this);
         // Both switches, each with what it is doing. OK goes to Android's screen either way; with the adb-granted
         // permission the first one also switches developer options on before opening it, which is the part a person
         // pressing this row usually wants. Wireless debugging is left to the screen: pairing needs its code.
-        addRow("Developer options", DebugState.devOptions(this) ? "On" : "Off", () -> {
+        addRow(getString(R.string.row_developer_options), state(DebugState.devOptions(this), R.string.state_on, R.string.state_off), () -> {
             if (DebugState.switchOnDevOptions(this)) {
                 refreshDebugDot();   // Home's dot follows the switch, not only the menu
-                Toast.makeText(this, "Developer options are on. The debugging switches are inside them.", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, getString(R.string.dev_options_on_toast), Toast.LENGTH_LONG).show();
             }
             start(new Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS));
         }, false);
         final View[] wd = new View[1];
-        wd[0] = addRow("Wireless debugging", "Checking…", () -> {
-            Toast.makeText(this, adbOn ? "Switch Wireless debugging (or Network debugging) on here"
-                    : "Switch developer options on, then the debugging switch, here", Toast.LENGTH_LONG).show();
+        wd[0] = addRow(getString(R.string.row_wireless_debugging), getString(R.string.state_checking), () -> {
+            Toast.makeText(this, getString(adbOn ? R.string.wireless_adb_on_toast : R.string.wireless_dev_off_toast),
+                    Toast.LENGTH_LONG).show();
             start(new Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS));
         }, false);
         checkNetworkDebugging(st -> { if (wd[0].isAttachedToWindow()) setStatus(wd[0], st); });
         if (adbOn && ServiceRepair.canRepair(this)) {
-            addRow("Turn off", "computers lose access", () -> {
+            addRow(getString(R.string.row_turn_off), getString(R.string.turn_off_detail), () -> {
                 boolean off = DebugState.switchOffAdb(this);
                 refreshDebugDot();
-                Toast.makeText(this, off ? "Network debugging is off. Turn it on again in Developer options."
-                        : "Android kept it on: turn it off in Developer options", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, getString(off ? R.string.debug_turned_off_toast : R.string.debug_kept_on_toast),
+                        Toast.LENGTH_LONG).show();
             }, false);
         }
         showMenu(460);
@@ -4182,7 +4221,7 @@ public class HomeActivity extends Activity {
     /** The first Continue card, as if you'd pressed OK on it. */
     private void resumeWatching() {
         recentPicks = continuePicks(RecentStore.load(this), watchNextPicks);
-        if (recentPicks.isEmpty()) Toast.makeText(this, "Nothing to continue yet", Toast.LENGTH_SHORT).show();
+        if (recentPicks.isEmpty()) Toast.makeText(this, getString(R.string.continue_none_toast), Toast.LENGTH_SHORT).show();
         else openPick(recentPicks.get(0));
     }
 
@@ -4243,7 +4282,7 @@ public class HomeActivity extends Activity {
         saveOrder();
         buildAppViews();
         if (focus) root.post(() -> focusDock(dockCount - 1));
-        Toast.makeText(this, app.label + " is in the dock; " + last.label + " moved to All apps", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, getString(R.string.dock_add_toast, app.label, last.label), Toast.LENGTH_SHORT).show();
     }
 
     /** Out of the dock to the front of All apps; the first app in All apps takes its spot. */
@@ -4258,7 +4297,7 @@ public class HomeActivity extends Activity {
         saveOrder();
         buildAppViews();
         if (focus) root.post(() -> focusDock(ai));
-        Toast.makeText(this, app.label + " moved to All apps; " + next.label + " is in the dock", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, getString(R.string.dock_remove_toast, app.label, next.label), Toast.LENGTH_SHORT).show();
     }
 
     /**
@@ -4317,12 +4356,12 @@ public class HomeActivity extends Activity {
         saveOrder();
         setHidden(pkg, true);
         reloadApps();
-        Toast.makeText(this, app.label + " hidden. Talkies settings → Hidden apps brings it back", Toast.LENGTH_LONG).show();
+        Toast.makeText(this, getString(R.string.app_hidden_toast, app.label), Toast.LENGTH_LONG).show();
     }
 
     /** Talkies settings → Hidden apps: OK on one shows it again (at the end of All apps). */
     private void openHiddenApps() {
-        beginMenu(settingsAt, "Hidden apps  ·  OK shows it again");
+        beginMenu(settingsAt, getString(R.string.hidden_apps_title));
         List<String> pkgs = new ArrayList<>(hiddenApps());
         List<String[]> rows = new ArrayList<>();
         for (String p : pkgs) {
@@ -4335,14 +4374,14 @@ public class HomeActivity extends Activity {
         rows.sort((x, y) -> x[1].compareToIgnoreCase(y[1]));
         for (String[] r : rows) {
             final View[] row = new View[1];
-            row[0] = addRow(r[1], "Hidden", () -> {
+            row[0] = addRow(r[1], getString(R.string.state_hidden), () -> {
                 boolean nowHidden = !hiddenApps().contains(r[0]);
                 setHidden(r[0], nowHidden);
-                setStatus(row[0], nowHidden ? "Hidden" : "Shown");
+                setStatus(row[0], state(nowHidden, R.string.state_hidden, R.string.state_shown));
                 reloadApps();
             }, true);
         }
-        if (rows.isEmpty()) addRow("No hidden apps", null, () -> { }, true);
+        if (rows.isEmpty()) addRow(getString(R.string.no_hidden_apps), null, () -> { }, true);
         showMenu(360);
     }
 
@@ -4385,16 +4424,16 @@ public class HomeActivity extends Activity {
         menuTile = chanCards.get(r).get(c);
         menuClosed = () -> focusChan(r, c);
         if (m.id.equals(ScoreCard.pinnedId(this))) {
-            addRow("Unpin from TV", null, () -> ScoreCard.unpin(this), false);
+            addRow(getString(R.string.unpin_from_tv_row), null, () -> ScoreCard.unpin(this), false);
         } else if (!m.ended) {
-            addRow("Pin over TV", null, () -> {
+            addRow(getString(R.string.pin_over_tv_row), null, () -> {
                 boolean on = ScoreCard.pin(this, m);
-                Toast.makeText(this, on ? "It shows over your apps while you watch. Control Center unpins it"
-                        : "This needs Talkies' Accessibility switch: Talkies settings → Finish setup", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, on ? getString(R.string.pin_on_toast)
+                        : getString(R.string.pin_needs_access_toast, getString(R.string.row_finish_setup)), Toast.LENGTH_LONG).show();
             }, false);
         }
         final View[] corner = new View[1];
-        corner[0] = addRow("Corner", ScoreCard.cornerName(this), () -> {
+        corner[0] = addRow(getString(R.string.corner_row), ScoreCard.cornerName(this), () -> {
             ScoreCard.nextCorner(this);
             setStatus(corner[0], ScoreCard.cornerName(this));
         }, true);
@@ -4410,10 +4449,10 @@ public class HomeActivity extends Activity {
         beginMenu(P_CONTROL, p.title);
         menuTile = z == Z_PICKS ? picksRow.anchorCard() : chanCards.get(r).get(c);
         menuClosed = () -> { if (z == Z_PICKS) focusPicks(anchor); else focusChan(r, c); };
-        addRow("Refresh Continue", null, this::refreshContinue, false);
-        addRow("Remove from Continue", null, () -> removeFromContinue(p), false);
+        addRow(getString(R.string.refresh_continue_row), null, this::refreshContinue, false);
+        addRow(getString(R.string.remove_continue_row), null, () -> removeFromContinue(p), false);
         Intent app = p.pkg == null ? null : pm.getLeanbackLaunchIntentForPackage(p.pkg);
-        if (app != null) addRow("Open " + Channels.label(pm, p.pkg), null, () -> start(app), false);
+        if (app != null) addRow(getString(R.string.open_app_row, Channels.label(pm, p.pkg)), null, () -> start(app), false);
         showMenu(320);
     }
 
@@ -4432,14 +4471,14 @@ public class HomeActivity extends Activity {
                 } else if (tabIdx == 0) {
                     buildPicksRow(0);
                 }
-                Toast.makeText(this, "Continue refreshed", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.continue_refreshed_toast), Toast.LENGTH_SHORT).show();
             });
         });
     }
 
     private String continueAppsLabel() {
         int off = prefs.getStringSet("continue_apps_off", java.util.Collections.emptySet()).size();
-        return off == 0 ? "All" : off + " hidden";
+        return off == 0 ? getString(R.string.state_all) : getString(R.string.continue_hidden_count, off);
     }
 
     /**
@@ -4448,23 +4487,23 @@ public class HomeActivity extends Activity {
      * tab and the Watch Next row. Asked for by AndyVRD (Discussion #22).
      */
     private void openContinueApps() {
-        beginMenu(settingsAt, "Continue apps");
+        beginMenu(settingsAt, getString(R.string.row_continue_apps));
         Set<String> pkgs = new HashSet<>(prefs.getStringSet("continue_apps_off", java.util.Collections.emptySet()));
         for (Trending.Pick p : RecentStore.load(this)) if (p.pkg != null) pkgs.add(p.pkg);
         for (Trending.Pick p : watchNextPicks) if (p.pkg != null) pkgs.add(p.pkg);
         List<String[]> rows = new ArrayList<>();
         for (String p : pkgs) rows.add(new String[]{p, Channels.label(pm, p)});
         rows.sort((x, y) -> x[1].compareToIgnoreCase(y[1]));
-        if (rows.isEmpty()) addRow("Nothing to continue yet", null, () -> { }, true);
+        if (rows.isEmpty()) addRow(getString(R.string.continue_nothing), null, () -> { }, true);
         for (String[] r : rows) {
             final View[] row = new View[1];
             boolean off = prefs.getStringSet("continue_apps_off", java.util.Collections.emptySet()).contains(r[0]);
-            row[0] = addRow(r[1], off ? "Hidden" : "Shown", () -> {
+            row[0] = addRow(r[1], state(off, R.string.state_hidden, R.string.state_shown), () -> {
                 Set<String> now = new HashSet<>(prefs.getStringSet("continue_apps_off", java.util.Collections.emptySet()));
                 boolean hide = now.add(r[0]);
                 if (!hide) now.remove(r[0]);
                 prefs.edit().putStringSet("continue_apps_off", now).apply();
-                setStatus(row[0], hide ? "Hidden" : "Shown");
+                setStatus(row[0], state(hide, R.string.state_hidden, R.string.state_shown));
             }, true);
         }
         menuClosed = () -> {
@@ -4503,19 +4542,19 @@ public class HomeActivity extends Activity {
 
     // ---------------------------------------------------------------- network
 
-    private String lastSpeed = "Test now";
+    private String lastSpeed = null;
     private boolean speedTesting;
 
     /** "TPG 5G", "Ethernet", or "Offline". The Wi-Fi name needs the location permission (granted by the install script). */
     private String networkName() {
         ConnectivityManager cm = getSystemService(ConnectivityManager.class);
         NetworkCapabilities caps = cm == null ? null : cm.getNetworkCapabilities(cm.getActiveNetwork());
-        if (caps == null) return "Offline";
-        if (caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)) return "Ethernet";
-        if (!caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) return "Connected";
+        if (caps == null) return getString(R.string.net_offline);
+        if (caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)) return getString(R.string.net_ethernet);
+        if (!caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) return getString(R.string.net_connected);
         android.net.wifi.WifiManager wm = getApplicationContext().getSystemService(android.net.wifi.WifiManager.class);
         String ssid = wm == null || wm.getConnectionInfo() == null ? null : wm.getConnectionInfo().getSSID();
-        if (ssid == null || ssid.equals("<unknown ssid>")) return "Wi-Fi";
+        if (ssid == null || ssid.equals("<unknown ssid>")) return getString(R.string.net_wifi);
         return ssid.replaceAll("^\"|\"$", "");
     }
 
@@ -4523,15 +4562,15 @@ public class HomeActivity extends Activity {
     private void runSpeedTest(View row) {
         if (speedTesting) return;
         speedTesting = true;
-        setStatus(row, "Testing…");
+        setStatus(row, getString(R.string.speed_testing));
         new Thread(() -> {
             String result;
             try {
                 double mbps = SpeedTest.downloadMbps();
-                result = (mbps >= 100 ? String.valueOf(Math.round(mbps)) : String.format(Locale.US, "%.1f", mbps)) + " Mbps";
+                result = getString(R.string.speed_mbps, mbps >= 100 ? String.valueOf(Math.round(mbps)) : String.format(Locale.US, "%.1f", mbps));
             } catch (Exception e) {
                 Log.w(TAG, "Speed test failed: " + e);
-                result = "Couldn't test";
+                result = getString(R.string.speed_failed);
             }
             final String r = result;
             runOnUiThread(() -> {
@@ -4563,7 +4602,7 @@ public class HomeActivity extends Activity {
         // answer "build it again": personal builds don't see it.
         if (!SelfUpdate.takesReleases(this)) return;
         final View[] up = new View[1];
-        up[0] = addRow("Updates", SelfUpdate.summary(this), () -> SelfUpdate.checkAndInstall(this, st -> runOnUiThread(() -> {
+        up[0] = addRow(getString(R.string.row_updates), SelfUpdate.summary(this), () -> SelfUpdate.checkAndInstall(this, st -> runOnUiThread(() -> {
             if (up[0].isAttachedToWindow()) setStatus(up[0], st);
         })), true);
     }
@@ -4604,7 +4643,7 @@ public class HomeActivity extends Activity {
         h.setTextSize(11);
         h.setLetterSpacing(0.12f);
         h.setTextColor(theme.text2);
-        h.setTypeface(Fonts.outfit(this, 600));
+        h.setTypeface(Fonts.figtree(this, 600));
         h.setPadding(px(14), px(12), px(14), px(4));
         menu.addView(h);
     }
@@ -4614,7 +4653,7 @@ public class HomeActivity extends Activity {
         t.setText(text);
         t.setTextSize(21);
         t.setTextColor(theme.text);
-        t.setTypeface(Fonts.outfit(this, 600));
+        t.setTypeface(Fonts.figtree(this, 600));
         t.setPadding(px(14), px(10), px(14), px(8));
         menu.addView(t);
         return t;
@@ -4626,7 +4665,7 @@ public class HomeActivity extends Activity {
      */
     private void openWhatsNew() {
         beginMenu(settingsAt, null);
-        menuTitle("What's new in " + versionName());
+        menuTitle(getString(R.string.whats_new_in, versionName()));
         addUpdatesRow();
         List<WhatsNew.Section> all = WhatsNew.read(this);
         for (WhatsNew.Section sec : all) {
@@ -4655,20 +4694,20 @@ public class HomeActivity extends Activity {
         WhatsNew.markSeen(this, prefs);
         if (items.isEmpty()) return;
         beginMenu(P_SETTINGS, null);
-        menuTitle("New in Talkies " + versionName());
+        menuTitle(getString(R.string.whats_new_in, "Talkies " + versionName()));
         for (String it : items) {
             TextView t = new TextView(this);
             t.setText(WhatsNew.styled("•  " + it));
             t.setTextSize(16);
             t.setTextColor(theme.text);
-            t.setTypeface(getResources().getFont(R.font.outfit));
+            t.setTypeface(getResources().getFont(R.font.figtree));
             t.setPadding(px(14), px(5), px(14), px(5));
             menu.addView(t);
         }
         View gap = new View(this);
         menu.addView(gap, new LinearLayout.LayoutParams(1, px(12)));
-        addRow("Done", null, () -> { }, false);
-        addRow("See all changes", null, () -> {
+        addRow(getString(R.string.done_row), null, () -> { }, false);
+        addRow(getString(R.string.see_all_changes_row), null, () -> {
             openWhatsNew();
             menuClosed = () -> focusDock(dockIdx);
         }, false);
@@ -4694,11 +4733,11 @@ public class HomeActivity extends Activity {
         List<Updates.Item> list = Updates.list();
         String mine = talkiesUpdate();
         if (list.isEmpty() && mine == null) return;
-        beginMenu(P_BELL, "App updates");
+        beginMenu(P_BELL, getString(R.string.app_updates_title));
         if (mine != null) {
             // Talkies first: OK downloads and installs it here, the same as Talkies settings → Updates.
             final View[] row = new View[1];
-            row[0] = addRow("Talkies " + mine, "OK installs", () -> SelfUpdate.checkAndInstall(this, st -> runOnUiThread(() -> {
+            row[0] = addRow(getString(R.string.updates_talkies, mine), getString(R.string.state_ok_installs), () -> SelfUpdate.checkAndInstall(this, st -> runOnUiThread(() -> {
                 if (row[0].isAttachedToWindow()) setStatus(row[0], st);
             })), true);
         }
@@ -4725,49 +4764,49 @@ public class HomeActivity extends Activity {
     private static final int REQ_BLUETOOTH = 7;
 
     private void openControlCenter() {
-        beginMenu(P_CONTROL, "Control Center");
-        if (serviceStopped) addRow("Fix Home and Turn off", "switch Talkies off and on", () -> {
-            Toast.makeText(this, "Talkies → off, then on again", Toast.LENGTH_LONG).show();
+        beginMenu(P_CONTROL, getString(R.string.cc_title));
+        if (serviceStopped) addRow(getString(R.string.cc_fix_home), getString(R.string.cc_fix_detail), () -> {
+            Toast.makeText(this, getString(R.string.cc_fix_toast), Toast.LENGTH_LONG).show();
             start(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
         }, false);
-        addRow("Talkies settings", null, () -> openTalkiesSettings(P_CONTROL), false);
-        if (ScoreCard.pinnedId(this) != null) addRow("Unpin score", ScoreCard.pinnedName(this), () -> ScoreCard.unpin(this), false);
+        addRow(getString(R.string.talkies_settings), null, () -> openTalkiesSettings(P_CONTROL), false);
+        if (ScoreCard.pinnedId(this) != null) addRow(getString(R.string.cc_unpin_score), ScoreCard.pinnedName(this), () -> ScoreCard.unpin(this), false);
         MediaController playing = NowPlaying.current(this);
-        if (playing != null) addRow("Now playing", NowPlaying.title(playing), () -> openNowPlaying(playing), false);
-        if (weatherLine != null) addRow("Weather", weatherLine, () -> openWeather(false), false);
+        if (playing != null) addRow(getString(R.string.cc_now_playing), NowPlaying.title(playing), () -> openNowPlaying(playing), false);
+        if (weatherLine != null) addRow(getString(R.string.about_weather), weather.shown(weatherLine), () -> openWeather(false), false);
         if (Sleep.SUPPORTED) {
             final View[] timer = new View[1];
-            timer[0] = addRow("Sleep timer", sleepStatus(), () -> {
+            timer[0] = addRow(getString(R.string.cc_sleep_timer), sleepStatus(), () -> {
                 if (!Sleep.available()) { needsTurnOffSetup(); return; }
                 Sleep.cycle(this);
                 setStatus(timer[0], sleepStatus());
             }, true);
-            addRow("Turn off now", null, () -> { if (!Sleep.now()) needsTurnOffSetup(); }, false);
+            addRow(getString(R.string.cc_turn_off_now), null, () -> { if (!Sleep.now()) needsTurnOffSetup(); }, false);
         }
-        addRow("Recent apps", null, this::openRecents, false);
-        addRow("Storage", storageLine(), () -> { if (!openShortcut("storage")) start(new Intent(Settings.ACTION_INTERNAL_STORAGE_SETTINGS)); }, false);
+        addRow(getString(R.string.cc_recent_apps), null, this::openRecents, false);
+        addRow(getString(R.string.cc_storage), storageLine(), () -> { if (!openShortcut("storage")) start(new Intent(Settings.ACTION_INTERNAL_STORAGE_SETTINGS)); }, false);
         final View[] anim = new View[1];
-        anim[0] = addRow("Animations", animationLabel(), () -> {
+        anim[0] = addRow(getString(R.string.cc_animations), animationLabel(), () -> {
             if (!cycleAnimations()) {
-                Toast.makeText(this, "Needs the WRITE_SECURE_SETTINGS grant (see the README)", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, getString(R.string.cc_anim_needs_grant), Toast.LENGTH_LONG).show();
                 return;
             }
             setStatus(anim[0], animationLabel());
         }, true);
-        addRow("Network", networkName(), () -> { if (!openShortcut("network")) start(new Intent(Settings.ACTION_WIFI_SETTINGS)); }, false);
+        addRow(getString(R.string.cc_network), networkName(), () -> { if (!openShortcut("network")) start(new Intent(Settings.ACTION_WIFI_SETTINGS)); }, false);
         final View[] speed = new View[1];
-        speed[0] = addRow("Speed test", lastSpeed, () -> runSpeedTest(speed[0]), true);
+        speed[0] = addRow(getString(R.string.about_speed_test), lastSpeed, () -> runSpeedTest(speed[0]), true);
         final View[] bt = new View[1];
-        bt[0] = addRow("Bluetooth", null, () -> { if (!openShortcut("bluetooth")) openBluetooth(); }, false);
+        bt[0] = addRow(getString(R.string.cc_bluetooth), null, () -> { if (!openShortcut("bluetooth")) openBluetooth(); }, false);
         bluetoothStatus(st -> { if (bt[0].isAttachedToWindow()) setStatus(bt[0], st); });
         // Android tells apps a soundbar is connected (HDMI ARC/eARC), not whether it's playing: say only what's known.
-        addRow("Sound output", soundbarConnected() ? "Soundbar connected" : "TV speakers", () -> {
+        addRow(getString(R.string.cc_sound_output), soundbarConnected() ? getString(R.string.cc_soundbar) : getString(R.string.cc_tv_speakers), () -> {
             if (!openShortcut("sound")) start(RemoteKeys.soundSettings(this));
         }, false);
         Intent dream = screensaverIntent();
-        if (dream != null) addRow("Screensaver", null, () -> start(dream), false);
+        if (dream != null) addRow(getString(R.string.row_screensaver), null, () -> start(dream), false);
         // The TV's own power menu, so it still asks before restarting.
-        addRow("Restart…", null, () -> { if (!SleepService.powerMenu()) needsTurnOffSetup(); }, false);
+        addRow(getString(R.string.cc_restart), null, () -> { if (!SleepService.powerMenu()) needsTurnOffSetup(); }, false);
         showMenu(350);
     }
 
@@ -4777,17 +4816,20 @@ public class HomeActivity extends Activity {
      */
     private void openTalkiesSettings(int anchor) {
         settingsAt = anchor;
-        beginMenu(anchor, "Talkies settings");
+        beginMenu(anchor, getString(R.string.talkies_settings));
         // What a new TV still needs (only while something does), then the rows in groups: how Home looks, what
         // it shows, the apps and inputs, the remote and power, and Talkies itself.
         int missing = setupMissing();
-        if (missing > 0) addRow("Finish setup", missing + (missing == 1 ? " step left" : " steps left"), this::openFinishSetup, false);
-        addMenuHeading("Look");
+        if (missing > 0) addRow(getString(R.string.row_finish_setup),
+                getResources().getQuantityString(R.plurals.setup_steps_left, missing, missing),
+                this::openFinishSetup, false);
+        addMenuHeading(getString(R.string.heading_look));
         final View[] look = new View[1];
-        look[0] = addRow("Appearance", APPEARANCE[prefs.getInt("appearance", 0)], () -> {
+        look[0] = addRow(getString(R.string.row_appearance),
+                choice(R.array.appearance_labels, prefs.getInt("appearance", 0)), () -> {
             int mode = (prefs.getInt("appearance", 0) + 1) % APPEARANCE.length;
             prefs.edit().putInt("appearance", mode).apply();
-            setStatus(look[0], APPEARANCE[mode]);
+            setStatus(look[0], choice(R.array.appearance_labels, mode));
             day = isDayNow();
             applyTheme();
             // Restyle the open menu too.
@@ -4800,9 +4842,9 @@ public class HomeActivity extends Activity {
             }
             focusMenu(menuIdx);
         }, true);
-        addRow("Wallpaper", wallpaperLabel(), this::openWallpaperMenu, false);
+        addRow(getString(R.string.row_wallpaper), wallpaperLabel(), this::openWallpaperMenu, false);
         final View[] bg = new View[1];
-        bg[0] = addRow("Background", backgroundLabel(), () -> {
+        bg[0] = addRow(getString(R.string.row_background), backgroundLabel(), () -> {
             boolean on = !prefs.getBoolean("blurred_art", false);
             prefs.edit().putBoolean("blurred_art", on).apply();
             setStatus(bg[0], backgroundLabel());
@@ -4810,44 +4852,44 @@ public class HomeActivity extends Activity {
             if (!on && !hasWallpaper) backdrop.setGlow(0);   // the art goes now; the next focus brings its app's colour
         }, true);
         final View[] ss = new View[1];
-        ss[0] = addRow("Screensaver", screensaverLabel(), () -> {
+        ss[0] = addRow(getString(R.string.row_screensaver), screensaverLabel(), () -> {
             String[] order = {"clock", "board", "wallpaper", "picks"};
             String next = order[(Arrays.asList(order).indexOf(prefs.getString("screensaver", "clock")) + 1) % order.length];
             prefs.edit().putString("screensaver", next).apply();
             setStatus(ss[0], screensaverLabel());
             if (next.equals("picks") && lowMemory()) {
-                Toast.makeText(this, "Picks can make the screensaver slow on a TV with this little memory. Clock or Wallpaper is lighter",
-                        Toast.LENGTH_LONG).show();
+                Toast.makeText(this, getString(R.string.screensaver_picks_heavy), Toast.LENGTH_LONG).show();
             } else if (!screensaverChosen()) {
-                Toast.makeText(this, "To use it, select TV's screensaver, just below", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, getString(R.string.screensaver_pick_on_tv), Toast.LENGTH_LONG).show();
             }
         }, true);
         final View[] sc = new View[1];
-        sc[0] = addRow("TV's screensaver", screensaverChosen() ? "Talkies" : "Not Talkies", () -> {
+        sc[0] = addRow(getString(R.string.row_tv_screensaver), screensaverChosen()
+                ? getString(R.string.state_talkies) : getString(R.string.state_not_talkies), () -> {
             if (!setScreensaver(!screensaverChosen())) {
                 openScreensaverHelp();
                 return;
             }
-            setStatus(sc[0], screensaverChosen() ? "Talkies" : "Not Talkies");
+            setStatus(sc[0], screensaverChosen() ? getString(R.string.state_talkies) : getString(R.string.state_not_talkies));
             setStatus(ss[0], screensaverLabel());
         }, true);
-        addRow("Screensaver message", messageLabel(), this::openPhoneMessage, false);
+        addRow(getString(R.string.row_screensaver_message), messageLabel(), this::openPhoneMessage, false);
         final View[] qh = new View[1];
-        qh[0] = addRow("Quiet hours", quietLabel(), () -> {
+        qh[0] = addRow(getString(R.string.row_quiet_hours), quietLabel(), () -> {
             String[] order = {"23-7", "22-6", "0-7", "off"};
             String next = order[(Arrays.asList(order).indexOf(prefs.getString("quiet_hours", "23-7")) + 1) % order.length];
             prefs.edit().putString("quiet_hours", next).apply();
             setStatus(qh[0], quietLabel());
         }, true);
         final View[] fo = new View[1];
-        fo[0] = addRow("Focus", FOCUS_NAMES[focusStyle()], () -> {
+        fo[0] = addRow(getString(R.string.row_focus), choice(R.array.focus_labels, focusStyle()), () -> {
             int next = (focusStyle() + 1) % FOCUS_NAMES.length;
             prefs.edit().putString("focus_style", FOCUS_IDS[next]).apply();
             ring.setStyle(next);
-            setStatus(fo[0], FOCUS_NAMES[next]);
+            setStatus(fo[0], choice(R.array.focus_labels, next));
         }, true);
         final View[] fx = new View[1];
-        fx[0] = addRow("Effects", effectsLabel(), () -> {
+        fx[0] = addRow(getString(R.string.row_effects), effectsLabel(), () -> {
             String[] order = {"auto", "full", "lite"};
             String next = order[(Arrays.asList(order).indexOf(prefs.getString("effects", "auto")) + 1) % order.length];
             prefs.edit().putString("effects", next).apply();
@@ -4857,26 +4899,27 @@ public class HomeActivity extends Activity {
             setStatus(fx[0], effectsLabel());
         }, true);
         final View[] ms = new View[1];
-        ms[0] = addRow("RAM and storage", meters.getVisibility() == View.VISIBLE ? "Shown" : "Hidden", () -> {
-            boolean show = meters.getVisibility() != View.VISIBLE;
-            prefs.edit().putBoolean("meters", show).apply();
-            meters.setVisibility(show ? View.VISIBLE : View.GONE);
-            if (show) meters.update();
-            setStatus(ms[0], show ? "Shown" : "Hidden");
-        }, true);
+        ms[0] = addRow(getString(R.string.row_meters),
+                shownHidden(meters.getVisibility() == View.VISIBLE), () -> {
+                    boolean show = meters.getVisibility() != View.VISIBLE;
+                    prefs.edit().putBoolean("meters", show).apply();
+                    meters.setVisibility(show ? View.VISIBLE : View.GONE);
+                    if (show) meters.update();
+                    setStatus(ms[0], shownHidden(show));
+                }, true);
         final View[] anim = new View[1];
-        anim[0] = addRow("Apps open from their tile", prefs.getBoolean("open_animation", true) ? "On" : "Off", () -> {
+        anim[0] = addRow(getString(R.string.row_open_from_tile), onOff(prefs.getBoolean("open_animation", true)), () -> {
             boolean on = !prefs.getBoolean("open_animation", true);
             prefs.edit().putBoolean("open_animation", on).apply();
-            setStatus(anim[0], on ? "On" : "Off");
+            setStatus(anim[0], onOff(on));
         }, true);
-        addMenuHeading("For You and scores");
-        addRow("Country", countryLabel(), this::openCountry, false);
+        addMenuHeading(getString(R.string.heading_for_you_scores));
+        addRow(getString(R.string.row_country), countryLabel(), this::openCountry, false);
         final View[] fy = new View[1];
-        fy[0] = addRow("For You", forYou ? "Shown" : "Hidden", () -> {
+        fy[0] = addRow(getString(R.string.row_for_you), shownHidden(forYou), () -> {
             forYou = !forYou;
             prefs.edit().putBoolean("for_you", forYou).apply();
-            setStatus(fy[0], forYou ? "Shown" : "Hidden");
+            setStatus(fy[0], shownHidden(forYou));
             applyForYou();
             tabIdx = TAB_TRENDING;
             buildPicksRow(0);
@@ -4885,16 +4928,16 @@ public class HomeActivity extends Activity {
         }, true);
         if (!forYou) {
             final View[] oh = new View[1];
-            oh[0] = addRow("Apps on Home", prefs.getBoolean("apps_on_home", false) ? "Shown" : "Hidden", () -> {
+            oh[0] = addRow(getString(R.string.row_apps_on_home), shownHidden(prefs.getBoolean("apps_on_home", false)), () -> {
                 boolean on = !prefs.getBoolean("apps_on_home", false);
                 prefs.edit().putBoolean("apps_on_home", on).apply();
-                setStatus(oh[0], on ? "Shown" : "Hidden");
+                setStatus(oh[0], shownHidden(on));
                 reloadApps();
             }, true);
         }
         if (forYou && trending.inIndia()) {
             final View[] pf = new View[1];
-            pf[0] = addRow("Picks from", picksFromLabel(), () -> {
+            pf[0] = addRow(getString(R.string.row_picks_from), picksFromLabel(), () -> {
                 trending.setPicksFrom(Trending.RADAR.equals(trending.source()) ? "tmdb" : Trending.RADAR);
                 setStatus(pf[0], picksFromLabel());
                 onPicks(null);   // TMDB without a key: the old picks go now; otherwise the new ones replace them shortly
@@ -4902,90 +4945,93 @@ public class HomeActivity extends Activity {
             }, true);
         }
         // StreamRadar's lists don't say a title's language.
-        if (forYou && !Trending.RADAR.equals(trending.source())) addRow("Picks languages", languagesLabel(), this::openPicksLanguages, false);
+        if (forYou && !Trending.RADAR.equals(trending.source())) addRow(getString(R.string.row_picks_languages), languagesLabel(), this::openPicksLanguages, false);
         final View[] sp = new View[1];
-        sp[0] = addRow("Hide spoilers", WatchNext.hideSpoilers(this) ? "On" : "Off", () -> {
+        sp[0] = addRow(getString(R.string.row_hide_spoilers), onOff(WatchNext.hideSpoilers(this)), () -> {
             boolean on = !WatchNext.hideSpoilers(this);
             prefs.edit().putBoolean("hide_spoilers", on).apply();
-            setStatus(sp[0], on ? "On" : "Off");
+            setStatus(sp[0], onOff(on));
             recentPicks = new ArrayList<>();  // rebuild Continue with the other pictures
             refreshWatchNext();
         }, true);
         // Off by default: looking a video up means sending its title and channel to YouTube.
         final View[] yt = new View[1];
-        yt[0] = addRow("Sharp YouTube pictures", prefs.getBoolean("youtube_art", false) ? "On" : "Off", () -> {
+        yt[0] = addRow(getString(R.string.row_sharp_youtube), onOff(prefs.getBoolean("youtube_art", false)), () -> {
             boolean on = !prefs.getBoolean("youtube_art", false);
             prefs.edit().putBoolean("youtube_art", on).apply();
-            setStatus(yt[0], on ? "On" : "Off");
+            setStatus(yt[0], onOff(on));
             if (on) refreshOnline();
         }, true);
-        addRow("Sports", sportsLabel(), this::openSports, false);
-        if (sportsOn.contains("football")) addRow(soccer + " leagues", football.footballLeagues().size() + " on",
-                () -> openFootballLeagues(0), false);
-        addRow("Continue apps", continueAppsLabel(), this::openContinueApps, false);
-        addRow("Channels", null, this::openChannelsEditor, false);
-        addMenuHeading("Apps and inputs");
-        final View da = addRow("Dock apps", dockCount + " in the dock", this::openDockApps, false);
+        addRow(getString(R.string.row_sports), sportsLabel(), this::openSports, false);
+        if (sportsOn.contains("football")) addRow(getString(R.string.row_football_leagues, soccer),
+                getString(R.string.leagues_on, football.footballLeagues().size()), () -> openFootballLeagues(0), false);
+        addRow(getString(R.string.row_continue_apps), continueAppsLabel(), this::openContinueApps, false);
+        addRow(getString(R.string.row_channels), null, this::openChannelsEditor, false);
+        addMenuHeading(getString(R.string.heading_apps_inputs));
+        final View da = addRow(getString(R.string.row_dock_apps), getString(R.string.dock_in_the_dock, dockCount), this::openDockApps, false);
         final View[] ds = new View[1];
-        ds[0] = addRow("Dock size", dockSize() + " apps", () -> {
+        ds[0] = addRow(getString(R.string.row_dock_size), getString(R.string.dock_size_count, dockSize()), () -> {
             int n = dockSize() + 1;
             if (n > DOCK_SIZES[DOCK_SIZES.length - 1]) n = DOCK_SIZES[0];
             prefs.edit().putInt("dock_size", n).apply();
-            setStatus(ds[0], n + " apps");
+            setStatus(ds[0], getString(R.string.dock_size_count, n));
             reloadApps();
-            setStatus(da, dockCount + " in the dock");
+            setStatus(da, getString(R.string.dock_in_the_dock, dockCount));
         }, true);
         final View[] ab = new View[1];
-        ab[0] = addRow("All apps button", prefs.getBoolean("all_apps_button", true) ? "Shown" : "Hidden", () -> {
+        ab[0] = addRow(getString(R.string.row_all_apps_button), shownHidden(prefs.getBoolean("all_apps_button", true)), () -> {
             boolean on = !prefs.getBoolean("all_apps_button", true);
             prefs.edit().putBoolean("all_apps_button", on).apply();
-            setStatus(ab[0], on ? "Shown" : "Hidden");
+            setStatus(ab[0], shownHidden(on));
             reloadApps();
         }, true);
         final View[] gs = new View[1];
-        gs[0] = addRow("All apps size", gridCols + " across", () -> {
+        gs[0] = addRow(getString(R.string.row_all_apps_size), getString(R.string.grid_across, gridCols), () -> {
             int n = gridCols == 4 ? 6 : gridCols - 1;
             prefs.edit().putInt("grid_cols", n).apply();
-            setStatus(gs[0], n + " across");
+            setStatus(gs[0], getString(R.string.grid_across, n));
             reloadApps();
         }, true);
         final View[] ao = new View[1];
-        ao[0] = addRow("All apps order", APPS_ORDER[appsOrder()], () -> {
+        ao[0] = addRow(getString(R.string.row_all_apps_order), choice(R.array.apps_order_labels, appsOrder()), () -> {
             int n = (appsOrder() + 1) % APPS_ORDER.length;
             prefs.edit().putInt("apps_order", n).apply();
-            setStatus(ao[0], APPS_ORDER[n]);
+            setStatus(ao[0], choice(R.array.apps_order_labels, n));
             reloadApps();
         }, true);
         int hiddenCount = hiddenApps().size();
-        if (hiddenCount > 0) addRow("Hidden apps", String.valueOf(hiddenCount), this::openHiddenApps, false);
+        if (hiddenCount > 0) addRow(getString(R.string.row_hidden_apps), String.valueOf(hiddenCount), this::openHiddenApps, false);
         // Only on a TV that has phone apps: elsewhere the setting would change nothing.
         int phone = phoneOnlyApps();
         final View[] pa = new View[1];
-        if (phone > 0) pa[0] = addRow("Phone apps", phoneAppsLabel(phone), () -> {
+        if (phone > 0) pa[0] = addRow(getString(R.string.row_phone_apps), phoneAppsLabel(phone), () -> {
             prefs.edit().putBoolean("phone_apps", !prefs.getBoolean("phone_apps", true)).apply();
             setStatus(pa[0], phoneAppsLabel(phone));
             reloadApps();
         }, true);
         // Only on a TV: a streaming box has no inputs of its own.
-        if (!ports().isEmpty()) addRow("Inputs on Home", homeInputs().isEmpty() ? null : homeInputs().size() + " on Home",
+        if (!ports().isEmpty()) addRow(getString(R.string.row_inputs_on_home),
+                homeInputs().isEmpty() ? null : getString(R.string.home_inputs_count, homeInputs().size()),
                 this::openHomeInputs, false);
-        if (!ports().isEmpty()) addRow("Edit inputs", null, this::openEditInputs, false);
+        if (!ports().isEmpty()) addRow(getString(R.string.row_edit_inputs), null, this::openEditInputs, false);
         final View[] inc = new View[1];
-        if (!ports().isEmpty()) inc[0] = addRow("A device turns on", prefs.getBoolean("incoming", true) ? "Offer to switch" : "Nothing", () -> {
-            boolean on = !prefs.getBoolean("incoming", true);
-            prefs.edit().putBoolean("incoming", on).apply();
-            setStatus(inc[0], on ? "Offer to switch" : "Nothing");
-        }, true);
+        if (!ports().isEmpty()) inc[0] = addRow(getString(R.string.row_device_turns_on),
+                state(prefs.getBoolean("incoming", true), R.string.inputs_offer_switch, R.string.inputs_nothing), () -> {
+                    boolean on = !prefs.getBoolean("incoming", true);
+                    prefs.edit().putBoolean("incoming", on).apply();
+                    setStatus(inc[0], state(on, R.string.inputs_offer_switch, R.string.inputs_nothing));
+                }, true);
         final View[] ports = new View[1];
-        ports[0] = addRow("Empty inputs", prefs.getBoolean("inputs_connected_only", false) ? "Under More inputs" : "Shown", () -> {
-            boolean only = !prefs.getBoolean("inputs_connected_only", false);
-            prefs.edit().putBoolean("inputs_connected_only", only).apply();
-            setStatus(ports[0], only ? "Under More inputs" : "Shown");
-        }, true);
-        addMenuHeading("Remote and power");
-        addRow("Remote keys", remoteKeysLabel(),
+        ports[0] = addRow(getString(R.string.row_empty_inputs),
+                state(prefs.getBoolean("inputs_connected_only", false), R.string.inputs_under_more, R.string.state_shown), () -> {
+                    boolean only = !prefs.getBoolean("inputs_connected_only", false);
+                    prefs.edit().putBoolean("inputs_connected_only", only).apply();
+                    setStatus(ports[0], state(only, R.string.inputs_under_more, R.string.state_shown));
+                }, true);
+        addMenuHeading(getString(R.string.heading_remote_power));
+        addRow(getString(R.string.row_remote_keys), remoteKeysLabel(),
                 this::openRemoteKeys, false);
-        powerOnRow = addRow("At power-on", wakeLabel(), () -> {
+        powerOnRow = addRow(getString(R.string.row_at_power_on), wakeLabel(), () -> {
             if (!SleepService.isRunning()) { needsTurnOffSetup(); return; }
             openPowerOn();
         }, false);
@@ -4997,23 +5043,22 @@ public class HomeActivity extends Activity {
             // Another launcher you installed has Home (CleanYourTV's, say), and Talkies steps aside for it. Removing
             // it is the way back; its App info page has Uninstall and Disable.
             String name = String.valueOf(other.loadLabel(pm));
-            addRow("Home app", name, () -> {
-                Toast.makeText(this, "Uninstall or disable " + name + " here, then press Home: Talkies takes over",
-                        Toast.LENGTH_LONG).show();
+            addRow(getString(R.string.row_home_app), name, () -> {
+                Toast.makeText(this, getString(R.string.home_app_other_toast, name), Toast.LENGTH_LONG).show();
                 start(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + other.activityInfo.packageName)));
             }, false);
         }
-        else if (isGoogleTvLauncher()) addRow("Home app", SleepService.isRunning() ? "Talkies" : currentHomeName(), () -> {
-            Toast.makeText(this, "To use another home screen, turn off Talkies here. Turn it back on to come back to Talkies",
-                    Toast.LENGTH_LONG).show();
+        else if (isGoogleTvLauncher()) addRow(getString(R.string.row_home_app),
+                SleepService.isRunning() ? getString(R.string.state_talkies) : currentHomeName(), () -> {
+            Toast.makeText(this, getString(R.string.home_app_google_toast), Toast.LENGTH_LONG).show();
             Intent i = new Intent().setClassName("com.android.tv.settings", "com.android.tv.settings.oemlink.AccessibilitySettingsActivity");
             if (pm.resolveActivity(i, 0) == null) i = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
             start(i);
         }, false);
-        else addRow("Home app", currentHomeName(), () -> start(new Intent(Settings.ACTION_HOME_SETTINGS)), false);
-        addRow("Control Center shortcuts", null, this::openShortcuts, false);
-        addMenuHeading("Talkies");
-        addRow("Keys and location", null, () -> openKeysAndLocation(0), false);
+        else addRow(getString(R.string.row_home_app), currentHomeName(), () -> start(new Intent(Settings.ACTION_HOME_SETTINGS)), false);
+        addRow(getString(R.string.row_cc_shortcuts), null, this::openShortcuts, false);
+        addMenuHeading(getString(R.string.heading_talkies));
+        addRow(getString(R.string.row_keys_location), null, () -> openKeysAndLocation(0), false);
         // Most TVs stay on "English (United States)" wherever they are sold, so following the TV (Auto) isn't enough
         // for a Spanish screen. Only the labels move: Region reads the time zone and the system locale, not this.
         addRow(getString(R.string.language), Lang.label(this), () -> {
@@ -5022,9 +5067,9 @@ public class HomeActivity extends Activity {
         }, false);
         addUpdatesRow();
         final View[] adb = new View[1];
-        adb[0] = addRow("Network debugging", "Checking…", this::openNetworkDebugging, false);
+        adb[0] = addRow(getString(R.string.row_network_debugging), getString(R.string.state_checking), this::openNetworkDebugging, false);
         checkNetworkDebugging(st -> { if (adb[0].isAttachedToWindow()) setStatus(adb[0], st); });
-        addRow("About", null, this::openAbout, false);
+        addRow(getString(R.string.row_about), null, this::openAbout, false);
         showMenu(350);
     }
 
@@ -5042,12 +5087,12 @@ public class HomeActivity extends Activity {
     }
 
     private String phoneAppsLabel(int n) {
-        return (prefs.getBoolean("phone_apps", true) ? "Shown" : "Hidden") + "  ·  " + n + (n == 1 ? " app" : " apps");
+        return state(prefs.getBoolean("phone_apps", true), R.string.state_shown, R.string.state_hidden) + "  ·  " + getResources().getQuantityString(R.plurals.phone_apps_count, n, n);
     }
 
     private String languagesLabel() {
         Set<String> chosen = trending.languages();
-        if (chosen.isEmpty()) return "All";
+        if (chosen.isEmpty()) return getString(R.string.state_all);
         List<String> names = new ArrayList<>();
         for (String c : chosen) names.add(Trending.languageName(c));
         return String.join(", ", names);
@@ -5060,21 +5105,21 @@ public class HomeActivity extends Activity {
     /** Talkies settings → Picks from (India): TMDB, needing your key, or StreamRadar's Top 10s, needing none. */
     private String picksFromLabel() {
         if (Trending.RADAR.equals(trending.source())) return "StreamRadar";
-        return Keys.read(this, Keys.TMDB) == null ? "TMDB (needs a key)" : "TMDB";
+        return Keys.read(this, Keys.TMDB) == null ? getString(R.string.picks_from_tmdb_no_key) : "TMDB";
     }
 
     private void openPicksLanguages() {
         List<String> codes = new ArrayList<>(trending.seenLanguages());
         for (String c : trending.languages()) if (!codes.contains(c)) codes.add(c);
-        beginMenu(settingsAt, codes.isEmpty() ? "Picks languages  ·  they show after the picks first load"
-                : "Picks languages  ·  OK on one to show only the ones you choose");
+        beginMenu(settingsAt, codes.isEmpty() ? getString(R.string.picks_languages_none_note)
+                : getString(R.string.picks_languages_chosen_note));
         List<View> rows = new ArrayList<>();
         Runnable mark = () -> {
             Set<String> chosen = trending.languages();
-            setStatus(rows.get(0), chosen.isEmpty() ? "On" : null);
-            for (int i = 0; i < codes.size(); i++) setStatus(rows.get(i + 1), chosen.contains(codes.get(i)) ? "On" : null);
+            setStatus(rows.get(0), chosen.isEmpty() ? getString(R.string.state_on) : null);
+            for (int i = 0; i < codes.size(); i++) setStatus(rows.get(i + 1), chosen.contains(codes.get(i)) ? getString(R.string.state_on) : null);
         };
-        rows.add(addRow("All languages", null, () -> {
+        rows.add(addRow(getString(R.string.all_languages_row), null, () -> {
             trending.setLanguages(new java.util.LinkedHashSet<>());
             mark.run();
             refreshOnline();
@@ -5099,29 +5144,30 @@ public class HomeActivity extends Activity {
 
     private String wallpaperLabel() {
         String folder = prefs.getString("wall_folder_name", null);
-        if (ownWallpaper()) return folder != null ? "A picture a day from " + folder : "Your picture";
-        return prefs.getBoolean("bing_wallpaper", false) ? "Picture of the day" : "Off";
+        if (ownWallpaper()) return folder != null ? getString(R.string.wallpaper_from_folder, folder) : getString(R.string.wallpaper_yours);
+        return state(prefs.getBoolean("bing_wallpaper", false), R.string.wallpaper_day, R.string.state_off);
     }
 
     // ---------------------------------------------------------------- wallpaper
 
     /** Talkies settings → Wallpaper: a picture of your own (from your phone or this TV), Bing's, or none. */
     private void openWallpaperMenu() {
-        beginMenu(settingsAt, "Wallpaper  ·  now: " + wallpaperLabel());
-        addRow("From your phone", "scan a QR code", () -> { pictureFor = null; openPhoneWallpaper(); }, false);
-        addRow("From this TV", "Pictures, Downloads, USB drives", () -> { pictureFor = null; openTvPictures(); }, false);
+        beginMenu(settingsAt, getString(R.string.wallpaper_menu_title, wallpaperLabel()));
+        addRow(getString(R.string.wallpaper_from_phone), getString(R.string.wallpaper_scan_qr), () -> { pictureFor = null; openPhoneWallpaper(); }, false);
+        addRow(getString(R.string.wallpaper_from_tv), getString(R.string.wallpaper_from_tv_detail), () -> { pictureFor = null; openTvPictures(); }, false);
         final View[] bing = new View[1];
-        bing[0] = addRow("Picture of the day", prefs.getBoolean("bing_wallpaper", false) ? "On" : "Off", () -> {
+        bing[0] = addRow(getString(R.string.wallpaper_day), state(prefs.getBoolean("bing_wallpaper", false), R.string.state_on, R.string.state_off), () -> {
             boolean on = !prefs.getBoolean("bing_wallpaper", false);
             prefs.edit().putBoolean("bing_wallpaper", on).apply();
             if (on) this.bing.refreshIfStale(this::loadWallpaper); else { this.bing.clear(); loadWallpaper(); }
-            setStatus(bing[0], on ? (ownWallpaper() ? "On · after your picture" : "On") : "Off");
+            setStatus(bing[0], on ? (ownWallpaper() ? getString(R.string.wallpaper_on_after_yours) : getString(R.string.state_on)) : getString(R.string.state_off));
         }, true);
-        if (ownWallpaper()) addRow("Remove your picture", prefs.getBoolean("bing_wallpaper", false) ? "back to Bing's" : null, () -> {
+        if (ownWallpaper()) addRow(getString(R.string.wallpaper_remove), prefs.getBoolean("bing_wallpaper", false)
+                ? getString(R.string.wallpaper_back_to_bing) : null, () -> {
             stopFolder();
             removeOwnWallpaper();
             loadWallpaper();
-            Toast.makeText(this, "Your picture is removed", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.wallpaper_removed_toast), Toast.LENGTH_SHORT).show();
         }, false);
         showMenu(420);
     }
@@ -5157,15 +5203,15 @@ public class HomeActivity extends Activity {
 
     /** Hold OK on an app → Change image: a picture of your own for its tile, from your phone or this TV. */
     private void openTileImage(String pkg) {
-        beginMenu(P_CONTROL, labelOf(pkg) + "  ·  image");
+        beginMenu(P_CONTROL, getString(R.string.tile_image_title, labelOf(pkg)));
         anchorToApp(pkg);
-        addRow("From your phone", "scan a QR code", () -> { pictureFor = pkg; openPhoneWallpaper(); }, false);
-        addRow("From this TV", "Pictures, Downloads, USB drives", () -> { pictureFor = pkg; openTvPictures(); }, false);
+        addRow(getString(R.string.wallpaper_from_phone), getString(R.string.wallpaper_scan_qr), () -> { pictureFor = pkg; openPhoneWallpaper(); }, false);
+        addRow(getString(R.string.wallpaper_from_tv), getString(R.string.from_tv_status), () -> { pictureFor = pkg; openTvPictures(); }, false);
         File own = AppEntry.customImage(pkg);
-        if (own != null && own.isFile()) addRow("Original image", null, () -> {
+        if (own != null && own.isFile()) addRow(getString(R.string.original_image_row), null, () -> {
             own.delete();
             reloadApps();
-            Toast.makeText(this, labelOf(pkg) + " has its own image again", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.tile_image_reset_toast, labelOf(pkg)), Toast.LENGTH_SHORT).show();
         }, false);
         showMenu(380);
     }
@@ -5174,11 +5220,12 @@ public class HomeActivity extends Activity {
     private void pictureSaved(String pkg, boolean ok) {
         if (pkg == null) {
             if (ok) stopFolder();
-            Toast.makeText(this, ok ? "Your picture is the wallpaper now" : "Couldn't use that picture", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(ok ? R.string.wallpaper_set_toast : R.string.picture_failed_toast), Toast.LENGTH_SHORT).show();
             if (ok) loadWallpaper();
             return;
         }
-        Toast.makeText(this, ok ? "Your picture is on " + labelOf(pkg) + " now" : "Couldn't use that picture", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, getString(ok ? R.string.wallpaper_app_set_toast : R.string.picture_failed_toast, labelOf(pkg)),
+                Toast.LENGTH_SHORT).show();
         if (ok) reloadApps();
     }
 
@@ -5239,7 +5286,7 @@ public class HomeActivity extends Activity {
     private void openPhoneWallpaper() {
         java.net.InetAddress lan = PhonePage.lanAddress(this);
         if (lan == null) {
-            Toast.makeText(this, "The TV isn't on a home Wi-Fi or Ethernet network, so the phone can't reach it", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, getString(R.string.phone_no_network_toast), Toast.LENGTH_LONG).show();
             return;
         }
         final String target = pictureFor;
@@ -5249,7 +5296,7 @@ public class HomeActivity extends Activity {
         try {
             page = new PhonePage(lan, true, target == null ? "the TV screen" : labelOf(target) + "'s tile", new PhonePage.Listener() {
                 @Override public void checking() {
-                    runOnUiThread(() -> status.setText("Saving your picture…"));
+                    runOnUiThread(() -> status.setText(getString(R.string.phone_saving_status)));
                 }
 
                 @Override public List<String> accept(Map<String, String> fields) { return new ArrayList<>(); }
@@ -5264,11 +5311,11 @@ public class HomeActivity extends Activity {
                 }
 
                 @Override public void closed(boolean expired) {
-                    if (expired) runOnUiThread(() -> status.setText("This code has expired. Close it and open From your phone again."));
+                    if (expired) runOnUiThread(() -> status.setText(getString(R.string.phone_expired_note, getString(R.string.wallpaper_from_phone))));
                 }
             });
         } catch (java.io.IOException e) {
-            Toast.makeText(this, "Couldn't open the page for your phone", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.page_open_failed_toast), Toast.LENGTH_SHORT).show();
             return;
         }
         LinearLayout box = new LinearLayout(this);
@@ -5281,14 +5328,14 @@ public class HomeActivity extends Activity {
         where.setTextSize(12);
         where.setPadding(0, px(8), 0, 0);
         box.addView(where);
-        status.setText("Waiting for your phone… The page works once, for 5 minutes.");
+        status.setText(getString(R.string.phone_waiting_note));
         status.setPadding(0, px(6), 0, 0);
         box.addView(status);
         dialog[0] = new android.app.AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                .setTitle(target == null ? "Wallpaper from your phone" : "A picture for " + labelOf(target))
-                .setMessage("Scan this with your phone's camera (on the same Wi-Fi as the TV), then choose a photo.")
+                .setTitle(getString(target == null ? R.string.wallpaper_phone_title : R.string.tile_picture_title, labelOf(target)))
+                .setMessage(getString(R.string.phone_picture_note))
                 .setView(box)
-                .setNegativeButton("Close", null)
+                .setNegativeButton(getString(R.string.dialog_close), null)
                 .setOnDismissListener(d -> page.close())
                 .create();
         dialog[0].show();
@@ -5342,11 +5389,12 @@ public class HomeActivity extends Activity {
 
     private void showTvPictures(List<String[]> pics) {
         final String target = pictureFor;
-        beginMenu(settingsAt, pics.isEmpty() ? "No pictures on this TV"
-                : target == null ? "Wallpaper  ·  OK on a folder or a picture" : labelOf(target) + "  ·  OK on a picture to use it");
+        beginMenu(settingsAt, pics.isEmpty() ? getString(R.string.no_pictures_title)
+                : target == null ? getString(R.string.wallpaper_picker_title)
+                : getString(R.string.tile_picker_title, labelOf(target)));
         if (target != null) anchorToApp(target);
         if (pics.isEmpty()) {
-            addRow("Copy pictures to Pictures or Downloads, or plug in a USB drive", null, () -> { }, true);
+            addRow(getString(R.string.pictures_help_row), null, () -> { }, true);
             showMenu(460);
             return;
         }
@@ -5355,12 +5403,12 @@ public class HomeActivity extends Activity {
         if (target == null) for (String[] pic : pics) {
             if (pic[4] == null || folders.size() >= MAX_FOLDERS || !folders.add(pic[3] + "/" + pic[4])) continue;
             String name = pic[2].isEmpty() ? "Pictures" : pic[2];
-            addThumb(addRow(name, "a new picture each day", () -> useFolder(pic[3], pic[4], name), false), Uri.parse(pic[0]));
+            addThumb(addRow(name, getString(R.string.folder_day_status), () -> useFolder(pic[3], pic[4], name), false), Uri.parse(pic[0]));
         }
         for (String[] pic : pics) {
             Uri uri = Uri.parse(pic[0]);
             View row = addRow(pic[1], pic[2], () -> {
-                if (target == null) Toast.makeText(this, "Setting the wallpaper…", Toast.LENGTH_SHORT).show();
+                if (target == null) Toast.makeText(this, getString(R.string.wallpaper_setting_toast), Toast.LENGTH_SHORT).show();
                 background.execute(() -> {
                     boolean ok = savePicture(() -> {
                         try { return getContentResolver().openInputStream(uri); }
@@ -5394,9 +5442,9 @@ public class HomeActivity extends Activity {
     private void useFolder(String volume, String id, String name) {
         prefs.edit().putString("wall_folder", volume + "/" + id).putString("wall_folder_name", name)
                 .remove("wall_folder_last").remove("wall_folder_day").apply();
-        Toast.makeText(this, "Setting the wallpaper…", Toast.LENGTH_SHORT).show();
-        nextFromFolder(() -> Toast.makeText(this, ownWallpaper() ? "A new picture from " + name + " each day"
-                : "Couldn't use a picture from " + name, Toast.LENGTH_SHORT).show());
+        Toast.makeText(this, getString(R.string.wallpaper_setting_toast), Toast.LENGTH_SHORT).show();
+        nextFromFolder(() -> Toast.makeText(this, getString(ownWallpaper() ? R.string.folder_day_toast : R.string.folder_failed_toast, name),
+                Toast.LENGTH_SHORT).show());
     }
 
     private boolean folderBusy;
@@ -5463,8 +5511,8 @@ public class HomeActivity extends Activity {
 
     /** Talkies after a restart only (the default), Talkies every time the TV wakes too, or an app or input. */
     private String wakeLabel() {
-        if (SleepService.openAtPowerOn(this) != null) return prefs.getString("power_on_label", "An app");
-        return SleepService.homeOnWake(this) ? "Talkies, every time" : "Talkies, after a restart";
+        if (SleepService.openAtPowerOn(this) != null) return prefs.getString("power_on_label", getString(R.string.wake_an_app));
+        return state(SleepService.homeOnWake(this), R.string.wake_talkies_every, R.string.wake_talkies_restart);
     }
 
     /**
@@ -5472,23 +5520,23 @@ public class HomeActivity extends Activity {
      * choose (HDMI 1, with the set-top box on it), each time. An idea from Aerial (aerial-tv, MIT).
      */
     private void openPowerOn() {
-        beginMenu(settingsAt, "At power-on  ·  now: " + wakeLabel());
-        addRow("Talkies, after a restart", "the TV's last input or app after standby", () -> setPowerOn("boot", null, null), false);
-        addRow("Talkies, every time", null, () -> setPowerOn("always", null, null), false);
+        beginMenu(settingsAt, getString(R.string.power_on_menu_title, wakeLabel()));
+        addRow(getString(R.string.wake_talkies_restart), getString(R.string.power_on_boot_detail), () -> setPowerOn("boot", null, null), false);
+        addRow(getString(R.string.wake_talkies_every), null, () -> setPowerOn("always", null, null), false);
         for (Port port : shownPorts()) addRow(port.row(), null, () -> setPowerOn("open", AppEntry.INPUT + port.id, port.row()), false);
-        addRow("Open an app", null, this::openPowerOnApps, false);
+        addRow(getString(R.string.power_on_open_app), null, this::openPowerOnApps, false);
         showMenu(460);
     }
 
     private void openPowerOnApps() {
-        beginMenu(settingsAt, "Open which app at power-on?");
+        beginMenu(settingsAt, getString(R.string.poweron_app_title));
         for (AppEntry a : apps) if (a.input == null) addRow(a.label, null, () -> setPowerOn("open", a.pkg, a.label), false);
         showMenu(360);
     }
 
     private void setPowerOn(String mode, String open, String label) {
         prefs.edit().putString("home_at_power_on", mode).putString("power_on_open", open).putString("power_on_label", label).apply();
-        Toast.makeText(this, "At power-on: " + wakeLabel(), Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, getString(R.string.power_on_toast, wakeLabel()), Toast.LENGTH_SHORT).show();
         openTalkiesSettings(settingsAt);
         int at = menuItems.indexOf(powerOnRow);
         if (at >= 0) focusMenu(at);
@@ -5498,31 +5546,30 @@ public class HomeActivity extends Activity {
     private void openAbout() {
         String version = "";
         try { version = " " + pm.getPackageInfo(getPackageName(), 0).versionName; } catch (PackageManager.NameNotFoundException ignored) { }
-        beginMenu(settingsAt, "Talkies" + version + "  ·  MIT License");
+        beginMenu(settingsAt, getString(R.string.talkies_version_license, version));
         String[][] credits = {
-                {"Picks in India without a key", "StreamRadar India"},
-                {"Weather", "Open-Meteo.com (CC BY 4.0)"},
-                {"Weather backup", "MET Norway (CC BY 4.0)"},
-                {"Airport temperatures", "aviationweather.gov (NOAA)"},
-                {"Scores", "ESPN (public scoreboard)"},
-                {"Speed test", "Cloudflare"},
-                {"Code from", "tv-vibehack, CleanYourTV, Free My TV, Matinee, Luma, GlassLauncher"},
-                {"Font", "Outfit (SIL OFL)"},
+                {getString(R.string.about_picks_no_key_note), getString(R.string.about_streamradar_india)},
+                {getString(R.string.about_weather), "Open-Meteo.com (CC BY 4.0)"},
+                {getString(R.string.about_weather_backup), "MET Norway (CC BY 4.0)"},
+                {getString(R.string.about_airport_temps), "aviationweather.gov (NOAA)"},
+                {getString(R.string.about_scores), "ESPN (public scoreboard)"},
+                {getString(R.string.about_speed_test), "Cloudflare"},
+                {getString(R.string.about_code_from), "tv-vibehack, CleanYourTV, Free My TV, Matinee, Luma, GlassLauncher"},
+                {getString(R.string.about_font), "Figtree (SIL OFL)"},
         };
-        addRow("What's new", null, this::openWhatsNew, false);
-        addRow("Made by", "Raju  ·  TechPP (techpp.com)", () -> { }, true);
-        addRow("Source code", "github.com/rajupp/talkies", () -> { }, true);
-        addRow("Support Talkies", "buymeacoffee.com/rajupp", this::showSupport, true);
-        addRow("Report a problem", "QR code", this::showReport, true);
+        addRow(getString(R.string.about_whats_new), null, this::openWhatsNew, false);
+        addRow(getString(R.string.about_made_by), getString(R.string.about_made_by_value), () -> { }, true);
+        addRow(getString(R.string.about_source_code), getString(R.string.about_source_code_value), () -> { }, true);
+        addRow(getString(R.string.about_support), getString(R.string.about_support_value), this::showSupport, true);
+        addRow(getString(R.string.about_report_problem), getString(R.string.qr_code), this::showReport, true);
         // TMDB's terms ask for its logo with the credit: smaller than anything identifying Talkies.
-        LinearLayout picks = (LinearLayout) addRow("Picks", null, () -> { }, true);
+        LinearLayout picks = (LinearLayout) addRow(getString(R.string.about_picks), null, () -> { }, true);
         ImageView logo = new ImageView(this);
         logo.setImageResource(R.drawable.tmdb_logo);
         logo.setContentDescription("TMDB");
         picks.addView(logo, picks.getChildCount() - 1, new LinearLayout.LayoutParams(px(123), px(16)));
         // TMDB's notice, in full: a row of its own that wraps.
-        View notice = addRow("This application uses TMDB and the TMDB APIs but is not endorsed, certified, or otherwise "
-                + "approved by TMDB.", null, () -> { }, true);
+        View notice = addRow(getString(R.string.tmdb_notice), null, () -> { }, true);
         TextView nt = notice.findViewById(R.id.input_label);
         nt.setSingleLine(false);
         nt.setMaxLines(3);
@@ -5531,7 +5578,7 @@ public class HomeActivity extends Activity {
         notice.setPadding(notice.getPaddingLeft(), px(8), notice.getPaddingRight(), px(8));
         for (String[] c : credits) addRow(c[0], c[1], () -> { }, true);
         String caption = bing.caption();
-        if (prefs.getBoolean("bing_wallpaper", false) && caption != null) addRow("Wallpaper", "Bing: " + caption, () -> { }, true);
+        if (prefs.getBoolean("bing_wallpaper", false) && caption != null) addRow(getString(R.string.row_wallpaper), getString(R.string.bing_wallpaper_status, caption), () -> { }, true);
         showMenu(720);
     }
 
@@ -5674,7 +5721,7 @@ public class HomeActivity extends Activity {
             return true;
         } catch (ActivityNotFoundException | SecurityException e) {
             prefs.edit().remove("shortcut_" + key).apply();
-            Toast.makeText(this, "The screen you chose isn't there any more, so the TV's own opens", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, getString(R.string.shortcut_gone_toast), Toast.LENGTH_LONG).show();
             return false;
         }
     }
@@ -5685,22 +5732,31 @@ public class HomeActivity extends Activity {
      * Launcher's activity picker.
      */
     private void openShortcuts() {
-        beginMenu(settingsAt, "Control Center shortcuts  ·  what each row opens");
+        beginMenu(settingsAt, getString(R.string.cc_shortcuts_title));
         for (int i = 0; i < SHORTCUTS.length; i++) {
             final int k = i;
-            addRow(SHORTCUTS[i][1], shortcutLabel(SHORTCUTS[i][0]), () -> openShortcutPicker(k, false), false);
+            addRow(shortcutName(SHORTCUTS[i][0]), shortcutLabel(SHORTCUTS[i][0]), () -> openShortcutPicker(k, false), false);
         }
         showMenu(460);
     }
 
+    /** What a Control Center row is called, in the language the app speaks. */
+    private String shortcutName(String key) {
+        switch (key) {
+            case "network": return getString(R.string.cc_network);
+            case "bluetooth": return getString(R.string.cc_bluetooth);
+            case "sound": return getString(R.string.cc_sound_output);
+            default: return getString(R.string.cc_storage);
+        }
+    }
     private String shortcutLabel(String key) {
         String c = prefs.getString("shortcut_" + key, null);
         android.content.ComponentName cn = c == null ? null : android.content.ComponentName.unflattenFromString(c);
-        if (cn == null) return "TV default";
+        if (cn == null) return getString(R.string.cc_tv_default);
         try {
             return screenName(pm.getActivityInfo(cn, 0));
         } catch (PackageManager.NameNotFoundException e) {
-            return "TV default";
+            return getString(R.string.cc_tv_default);
         }
     }
 
@@ -5740,17 +5796,17 @@ public class HomeActivity extends Activity {
             if (all) for (android.content.pm.ActivityInfo ai : rest) rows.add(new String[]{screenName(ai), ai.packageName + "/" + ai.name});
             final int more = all ? 0 : rest.size();
             runOnUiThread(() -> {
-                beginMenu(settingsAt, SHORTCUTS[k][1] + " opens…");
-                addRow("TV default", null, () -> {
+                beginMenu(settingsAt, getString(R.string.shortcut_opens_title, shortcutName(key)));
+                addRow(getString(R.string.cc_tv_default), null, () -> {
                     prefs.edit().remove("shortcut_" + key).apply();
                     openShortcuts();
                 }, false);
                 for (String[] r : rows) addRow(r[0], r[1].substring(0, r[1].indexOf('/')), () -> {
                     prefs.edit().putString("shortcut_" + key, r[1]).apply();
-                    Toast.makeText(this, SHORTCUTS[k][1] + " opens " + r[0] + ". Try it from Control Center", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, getString(R.string.shortcut_picked_toast, shortcutName(key), r[0]), Toast.LENGTH_LONG).show();
                     openShortcuts();
                 }, false);
-                if (more > 0) addRow("Show every screen", String.valueOf(more), () -> openShortcutPicker(k, true), false);
+                if (more > 0) addRow(getString(R.string.show_every_screen_row), String.valueOf(more), () -> openShortcutPicker(k, true), false);
                 showMenu(520);
             });
         });
@@ -5763,7 +5819,7 @@ public class HomeActivity extends Activity {
      * Add to dock and Remove from dock in an app's hold-OK menu). The rows stay where they are while you change them.
      */
     private void openDockApps() {
-        beginMenu(settingsAt, "Dock apps  ·  OK: in or out of the dock");
+        beginMenu(settingsAt, getString(R.string.dock_apps_title));
         final List<String> pkgs = new ArrayList<>();
         for (AppEntry a : apps) pkgs.add(a.pkg);
         for (AppEntry a : new ArrayList<>(apps)) {
@@ -5781,7 +5837,7 @@ public class HomeActivity extends Activity {
     private void dockAppStatuses(List<String> pkgs) {
         for (int i = 0; i < pkgs.size() && i < menuItems.size(); i++) {
             int ai = indexOf(pkgs.get(i));
-            setStatus(menuItems.get(i), ai >= 0 && ai < dockCount ? "In dock · " + (ai + 1) : null);
+            setStatus(menuItems.get(i), ai >= 0 && ai < dockCount ? getString(R.string.dock_row_position, ai + 1) : null);
         }
     }
 
@@ -5796,7 +5852,7 @@ public class HomeActivity extends Activity {
     }
 
     private void fillChannelsMenu() {
-        beginMenu(settingsAt, "Channels  ·  OK: show or hide  ·  hold OK: move");
+        beginMenu(settingsAt, getString(R.string.channels_editor_title));
         menuMode = MENU_CHANNELS;
         for (Channels.Channel ch : editList) {
             final Channels.Channel c = ch;
@@ -5814,9 +5870,9 @@ public class HomeActivity extends Activity {
         boolean first = true;
         for (int i = 0; i < editList.size() && i < menuItems.size(); i++) {
             Channels.Channel ch = editList.get(i);
-            String status = ch.shown ? (first ? "Shown · first" : "Shown") : "Hidden";
+            String status = ch.shown ? (first ? getString(R.string.ch_shown_first) : shownHidden(true)) : shownHidden(false);
             if (ch.shown) first = false;
-            if (menuMoving && i == menuIdx) status = "Moving…";
+            if (menuMoving && i == menuIdx) status = getString(R.string.ch_moving);
             setStatus(menuItems.get(i), status);
         }
     }
@@ -5827,7 +5883,7 @@ public class HomeActivity extends Activity {
         menuMoving = true;
         beforeEdit = new ArrayList<>(editList);
         channelStatuses();
-        moveHint.setText("Moving " + editList.get(menuIdx).title + "  ·  OK to place  ·  Back to cancel");
+        moveHint.setText(getString(R.string.move_hint, editList.get(menuIdx).title));
         moveHint.setAlpha(0f);
         moveHint.setVisibility(View.VISIBLE);
         moveHint.animate().alpha(1f).setDuration(150).start();
@@ -5898,13 +5954,13 @@ public class HomeActivity extends Activity {
 
     private String sleepStatus() {
         int left = Sleep.minutesLeft(this);
-        return left > 0 ? left + " min left" : "Off";
+        return left > 0 ? getResources().getQuantityString(R.plurals.sleep_min_left, left, left) : getString(R.string.state_off);
     }
 
     /** Turning off needs the accessibility helper, which only you can switch on. Take you there. */
     private void needsTurnOffSetup() {
-        Toast.makeText(this, "To turn the TV off, switch on \"" + getString(R.string.sleep_service_label)
-                + "\" in Accessibility", Toast.LENGTH_LONG).show();
+        Toast.makeText(this, getString(R.string.needs_turnoff_toast, getString(R.string.sleep_service_label)),
+                Toast.LENGTH_LONG).show();
         closeMenu();
         Intent i = new Intent().setClassName("com.android.tv.settings", "com.android.tv.settings.oemlink.AccessibilitySettingsActivity");
         if (pm.resolveActivity(i, 0) == null) i = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
@@ -5915,8 +5971,9 @@ public class HomeActivity extends Activity {
     private String storageLine() {
         try {
             android.os.StatFs fs = new android.os.StatFs(android.os.Environment.getDataDirectory().getPath());
-            return String.format(java.util.Locale.getDefault(), "%.1f GB free of %d GB",
-                    fs.getAvailableBytes() / 1e9, Math.round(fs.getTotalBytes() / 1e9));
+            return getString(R.string.storage_free_of,
+                    String.format(java.util.Locale.getDefault(), "%.1f", fs.getAvailableBytes() / 1e9),
+                    Math.round(fs.getTotalBytes() / 1e9));
         } catch (RuntimeException e) {
             return null;
         }
@@ -5936,7 +5993,7 @@ public class HomeActivity extends Activity {
 
     private String animationLabel() {
         float s = animationScale();
-        return s == 0f ? "Off" : s == 0.5f ? "0.5×" : s == 1f ? "1×" : s + "×";
+        return s == 0f ? getString(R.string.state_off) : s == 0.5f ? "0.5×" : s == 1f ? "1×" : s + "×";
     }
 
     private boolean cycleAnimations() {
@@ -5967,7 +6024,7 @@ public class HomeActivity extends Activity {
         boolean online = caps != null && (caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
                 || caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET));
         icons[P_WIFI].setAlpha(online ? 1f : 0.45f);
-        icons[P_WIFI].setContentDescription(online ? "Wi-Fi" : "Wi-Fi: offline");
+        icons[P_WIFI].setContentDescription(getString(online ? R.string.cd_wifi : R.string.wifi_offline_desc));
         // Back online after being offline: whatever failed meanwhile is fetched now, not at its next retry.
         if (online && Boolean.FALSE.equals(wasOnline)) {
             weather.networkBack();
@@ -6168,7 +6225,7 @@ public class HomeActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        tabs[2].setText("New in " + Region.name(Region.country(this)));  // the country can change (Region)
+        tabs[2].setText(getString(R.string.new_in_country, Region.name(Region.country(this))));  // the country can change (Region)
         inFront = true;
         HomeState.inFront = true;
         HomeState.inSettings = false;
@@ -6222,9 +6279,9 @@ public class HomeActivity extends Activity {
         if (serviceNote == null) {
             if (!show) return;
             serviceNote = new TextView(this);
-            serviceNote.setText("Home, Turn off and Remote keys stopped working  ·  Control Center → Fix");
+            serviceNote.setText(getString(R.string.service_note));
             serviceNote.setTextSize(13);
-            serviceNote.setTypeface(getResources().getFont(R.font.outfit));
+            serviceNote.setTypeface(getResources().getFont(R.font.figtree));
             serviceNote.setGravity(android.view.Gravity.CENTER);
             serviceNote.setPadding(px(16), 0, px(16), 0);
             FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, px(28),
@@ -6278,8 +6335,7 @@ public class HomeActivity extends Activity {
             boolean news = SelfUpdate.checkIfStale(this);
             runOnUiThread(() -> {
                 onUpdates();
-                if (news) Toast.makeText(this, "Talkies " + SelfUpdate.available(this) + " is out: the bell, top right, installs it",
-                        Toast.LENGTH_LONG).show();
+                if (news) Toast.makeText(this, getString(R.string.update_ready_toast, SelfUpdate.available(this)), Toast.LENGTH_LONG).show();
             });
         });
         if (prefs.getBoolean("youtube_art", false)) RecentStore.upgradeArtwork(this, () -> {
@@ -6307,7 +6363,7 @@ public class HomeActivity extends Activity {
         // backup-settings.sh: write files/talkies-backup.json for it to pull. restore-settings.sh: start again, so
         // onCreate applies the file it pushed.
         if (intent.getBooleanExtra("talkies_backup", false)) {
-            Toast.makeText(this, Backup.save(this) ? "Settings backed up" : "Couldn't back up the settings", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(Backup.save(this) ? R.string.backup_saved_toast : R.string.backup_failed_toast), Toast.LENGTH_SHORT).show();
             return;
         }
         if (intent.getBooleanExtra("talkies_restore", false)) {

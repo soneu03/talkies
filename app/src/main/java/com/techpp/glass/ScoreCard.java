@@ -32,7 +32,8 @@ final class ScoreCard {
     private static final long TICK_MS = 30_000, ENDED_MS = 5 * 60_000L;
     /** Ticks with the match missing from the saved list before giving up on it: ten minutes. */
     private static final int MAX_MISSES = 20;
-    private static final String[] CORNERS = {"Top right", "Top left", "Bottom right", "Bottom left"};
+    private static final int[] CORNERS = {R.string.corner_top_right, R.string.corner_top_left,
+            R.string.corner_bottom_right, R.string.corner_bottom_left};
     private static final int[] GRAVITY = {Gravity.TOP | Gravity.END, Gravity.TOP | Gravity.START,
             Gravity.BOTTOM | Gravity.END, Gravity.BOTTOM | Gravity.START};
 
@@ -77,7 +78,7 @@ final class ScoreCard {
     /** "IND v NZ", for Control Center. */
     static String pinnedName(Context c) { return prefs(c).getString("name", ""); }
 
-    static String cornerName(Context c) { return CORNERS[corner(c)]; }
+    static String cornerName(Context c) { return c.getString(CORNERS[corner(c)]); }
 
     private static int corner(Context c) { return Math.floorMod(prefs(c).getInt("corner", 0), CORNERS.length); }
 
@@ -137,7 +138,7 @@ final class ScoreCard {
 
     private boolean add() {
         float dp = service.getResources().getDisplayMetrics().density;
-        Typeface font = service.getResources().getFont(R.font.outfit);
+        Typeface font = service.getResources().getFont(R.font.figtree);
         card = new LinearLayout(service);
         card.setOrientation(LinearLayout.VERTICAL);
         card.setPadding(Math.round(16 * dp), Math.round(10 * dp), Math.round(16 * dp), Math.round(10 * dp));

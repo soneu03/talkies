@@ -39,9 +39,9 @@ final class DebugState {
 
     /** Off · On · Wi-Fi · On · port 5555 · USB only. Waits up to 400 ms for the port, so not on the UI thread. */
     static String wirelessText(Context c) {
-        if (wifiSwitch(c)) return "On · Wi-Fi";
-        if (!adbOn(c)) return devOptions(c) ? "Off" : "Off · dev options off";
-        return listening(c) ? "On · port 5555" : "USB only";
+        if (wifiSwitch(c)) return c.getString(R.string.dbg_wifi_on);
+        if (!adbOn(c)) return devOptions(c) ? c.getString(R.string.state_off) : c.getString(R.string.dbg_off_dev);
+        return listening(c) ? c.getString(R.string.dbg_port) : c.getString(R.string.dbg_usb_only);
     }
 
     private static boolean listening(Context c) {

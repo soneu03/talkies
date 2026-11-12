@@ -74,7 +74,7 @@ final class Weather {
             try { t = Long.parseLong(at); } catch (NumberFormatException e) { continue; }
             if (t <= now) continue;
             boolean h24 = android.text.format.DateFormat.is24HourFormat(ctx);
-            return "Rain around " + new java.text.SimpleDateFormat(h24 ? "HH:mm" : "h a", Locale.getDefault()).format(new java.util.Date(t));
+            return ctx.getString(R.string.wx_rain_at, new java.text.SimpleDateFormat(h24 ? "HH:mm" : "h a", Locale.getDefault()).format(new java.util.Date(t)));
         }
         return null;
     }
@@ -342,7 +342,7 @@ final class Weather {
                 if (at <= now) continue;
                 f[0] = hour.format(new java.util.Date(at));
             }
-            out.add(f);
+            out.add(new String[]{ when(f[0]), shown(f[1]) });
             if (!days && out.size() == 6) break;
         }
         return out;
@@ -477,6 +477,39 @@ final class Weather {
             case "Thunderstorm": return R.drawable.ic_wx_thunder;
             default: return 0;
         }
+    }
+
+    /**
+     * The conditions as Weather files its lines, and the string each one is read as. The English stays in the saved
+     * line (the icon and the rain note are read back out of it, and a saved line outlives a change of language), so
+     * the swap happens only on the way to the screen.
+     */
+    private static final String[] CONDITIONS = {"Sunny", "Clear", "Mostly sunny", "Mostly clear", "Partly cloudy",
+            "Overcast", "Fog", "Drizzle", "Rain", "Showers", "Snow", "Thunderstorm"};
+    private static final int[] CONDITION_NAMES = {R.string.wx_sunny, R.string.wx_clear, R.string.wx_mostly_sunny,
+            R.string.wx_mostly_clear, R.string.wx_partly_cloudy, R.string.wx_overcast, R.string.wx_fog,
+            R.string.wx_drizzle, R.string.wx_rain, R.string.wx_showers, R.string.wx_snow, R.string.wx_thunderstorm};
+
+    /** A weather line ("31° / 22°  Rain", "27° Sunny ... Rain around 4 PM") with its condition in this language. */
+    String shown(String line) {
+        if (line == null) return null;
+        int at = line.lastIndexOf('\u00b0');
+        if (at < 0) return line;
+        int from = at + 1;
+        while (from < line.length() && line.charAt(from) == ' ') from++;
+        int to = line.indexOf(" \u00b7 ", from);
+        if (to < 0) to = line.length();
+        String key = line.substring(from, to);
+        for (int i = 0; i < CONDITIONS.length; i++)
+            if (CONDITIONS[i].equals(key)) return line.substring(0, from) + ctx.getString(CONDITION_NAMES[i]) + line.substring(to);
+        return line;
+    }
+
+    /** The first column of a forecast row: a day's name, or an hour that is already a time. */
+    private String when(String day) {
+        if ("Today".equals(day)) return ctx.getString(R.string.wx_today);
+        if ("Tomorrow".equals(day)) return ctx.getString(R.string.wx_tomorrow);
+        return day;
     }
 
     /** WMO weather codes, as Open-Meteo uses them. */

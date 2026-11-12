@@ -210,8 +210,10 @@ final class RemoteKeys {
     }
 
     /** "Prog Red", "Button 3", "Key 1201" for a vendor key Android has no name for, "Button 0x1a5" by scan code. */
-    static String keyName(int code) {
+    static String keyName(Context c, int code) {
         String known = known(code);
+        if (known != null && known.endsWith(" button"))
+            return c.getString(R.string.button_named, plainWord(c, known.substring(0, known.length() - 7)));
         if (known != null) return known;
         if (code < 0) return "Button 0x" + Integer.toHexString(-code);
         String s = KeyEvent.keyCodeToString(code);
@@ -225,26 +227,38 @@ final class RemoteKeys {
         return b.toString();
     }
 
+    /** The word before "button": the TV's own pages have names of their own; an app's brand keeps its own. */
+    private static String plainWord(Context c, String word) {
+        switch (word) {
+            case "Settings": return c.getString(R.string.button_settings);
+            case "All apps": return c.getString(R.string.button_all_apps);
+            case "Apps": return c.getString(R.string.button_apps);
+            case "Profile": return c.getString(R.string.button_profile);
+            default: return word;
+        }
+    }
+
     static String describe(Context c, String action) {
-        if (action == null) return "Normal";
-        if (action.equals(INPUTS)) return "Inputs";
-        if (action.equals(RECENTS)) return "Recent apps";
-        if (action.equals(CONTROL)) return "Control Center";
-        if (action.equals(TALKIES_SETTINGS)) return "Talkies settings";
-        if (action.equals(SETTINGS)) return "TV settings";
-        if (action.equals(SOUND)) return "Sound output";
-        if (action.equals(PREVIOUS)) return "Previous app";
-        if (action.equals(RESUME)) return "Resume watching";
-        if (action.equals(PLAY_PAUSE)) return "Play / pause";
-        if (action.equals(MUTE)) return "Mute";
-        if (action.equals(BLUETOOTH)) return "Bluetooth";
-        if (action.equals(SCREENSAVER)) return "Screensaver";
-        if (action.equals(TURN_OFF)) return "Turn off";
-        if (action.startsWith(INPUT)) return prefs(c).getString("name:" + action, "An input");
-        if (action.equals(WIFI)) return "Wi-Fi";
-        if (action.equals(HOME)) return "Talkies";
-        if (action.equals(NONE)) return "Nothing";
-        if (action.startsWith(APP)) return "Open " + Channels.label(c.getPackageManager(), action.substring(APP.length()));
+        if (action == null) return c.getString(R.string.action_normal);
+        if (action.equals(INPUTS)) return c.getString(R.string.job_inputs);
+        if (action.equals(RECENTS)) return c.getString(R.string.job_recent_apps);
+        if (action.equals(CONTROL)) return c.getString(R.string.job_control_center);
+        if (action.equals(TALKIES_SETTINGS)) return c.getString(R.string.job_talkies_settings);
+        if (action.equals(SETTINGS)) return c.getString(R.string.job_tv_settings);
+        if (action.equals(SOUND)) return c.getString(R.string.job_sound_output);
+        if (action.equals(PREVIOUS)) return c.getString(R.string.job_previous_app);
+        if (action.equals(RESUME)) return c.getString(R.string.job_resume);
+        if (action.equals(PLAY_PAUSE)) return c.getString(R.string.job_play_pause);
+        if (action.equals(MUTE)) return c.getString(R.string.job_mute);
+        if (action.equals(BLUETOOTH)) return c.getString(R.string.job_bluetooth);
+        if (action.equals(SCREENSAVER)) return c.getString(R.string.job_screensaver);
+        if (action.equals(TURN_OFF)) return c.getString(R.string.job_turn_off);
+        if (action.startsWith(INPUT)) return prefs(c).getString("name:" + action, c.getString(R.string.action_an_input));
+        if (action.equals(WIFI)) return c.getString(R.string.job_wifi);
+        if (action.equals(HOME)) return c.getString(R.string.job_talkies);
+        if (action.equals(NONE)) return c.getString(R.string.action_nothing);
+        if (action.startsWith(APP)) return c.getString(R.string.open_app_row,
+                Channels.label(c.getPackageManager(), action.substring(APP.length())));
         return action;
     }
 
@@ -274,7 +288,7 @@ final class RemoteKeys {
                 Intent dream = screensaver(s);
                 if (dream != null) s.startActivity(dream.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             } else if (action.equals(TURN_OFF)) {
-                if (!Sleep.now()) android.widget.Toast.makeText(s, "This TV doesn't let Talkies turn it off", android.widget.Toast.LENGTH_LONG).show();
+                if (!Sleep.now()) android.widget.Toast.makeText(s, s.getString(R.string.turn_off_not_allowed), android.widget.Toast.LENGTH_LONG).show();
             } else if (action.equals(INPUTS) || action.equals(RECENTS) || action.equals(CONTROL) || action.equals(TALKIES_SETTINGS)
                     || action.equals(RESUME) || action.equals(BLUETOOTH)) {
                 s.startActivity(new Intent(Intent.ACTION_MAIN).setClass(s, HomeActivity.class).putExtra(EXTRA_OPEN, action)
@@ -322,7 +336,7 @@ final class RemoteKeys {
             RecentApps.note(s, pkg);
             return;
         }
-        android.widget.Toast.makeText(s, "No other app yet", android.widget.Toast.LENGTH_SHORT).show();
+        android.widget.Toast.makeText(s, s.getString(R.string.previous_app_none), android.widget.Toast.LENGTH_SHORT).show();
     }
 
     /** Starts the screensaver the way Google Assistant does, or through Android's own shortcut; null when there's no way. */

@@ -21,8 +21,8 @@ final class Lang {
     private Lang() { }
 
     static String code(Context c) {
-        String v = c.getSharedPreferences("home", Context.MODE_PRIVATE).getString("lang", "auto");
-        return v == null || v.isEmpty() ? "auto" : v;
+        String v = c.getSharedPreferences("home", Context.MODE_PRIVATE).getString("lang", "es");
+        return v == null || v.isEmpty() ? "es" : v;
     }
 
     static int index(Context c) {
@@ -46,7 +46,12 @@ final class Lang {
         String code = code(base);
         if (code.equals("auto")) return base;
         Configuration c = new Configuration(base.getResources().getConfiguration());
-        c.setLocales(new LocaleList(new Locale(code)));
+        Locale here = new Locale(code);
+        c.setLocales(new LocaleList(here));
+        // Dates and numbers come from the default locale, not from a context, so a wrapped Home would still say
+        // "Monday": these two lines are what make "lunes" and "1,2 GB" happen.
+        Locale.setDefault(Locale.Category.DISPLAY, here);
+        Locale.setDefault(Locale.Category.FORMAT, here);
         return base.createConfigurationContext(c);
     }
 }

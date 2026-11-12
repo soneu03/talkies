@@ -33,7 +33,7 @@
                 android:fontFamily="@font/figtree"
                 android:includeFontPadding="false"
                 android:letterSpacing="-0.015"
-                android:text="For You"
+                android:text="@string/row_for_you"
                 android:textSize="38sp"
                 android:visibility="gone" />
 
@@ -43,9 +43,9 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="-12dp"
                 android:orientation="horizontal">
-                <TextView android:id="@+id/tab_recent" style="@style/TabText" android:text="Continue" />
-                <TextView android:id="@+id/tab_trending" style="@style/TabText" android:layout_marginStart="2dp" android:text="Trending" />
-                <TextView android:id="@+id/tab_india" style="@style/TabText" android:layout_marginStart="2dp" android:text="New in India" />
+                <TextView android:id="@+id/tab_recent" style="@style/TabText" android:text="@string/tab_recent" />
+                <TextView android:id="@+id/tab_trending" style="@style/TabText" android:layout_marginStart="2dp" android:text="@string/tab_trending" />
+                <TextView android:id="@+id/tab_india" style="@style/TabText" android:layout_marginStart="2dp" android:text="@string/tab_new_default" />
             </LinearLayout>
 
             <!-- Only while there are no picks to show: why (no TMDB key yet, or offline) -->
@@ -82,12 +82,12 @@
                 <com.techpp.glass.Meters android:id="@+id/meters" android:layout_width="112dp"
                     android:layout_height="44dp" android:layout_gravity="center_vertical"
                     android:layout_marginEnd="22dp" android:importantForAccessibility="no" />
-                <ImageView android:id="@+id/icon_cc" style="@style/IconButton" android:src="@drawable/ic_cc" android:contentDescription="Control Center" />
-                <ImageView android:id="@+id/icon_inputs" style="@style/IconButton" android:src="@drawable/ic_input" android:contentDescription="Inputs" />
-                <ImageView android:id="@+id/icon_wifi" style="@style/IconButton" android:src="@drawable/ic_wifi" android:contentDescription="Wi-Fi" />
-                <ImageView android:id="@+id/icon_settings" style="@style/IconButton" android:src="@drawable/ic_settings" android:contentDescription="Settings" />
+                <ImageView android:id="@+id/icon_cc" style="@style/IconButton" android:src="@drawable/ic_cc" android:contentDescription="@string/cd_control_center" />
+                <ImageView android:id="@+id/icon_inputs" style="@style/IconButton" android:src="@drawable/ic_input" android:contentDescription="@string/cd_inputs" />
+                <ImageView android:id="@+id/icon_wifi" style="@style/IconButton" android:src="@drawable/ic_wifi" android:contentDescription="@string/cd_wifi" />
+                <ImageView android:id="@+id/icon_settings" style="@style/IconButton" android:src="@drawable/ic_settings" android:contentDescription="@string/cd_settings" />
                 <!-- Shown only while the Play Store has updates waiting -->
-                <ImageView android:id="@+id/icon_bell" style="@style/IconButton" android:src="@drawable/ic_bell" android:contentDescription="App updates" android:visibility="gone" />
+                <ImageView android:id="@+id/icon_bell" style="@style/IconButton" android:src="@drawable/ic_bell" android:contentDescription="@string/cd_app_updates" android:visibility="gone" />
             </LinearLayout>
 
             <TextView
@@ -121,7 +121,7 @@
             android:layout_marginTop="106dp"
             android:layout_marginEnd="40dp"
             android:fontFamily="@font/figtree"
-            android:text="Picks from TMDB"
+            android:text="@string/picks_from_tmdb"
             android:textSize="11sp" />
 
         <!-- Weather, then time | date, top left. -->
@@ -231,7 +231,7 @@
             android:layout_marginStart="40dp"
             android:layout_marginTop="566dp"
             android:fontFamily="@font/figtree"
-            android:text="All apps"
+            android:text="@string/all_apps"
             android:textSize="20sp" />
 
         <LinearLayout

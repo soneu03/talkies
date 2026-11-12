@@ -56,7 +56,7 @@ final class RecentsCards extends FrameLayout {
     private int action = -1;
     private final LinearLayout actions;
     private final TextView hint;
-    private static final String[] ACTIONS = {"Remove from list", "App info"};
+    private static final int[] ACTIONS = {R.string.remove_from_list_row, R.string.row_app_info};
 
     RecentsCards(Context c, List<Entry> entries, int cardBackground, boolean lite) {
         super(c);
@@ -79,7 +79,7 @@ final class RecentsCards extends FrameLayout {
         scrim.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, new int[]{0xD60A0A0E, 0xB30A0A0E, 0xE00A0A0E}));
         addView(scrim, new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
-        TextView title = text(c, "RECENT APPS", 13, 600);
+        TextView title = text(c, c.getString(R.string.cc_recent_apps).toUpperCase(java.util.Locale.ROOT), 13, 600);
         title.setLetterSpacing(0.12f);
         title.setTextColor(0xB3F5F5F7);
         LayoutParams titleLp = new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.START);
@@ -152,7 +152,7 @@ final class RecentsCards extends FrameLayout {
             frame.addView(shade, new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
             card.addView(frame, new LinearLayout.LayoutParams(cardW, cardH));
 
-            TextView caption = text(c, e.watched != null && e.still != null ? "Last watched  ·  " + e.watched : " ", 15, 400);
+            TextView caption = text(c, e.watched != null && e.still != null ? c.getString(R.string.recents_last_watched, e.watched) : " ", 15, 400);
             caption.setTextColor(0xFFC7C7CC);
             caption.setSingleLine(true);
             caption.setEllipsize(android.text.TextUtils.TruncateAt.END);
@@ -176,7 +176,7 @@ final class RecentsCards extends FrameLayout {
             ambient.add(null);
         }
         if (entries.isEmpty()) {
-            TextView none = text(c, "Apps you open show up here", 20, 400);
+            TextView none = text(c, c.getString(R.string.recents_empty), 20, 400);
             none.setTextColor(0xFFA1A1A6);
             addView(none, new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
         }
@@ -184,8 +184,8 @@ final class RecentsCards extends FrameLayout {
         int under = pictureTop + cardH + px(50);
         actions = new LinearLayout(c);
         actions.setOrientation(LinearLayout.HORIZONTAL);
-        for (String name : ACTIONS) {
-            TextView b = text(c, name, 16, 500);
+        for (int name : ACTIONS) {
+            TextView b = text(c, c.getString(name), 16, 500);
             b.setPadding(px(18), px(9), px(18), px(9));
             LinearLayout.LayoutParams bl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             bl.leftMargin = bl.rightMargin = px(6);
@@ -195,7 +195,7 @@ final class RecentsCards extends FrameLayout {
         LayoutParams al = new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL | Gravity.TOP);
         al.topMargin = under;
         addView(actions, al);
-        hint = text(c, "Down for options", 14, 400);
+        hint = text(c, c.getString(R.string.recents_hint), 14, 400);
         hint.setTextColor(0xFF9A9AA0);
         LayoutParams hl = new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL | Gravity.TOP);
         hl.topMargin = under + px(9);
@@ -224,7 +224,7 @@ final class RecentsCards extends FrameLayout {
         TextView t = new TextView(c);
         t.setText(s);
         t.setTextSize(sp);
-        t.setTypeface(Fonts.outfit(c, weight));
+        t.setTypeface(Fonts.figtree(c, weight));
         return t;
     }
 

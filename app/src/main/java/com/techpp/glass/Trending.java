@@ -325,17 +325,25 @@ final class Trending {
      * Genre names and India's list of streaming services hardly ever change: kept for a week (prefs "setup"), which
      * saves four requests per refresh.
      */
+    /** The language TMDB answers in: the one on screen, which is the TV's own when the setting is auto. */
+    private String speak() {
+        String code = Lang.code(ctx);
+        if (!code.equals("auto")) return code;
+        String s = ctx.getResources().getConfiguration().getLocales().get(0).getLanguage();
+        return s.equals("es") ? s : "en";
+    }
+
     private JSONObject setup(String key) throws Exception {
         try {
             JSONObject saved = new JSONObject(prefs.getString("setup", "{}"));
             if (System.currentTimeMillis() - saved.optLong("at") < SETUP_MS && saved.has("tv_providers")
-                    && region.equals(saved.optString("region"))) return saved;
+                    && region.equals(saved.optString("region")) && speak().equals(saved.optString("lang"))) return saved;
         } catch (Exception ignored) {
             // Fetch afresh.
         }
-        JSONObject o = new JSONObject().put("at", System.currentTimeMillis()).put("region", region);
+        JSONObject o = new JSONObject().put("at", System.currentTimeMillis()).put("region", region).put("lang", speak());
         for (String kind : new String[]{"movie", "tv"}) {
-            o.put(kind + "_genres", get(key, "/genre/" + kind + "/list?language=en").getJSONArray("genres"));
+            o.put(kind + "_genres", get(key, "/genre/" + kind + "/list?language=" + speak()).getJSONArray("genres"));
             o.put(kind + "_providers", get(key, "/watch/providers/" + kind + "?watch_region=" + region).getJSONArray("results"));
         }
         prefs.edit().putString("setup", o.toString()).apply();

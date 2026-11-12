@@ -346,7 +346,7 @@ final class Football {
     }
 
     /** One ESPN event as the small record saved and shown, or null if it's unusable. */
-    private static JSONObject parse(JSONObject e, String league, String date) throws Exception {
+    private JSONObject parse(JSONObject e, String league, String date) throws Exception {
         JSONObject c = e.getJSONArray("competitions").getJSONObject(0);
         JSONObject st = c.getJSONObject("status"), type = st.getJSONObject("type");
         JSONArray teams = c.getJSONArray("competitors");
@@ -369,9 +369,9 @@ final class Football {
         // "67'", "HT", "FT", "Postponed": what the card and the score line say.
         String status;
         if (name.contains("POSTPONED") || name.contains("CANCELED") || name.contains("ABANDONED")) status = type.optString("description");
-        else if ("in".equals(state) && name.contains("HALFTIME")) status = "Half-time";
+        else if ("in".equals(state) && name.contains("HALFTIME")) status = ctx.getString(R.string.score_half_time);
         else if ("in".equals(state)) status = american(league) ? type.optString("shortDetail") : st.optString("displayClock");  // "8:28 - 4th"
-        else if ("post".equals(state)) status = type.optString("detail", "FT").replace("FT", "Full time");
+        else if ("post".equals(state)) status = type.optString("detail", "FT").replace("FT", ctx.getString(R.string.score_full_time));
         else status = "";
         o.put("status", status);
         o.put("t1", home.getJSONObject("team").optString("shortDisplayName"));

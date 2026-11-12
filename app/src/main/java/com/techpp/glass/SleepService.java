@@ -344,13 +344,13 @@ public class SleepService extends AccessibilityService {
             warningText = new TextView(this);
             warningText.setTextColor(0xFFF5F5F7);
             warningText.setTextSize(20);
-            warningText.setTypeface(getResources().getFont(R.font.outfit));
+            warningText.setTypeface(getResources().getFont(R.font.figtree));
             warningText.setFontVariationSettings("'wght' 600");
             TextView hint = new TextView(this);
-            hint.setText("Press OK for 15 more minutes");
+            hint.setText(getString(R.string.sleep_ok_hint));
             hint.setTextColor(0xFFA1A1A6);
             hint.setTextSize(14);
-            hint.setTypeface(getResources().getFont(R.font.outfit));
+            hint.setTypeface(getResources().getFont(R.font.figtree));
             warning.addView(warningText);
             warning.addView(hint);
             WindowManager.LayoutParams lp = new WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT,
@@ -379,7 +379,7 @@ public class SleepService extends AccessibilityService {
             Sleep.fire(this);
             return;
         }
-        if (warningText != null) warningText.setText("Turning off in " + ((left + 999) / 1000) + " s");
+        if (warningText != null) warningText.setText(getString(R.string.sleep_turning_off, (left + 999) / 1000));
         main.postDelayed(tick, Math.max(50, left % 1000 == 0 ? 1000 : left % 1000));
     }
 

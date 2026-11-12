@@ -1,5 +1,6 @@
 package com.techpp.glass;
 
+import android.content.Context;
 import android.media.tv.TvInputInfo;
 
 import java.util.Locale;
@@ -71,6 +72,17 @@ final class Devices {
                     (int) d.getClass().getMethod("getDeviceType").invoke(d)};
         } catch (ReflectiveOperationException | RuntimeException ignored) { }
         return new int[]{-1, -1};
+    }
+
+    /** What Talkies calls a device that never announced itself; a product's own name is nobody's to translate. */
+    private static final String[] GENERIC = {"Sound system", "Blu-ray player", "Set-top box", "HDMI device"};
+    private static final int[] GENERIC_LABELS = {R.string.dev_sound_system, R.string.dev_bluray,
+            R.string.dev_settop, R.string.dev_hdmi};
+
+    /** The name to show, in the language on screen. */
+    String label(Context c) {
+        for (int i = 0; i < GENERIC.length; i++) if (GENERIC[i].equals(name)) return c.getString(GENERIC_LABELS[i]);
+        return name;
     }
 
     /** "NintendoSwitch" → "Nintendo Switch", "DIGITAL_RECEIVER" → "Digital Receiver"; names with spaces stay. */

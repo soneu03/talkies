@@ -90,9 +90,10 @@ final class SelfUpdate {
     /** The row's status: "0.4.2 · Up to date", "0.4.3 is out · OK installs", … */
     static String summary(Context c) {
         String mine = installed(c), v = available(c);
-        if (v == null) return mine + "  ·  " + (prefs(c).contains("checked") ? "Up to date" : "Check now");
-        if (!takesReleases(c)) return v + " is out  ·  build it again";
-        return v.equals(prefs(c).getString("no_installer", null)) ? v + " is out  ·  needs a computer" : v + " is out  ·  OK installs";
+        if (v == null) return mine + "  ·  " + c.getString(prefs(c).contains("checked") ? R.string.update_up_to_date : R.string.update_check_now);
+        if (!takesReleases(c)) return c.getString(R.string.update_out_build, v);
+        return c.getString(v.equals(prefs(c).getString("no_installer", null))
+                ? R.string.update_out_pc : R.string.update_out_ok, v);
     }
 
     /** The daily check (no download): true when it found a newer version it hadn't mentioned yet. Background thread. */
@@ -117,25 +118,25 @@ final class SelfUpdate {
         waiting = l;
         new Thread(() -> {
             try {
-                l.changed("Checking…");
+                l.changed(c.getString(R.string.state_checking));
                 JSONObject release = latest(c);
                 String v = available(c);
                 if (v == null) { l.changed(summary(c)); return; }
                 if (!takesReleases(c)) { l.changed(summary(c)); return; }
-                l.changed("Downloading " + v + "…");
+                l.changed(c.getString(R.string.update_downloading, v));
                 File apk = download(c, release, v);
                 String wrong = misfit(c, apk);
                 if (wrong != null) {
                     apk.delete();
                     Log.w(TAG, v + " " + wrong);
-                    l.changed("Couldn't update: the download " + wrong);
+                    l.changed(c.getString(R.string.update_download_bad, wrong));
                     return;
                 }
-                l.changed("Installing " + v + "…");
+                l.changed(c.getString(R.string.update_installing, v));
                 install(c, apk, v);
             } catch (Exception e) {
                 Log.w(TAG, "Update: " + e);
-                l.changed(offline(e) ? "No connection" : "Couldn't update");
+                l.changed(offline(e) ? c.getString(R.string.update_no_connection) : c.getString(R.string.update_failed));
             }
         }, "Updates").start();
     }
@@ -267,12 +268,13 @@ final class SelfUpdate {
                     Log.w(TAG, "Android's installer didn't open: " + e);
                     // Some boxes have no install screen. It stays worth another try: OK on the row or the bell.
                     prefs(c).edit().putString("no_installer", intent.getStringExtra("version")).apply();
-                    tell(c, "This TV can't show Android's install screen. Install it from a computer: README → Updates", summary(c));
+                    tell(c, c.getString(R.string.update_install_from_pc), summary(c));
                 }
             } else if (status != PackageInstaller.STATUS_SUCCESS) {
                 Log.w(TAG, "Not installed (" + status + "): " + intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE));
                 // Cancelling is your own answer. Anything else would otherwise leave the row on "Installing…".
-                if (status != PackageInstaller.STATUS_FAILURE_ABORTED) tell(c, "Android couldn't install the update", "Couldn't update");
+                if (status != PackageInstaller.STATUS_FAILURE_ABORTED)
+                    tell(c, c.getString(R.string.update_android_failed), c.getString(R.string.update_failed));
                 else if (waiting != null) waiting.changed(summary(c));
             }
         }

@@ -18,9 +18,16 @@ features, a new fix number only fixes. The version shows in Talkies settings →
   `adb_enabled` stays at 0 while the TV answers on 5555). What
   [docs/building.en.md](docs/building.en.md#connect-to-the-tv) asks you to turn on can now be checked on the TV itself.
 - **Talkies settings → Language**: Auto, English or Español. Following the TV is not enough on its own, because many
-  TVs stay on "English (United States)" wherever they are sold. The first things to move into resources are the menu
-  hold-OK opens on an app, the All apps button and Android's own warning about the accessibility service; the rest
-  follow screen by screen, in the order [docs/l10n.en.md](docs/l10n.en.md) sets out.
+  TVs stay on "English (United States)" wherever they are sold. With nothing chosen yet the app starts in **Español**;
+  Auto and English stay one press away.
+- **The whole interface is in resources now, in both languages** (493 strings, English and Spanish side by side):
+  every menu, row, toast, title, the Home furniture (clock, date, weather line, score strip), the screensaver, the
+  sleep timer and the remote-key screens. Spanish weekday and month names come from `Lang.wrap` also setting the
+  default locale, not only the context. Weather's condition words and the names Talkies gives an HDMI device are
+  swapped on the way to the screen, because the saved line is read back for the icon and the rain note; and TMDB's
+  genre names are asked for in the language on screen. What is still English is only what somebody else writes: the
+  code and its comments, Android's own dialogs, ESPN's and TMDB's match and film data, and the page that opens on the
+  phone ([docs/l10n.md](docs/l10n.md)).
 - **Spanish is what the docs show first**: [README.md](README.md), [docs/guide.md](docs/guide.md),
   [docs/building.md](docs/building.md) and [docs/l10n.md](docs/l10n.md) are the Spanish ones, which is what GitHub
   puts on the front page, and the English that was there before sits beside each of them as `README.en.md`,

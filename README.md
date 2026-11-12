@@ -13,7 +13,7 @@
   Una sola pantalla en calma: tus apps, las Tendencias del lugar donde vives, críquet y fútbol en directo, clara de día y oscura de noche.
 </p>
 
-> [!NOTE] Los nombres de pantalla van en inglés porque la interfaz de Talkies aún no está traducida; la traducción de la app avanza por fases (ver [docs/l10n.md](docs/l10n.md)).
+> [!NOTE] Talkies arranca **en español**. Si tu TV se quedó en "English (United States)" —lo habitual en casi todos — no hay que tocar nada: **Talkies settings → Idioma** rota entre Español, English y Auto (seguir al TV). La interfaz está traducida entera; lo que sigue en su idioma es lo que escriben Android, las apps y los datos de ESPN y TMDB ([docs/l10n.md](docs/l10n.md)).
 
 <p align="center">
   <a href="#instalación"><b>Instalación</b></a> &nbsp;·&nbsp;
@@ -332,7 +332,7 @@ Ideas (sin código; la implementación de Talkies es propia):
   [Departures](https://github.com/0xdravyn/departures).
 - Una fuente de respaldo del tiempo, y una ubicación aproximada a partir de la dirección de internet: tvOS Launcher, Aerial y Plume.
 
-La tipografía Outfit es © The Outfit Project Authors, con licencia SIL Open Font License 1.1 (`OUTFIT-OFL.txt`).
+La tipografía Figtree es © The Figtree Project Authors, con licencia SIL Open Font License 1.1 (`FIGTREE-OFL.txt`).
 
 ## Licencia
 

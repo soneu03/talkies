@@ -1,6 +1,7 @@
 package com.techpp.glass;
 
 import android.app.ActivityManager;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -83,6 +84,10 @@ public class Screensaver extends DreamService {
         }
     };
 
+    @Override protected void attachBaseContext(Context base) {
+        super.attachBaseContext(Lang.wrap(base));   // Spanish screensaver even on a TV set to English
+    }
+
     @Override
     public void onAttachedToWindow() {
         super.onAttachedToWindow();
@@ -94,9 +99,9 @@ public class Screensaver extends DreamService {
         root = new FrameLayout(this);
         root.setBackgroundColor(Color.BLACK);
         root.setAlpha(quiet(this) ? QUIET_ALPHA : 1f);
-        Typeface outfit = getResources().getFont(R.font.outfit);
+        Typeface figtree = getResources().getFont(R.font.figtree);
         if (mode.equals("board")) {
-            board = new FlapBoard(this, outfit);
+            board = new FlapBoard(this, figtree);
             root.addView(board, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
         } else if (!mode.equals("clock")) {
             art = new ImageView[]{new ImageView(this), new ImageView(this)};
@@ -111,12 +116,12 @@ public class Screensaver extends DreamService {
         }
         block = new LinearLayout(this);
         block.setOrientation(LinearLayout.VERTICAL);
-        clock = text(outfit, 96, 300, 0xB3FFFFFF);
+        clock = text(figtree, 96, 300, 0xB3FFFFFF);
         clock.setFontFeatureSettings("tnum");   // even-width digits: the seconds don't jiggle the line
-        date = text(outfit, 22, 500, 0x80FFFFFF);
+        date = text(figtree, 22, 500, 0x80FFFFFF);
         date.setLetterSpacing(0.12f);
-        weather = text(outfit, 20, 400, 0x66FFFFFF);
-        caption = text(outfit, 18, 400, 0x66FFFFFF);
+        weather = text(figtree, 20, 400, 0x66FFFFFF);
+        caption = text(figtree, 18, 400, 0x66FFFFFF);
         caption.setPadding(0, 16, 0, 0);
         caption.setSingleLine(false);   // your message's two lines stay two lines
         caption.setMaxLines(2);
@@ -174,7 +179,7 @@ public class Screensaver extends DreamService {
         date.setText(DateFormat.format("EEEE  d MMMM", now).toString().toUpperCase(java.util.Locale.getDefault()));
         if (wx == null) wx = new Weather(this);
         String w = wx.cached();
-        weather.setText(w == null ? "" : w);
+        weather.setText(w == null ? "" : wx.shown(w));
         weather.setVisibility(w == null ? View.GONE : View.VISIBLE);
         // Your message, where the picks' caption isn't using the line.
         if (!mode.equals("picks")) {
@@ -212,15 +217,15 @@ public class Screensaver extends DreamService {
         boolean h24 = DateFormat.is24HourFormat(this);
         lines.add(DateFormat.format(h24 ? "HH:mm:ss" : "h:mm:ss a", now).toString());
         colors.add(white);
-        lines.add(new java.text.SimpleDateFormat("EEEE d MMMM", java.util.Locale.ENGLISH).format(now));
+        lines.add(new java.text.SimpleDateFormat("EEEE d MMMM").format(now));
         colors.add(grey);
         if (wx == null) wx = new Weather(this);
         String w = wx.cached();
         String[] hl = wx.highLow();
-        String extra = hl == null ? null : "HIGH " + hl[0] + "  LOW " + hl[1];
+        String extra = hl == null ? null : getString(R.string.board_high_low, hl[0], hl[1]);
         if (w != null) {
             String[] parts = w.split(" · ");
-            lines.add(parts[0]);
+            lines.add(wx.shown(parts[0]));
             colors.add(grey);
             if (parts.length > 1) { lines.add(parts[1]); colors.add(blue); }
             else if (extra != null) { lines.add(extra); colors.add(grey); extra = null; }
