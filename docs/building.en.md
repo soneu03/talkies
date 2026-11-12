@@ -68,8 +68,10 @@ Gradle, so it takes a few minutes.
 
 1. **Choose your dock** in `app/src/main/res/values/dock.xml` (package names; list yours with the command under
    [Rearrange apps](guide.en.md#rearrange-apps)). You can rearrange on the TV later.
-2. **Build and install**: `./build-and-install.sh`. It makes Talkies the home screen and grants the permissions it
-   can (location for the Wi-Fi name, TV listings for Watch Next), and puts back keys saved by the key scripts.
+2. **Build and install**: `./build-and-install.sh`. Before it builds it runs the words through `check-l10n.sh` (a `%1`
+   with no `$`, or a name missing from one language, is a black screen flickering once a second). It makes Talkies the
+   home screen and grants the permissions it can (location for the Wi-Fi name, TV listings for Watch Next), and puts
+   back keys saved by the key scripts.
 3. **On the TV**, finish the [first-time setup](../README.en.md#first-time-setup) (Accessibility and notification
    access).
 4. **Keys and your weather area**: on the TV in Talkies settings → **Keys and location**, or from here:
@@ -86,6 +88,7 @@ What `build-and-install.sh` does, one command at a time (and the way without Git
 build).
 
 ```bash
+./check-l10n.sh                                             # the words, before anything gets built
 ./gradlew assembleRelease                                   # → app/build/outputs/apk/release/app-release.apk
 adb connect 192.168.1.20:5555
 adb -s 192.168.1.20:5555 install -r app/build/outputs/apk/release/app-release.apk
@@ -109,6 +112,7 @@ Google Photos. More in the guide: [Google TV's setup wizard](guide.en.md#google-
 
 ```bash
 ./build-and-install.sh                 # optimised build (about 270 KB, no libraries), install, set as home
+./check-l10n.sh                        # the words: same names in both languages, every placeholder (build-and-install.sh runs it first)
 ./restore.sh                           # the TV's own home screen back, Talkies removed
 ./restore.sh --keep-talkies            # the TV's own home screen back, Talkies kept
 ./switch-home.sh list|talkies|stock    # choose the home screen (see the guide)
@@ -120,7 +124,8 @@ Google Photos. More in the guide: [Google TV's setup wizard](guide.en.md#google-
 ```
 
 Every script takes the TV's address as an optional last argument; otherwise it uses `TALKIES_TV` or the `.tv` file.
-The build script takes its JDK and SDK from `JAVA_HOME` / `ANDROID_HOME` when you set them, and asks
+`check-l10n.sh` is the exception: it talks to no TV, only reads the two `strings.xml` files and the Java, and takes the
+repo root. The build script takes its JDK and SDK from `JAVA_HOME` / `ANDROID_HOME` when you set them, and asks
 `android-env.sh` otherwise — the same script decides on Windows ([On Windows](#on-windows)).
 
 **Back up your settings:** `./backup-settings.sh` saves Talkies settings, the dock and app order, hidden apps, remote

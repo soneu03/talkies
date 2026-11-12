@@ -69,9 +69,10 @@ primera compilación descarga Gradle, así que tarda unos minutos.
 
 1. **Elige tu dock** en `app/src/main/res/values/dock.xml` (nombres de paquete; los tuyos los listas con la orden
    de [Reordenar apps](guide.md#reordenar-apps)). Después puedes reordenarlos en el TV.
-2. **Compila e instala**: `./build-and-install.sh`. Deja Talkies como pantalla de inicio, concede los permisos que
-   puede (ubicación para el nombre de la Wi-Fi, lista de canales para Watch Next) y restaura las claves que
-   guardaron los scripts de claves.
+2. **Compila e instala**: `./build-and-install.sh`. Antes de compilar pasa los textos por `check-l10n.sh` (un `%1` sin
+   `$`, o un nombre que falta en un idioma, es una pantalla negra que parpadea). Deja Talkies como pantalla de inicio,
+   concede los permisos que puede (ubicación para el nombre de la Wi-Fi, lista de canales para Watch Next) y restaura
+   las claves que guardaron los scripts de claves.
 3. **En el TV**, completa la [configuración inicial](../README.md#configuración-inicial) (Accessibility y acceso a las
    notificaciones).
 4. **Las claves y tu zona del tiempo**: en el TV, en Talkies settings → **Keys and location**, o desde aquí:
@@ -88,6 +89,7 @@ Lo que hace `build-and-install.sh`, una orden cada vez (y el camino también sin
 misma compilación).
 
 ```bash
+./check-l10n.sh                                             # the words, before anything gets built
 ./gradlew assembleRelease                                   # → app/build/outputs/apk/release/app-release.apk
 adb connect 192.168.1.20:5555
 adb -s 192.168.1.20:5555 install -r app/build/outputs/apk/release/app-release.apk
@@ -112,6 +114,7 @@ salvapantallas necesita el wizard para tus fotos de Google Photos. Más en la gu
 
 ```bash
 ./build-and-install.sh                 # optimised build (about 270 KB, no libraries), install, set as home
+./check-l10n.sh                        # the words: same names in both languages, every placeholder (build-and-install.sh runs it first)
 ./restore.sh                           # the TV's own home screen back, Talkies removed
 ./restore.sh --keep-talkies            # the TV's own home screen back, Talkies kept
 ./switch-home.sh list|talkies|stock    # choose the home screen (see the guide)
@@ -123,7 +126,8 @@ salvapantallas necesita el wizard para tus fotos de Google Photos. Más en la gu
 ```
 
 Todos los scripts aceptan la dirección del TV como último argumento opcional; si no, usan `TALKIES_TV` o el archivo
-`.tv`. El script de compilación usa las rutas de Homebrew salvo que `JAVA_HOME` / `ANDROID_HOME` digan otra cosa
+`.tv`. La excepción es `check-l10n.sh`: no habla con el TV, lee los dos `strings.xml` y el Java, y recibe la raíz del
+repositorio. El script de compilación usa las rutas de Homebrew salvo que `JAVA_HOME` / `ANDROID_HOME` digan otra cosa
 (en Windows decide `android-env.sh`: mira [En Windows](#en-windows)).
 
 **Guarda tus ajustes:** `./backup-settings.sh` guarda los ajustes de Talkies, el dock y el orden de las apps, las

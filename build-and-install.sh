@@ -11,6 +11,11 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 . "$(dirname "$0")/android-env.sh"
 env_check "$HERE" || exit 1
 
+# A bad placeholder crash-loops the TV's screen, and a name in one language only leaves it half translated. Both are
+# text-file problems, so they get checked before the build and long before the install.
+echo "== Checking strings"
+"$HERE/check-l10n.sh" "$HERE"
+
 adb connect "$DEV" >/dev/null || true
 # Talkies needs Android 8.0 (API 26) or newer; say so before building rather than failing at install.
 SDK="$(adb -s "$DEV" shell -n getprop ro.build.version.sdk | tr -d '\r')"
