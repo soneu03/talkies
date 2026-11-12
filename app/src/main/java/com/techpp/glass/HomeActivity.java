@@ -247,6 +247,7 @@ public class HomeActivity extends Activity {
      */
     @Override
     protected void attachBaseContext(Context base) {
+        base = Lang.wrap(base);   // Talkies' own words, in the language Talkies settings → Language sets
         android.util.DisplayMetrics dm = base.getResources().getDisplayMetrics();
         android.content.res.Configuration c = new android.content.res.Configuration(base.getResources().getConfiguration());
         int wide = Math.max(dm.widthPixels, dm.heightPixels), narrow = Math.min(dm.widthPixels, dm.heightPixels);
@@ -1077,7 +1078,7 @@ public class HomeActivity extends Activity {
         ImageView b = new ImageView(this);
         b.setImageResource(R.drawable.ic_apps);
         b.setScaleType(ImageView.ScaleType.CENTER);
-        b.setContentDescription("All apps");
+        b.setContentDescription(getString(R.string.all_apps));
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(px(ALL_BUTTON), px(ALL_BUTTON));
         lp.gravity = android.view.Gravity.CENTER_VERTICAL;
         b.setLayoutParams(lp);
@@ -2095,10 +2096,10 @@ public class HomeActivity extends Activity {
     /** All apps says which app has focus ("All apps · Downloader"): some tiles are a logo with no name on it. */
     private void nameGridApp(CharSequence name) {
         if (name == null || name.length() == 0) {
-            if (!"All apps".contentEquals(allAppsLabel.getText())) allAppsLabel.setText("All apps");
+            if (!getString(R.string.all_apps).contentEquals(allAppsLabel.getText())) allAppsLabel.setText(R.string.all_apps);
             return;
         }
-        SpannableStringBuilder b = new SpannableStringBuilder("All apps");
+        SpannableStringBuilder b = new SpannableStringBuilder(getString(R.string.all_apps));
         int from = b.length();
         b.append("   ·   ").append(name);
         b.setSpan(new ForegroundColorSpan(theme.text2), from, b.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -4166,22 +4167,23 @@ public class HomeActivity extends Activity {
         menuTile = tile;
         menuClosed = () -> { if (z == Z_DOCK) focusDock(di); else focusGrid(gi); };
         boolean inDock = ai < dockCount, anyOutside = apps.size() > dockCount;
-        if (!inDock) addRow("Add to dock", null, () -> addToDock(a.pkg), false);
-        else if (anyOutside) addRow("Remove from dock", null, () -> removeFromDock(a.pkg), false);
+        if (!inDock) addRow(getString(R.string.add_to_dock), null, () -> addToDock(a.pkg), false);
+        else if (anyOutside) addRow(getString(R.string.remove_from_dock), null, () -> removeFromDock(a.pkg), false);
         // A sorted All apps would put a moved app straight back, so there only the dock's apps move.
-        if (inDock || appsOrder() == ORDER_YOURS) addRow("Move", null, this::startMove, false);
+        if (inDock || appsOrder() == ORDER_YOURS) addRow(getString(R.string.move), null, this::startMove, false);
         File own = AppEntry.customImage(a.pkg);
-        addRow("Change image", own != null && own.isFile() ? "your picture" : null, () -> openTileImage(a.pkg), false);
+        addRow(getString(R.string.change_image), own != null && own.isFile() ? getString(R.string.your_picture) : null,
+                () -> openTileImage(a.pkg), false);
         if (a.input != null) {
-            addRow("Remove from Home", null, () -> setHomeInput(a.input, false), false);
+            addRow(getString(R.string.remove_from_home), null, () -> setHomeInput(a.input, false), false);
             showMenu(240);
             return;
         }
-        addRow("Hide", null, () -> hideApp(a.pkg), false);
+        addRow(getString(R.string.hide), null, () -> hideApp(a.pkg), false);
         if (canUninstall(a.pkg)) {
-            addRow("Uninstall", null, () -> start(new Intent(Intent.ACTION_DELETE, Uri.parse("package:" + a.pkg))), false);
+            addRow(getString(R.string.uninstall), null, () -> start(new Intent(Intent.ACTION_DELETE, Uri.parse("package:" + a.pkg))), false);
         }
-        addRow("App info", null, () -> start(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+        addRow(getString(R.string.app_info), null, () -> start(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
                 Uri.parse("package:" + a.pkg))), false);
         showMenu(240);
     }
@@ -4973,6 +4975,12 @@ public class HomeActivity extends Activity {
         addRow("Control Center shortcuts", null, this::openShortcuts, false);
         addMenuHeading("Talkies");
         addRow("Keys and location", null, () -> openKeysAndLocation(0), false);
+        // Most TVs stay on "English (United States)" wherever they are sold, so following the TV (Auto) isn't enough
+        // for a Spanish screen. Only the labels move: Region reads the time zone and the system locale, not this.
+        addRow(getString(R.string.language), Lang.label(this), () -> {
+            Lang.cycle(this);
+            recreate();   // every label comes from the resources: Home has to read them again
+        }, false);
         addUpdatesRow();
         final View[] adb = new View[1];
         adb[0] = addRow("Network debugging", "Checking…", this::openNetworkDebugging, false);

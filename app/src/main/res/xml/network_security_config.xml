@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Everything Talkies asks for goes over https. Android 9 and newer refuse a cleartext request anyway; Android 8,
+     the oldest this app runs on, still allows it unless told otherwise, so the rule is written down. It also means a
+     TMDB or weather answer that tried to send an http:// picture back fails instead of carrying it across the Wi-Fi
+     in the open.
+     The phone page (Settings → Send from your phone) is a server on the home network, not a request out, so this
+     leaves it alone. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+</network-security-config>

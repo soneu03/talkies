@@ -5,7 +5,29 @@ features, a new fix number only fixes. The version shows in Talkies settings →
 
 ## Unreleased
 
+### New
+- **Talkies settings → Language**: Auto, English or Español. Following the TV is not enough on its own, because many
+  TVs stay on "English (United States)" wherever they are sold. The first things to move into resources are the menu
+  hold-OK opens on an app, the All apps button and Android's own warning about the accessibility service; the rest
+  follow screen by screen, in the order [docs/l10n.md](docs/l10n.md) sets out.
+- **The docs in Spanish**: [README.es.md](README.es.md), [docs/guide.es.md](docs/guide.es.md),
+  [docs/building.es.md](docs/building.es.md) and [docs/l10n.es.md](docs/l10n.es.md), each with a link back to the
+  English.
+- **Building on Windows**: the scripts keep LF endings through `.gitattributes`, and `android-env.sh` finds JDK 17
+  and the SDK wherever the machine keeps them instead of assuming Homebrew paths.
+- **GitHub Actions builds every push**, the minified release as well as the debug one, and says so when `versionName`,
+  `versionCode` and CHANGELOG.md stop agreeing.
+
 ### Changed
+- **An update is checked the same way every time.** GitHub's SHA-256 is now required before a byte is downloaded, and
+  an APK signed by more than one key is refused; either check could quietly not happen before.
+- **Nothing leaves the TV unencrypted** on Android 8 either, which allowed it unless told otherwise (the newer ones
+  already refused).
+- **`./release-apk.sh` refuses to publish code that isn't the release**: it wants a committed tree, a CHANGELOG
+  section for the version, a versionCode higher than the last release's, and the GitHub release pointing at the
+  commit it is building (`--force` still means it will listen).
+- **`./restore.sh` asks before uninstalling Talkies** (`--yes` for scripts and AI assistants), and the scripts no
+  longer define a function called `sh`, which used to hide the shell itself.
 - **Focus is easier to see.** The focused card keeps its lift and gains a thin light outline, so it stands out on dark
   posters too. Talkies settings → Focus now has three choices: Outline (new, the default), Lift and Ring. If you had
   chosen Lift or Ring, that's kept.

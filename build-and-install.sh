@@ -7,8 +7,9 @@ DEV="${1:-$(tv_default)}"; need_tv
 PKG=com.techpp.glass
 HERE="$(cd "$(dirname "$0")" && pwd)"
 
-export JAVA_HOME="${JAVA_HOME:-/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home}"
-export ANDROID_HOME="${ANDROID_HOME:-/opt/homebrew/share/android-commandlinetools}"
+# JDK 17 and the Android SDK, wherever this machine keeps them (android-env.sh: macOS, Linux, Windows/Git Bash).
+. "$(dirname "$0")/android-env.sh"
+env_check "$HERE" || exit 1
 
 adb connect "$DEV" >/dev/null || true
 # Talkies needs Android 8.0 (API 26) or newer; say so before building rather than failing at install.
@@ -19,11 +20,20 @@ if [ -n "$SDK" ] && [ "$SDK" -lt 26 ]; then
 fi
 
 echo "== Building"
+if [ ! -f "$HERE/release.properties" ]; then
+  echo "   No release.properties here, so this APK gets the debug key: fine on your own TV, but it won't install"
+  echo "   over an official Talkies and it can't update itself (docs/building.md -> Signing and releases)."
+fi
 (cd "$HERE" && ./gradlew -q assembleRelease)
 APK="$HERE/app/build/outputs/apk/release/app-release.apk"
 
 echo "== Installing on $DEV"
-adb -s "$DEV" install -r "$APK"
+if ! adb -s "$DEV" install -r "$APK"; then
+  echo "!! Android refused the APK. INSTALL_FAILED_UPDATE_INCOMPATIBLE means the Talkies on the TV is signed with"
+  echo "   another key (the official one, or a build from a different computer). Then:"
+  echo "   ./backup-settings.sh   uninstall Talkies on the TV   ./build-and-install.sh   ./restore-settings.sh"
+  exit 1
+fi
 
 # Lets the Wi-Fi pill show the network name (Android hides SSIDs from apps without location).
 adb -s "$DEV" shell -n pm grant $PKG android.permission.ACCESS_FINE_LOCATION || true

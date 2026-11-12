@@ -159,6 +159,9 @@ final class SelfUpdate {
         String url = asset.optString("browser_download_url"), digest = asset.optString("digest");
         long size = asset.optLong("size");
         if (!url.startsWith(RELEASES) || size <= 0 || size > MAX_SIZE) throw new IOException("unexpected asset: " + url + ", " + size);
+        // GitHub's own SHA-256, asked for before a byte comes down: without it only the size would be checked, and a
+        // size is easy to match. An asset with no digest stops here rather than installing on a hope.
+        if (!digest.startsWith("sha256:")) throw new IOException("GitHub sent no SHA-256 for " + ASSET);
         File dir = new File(c.getNoBackupFilesDir(), "update");
         File[] old = dir.listFiles();
         for (int i = 0; old != null && i < old.length; i++) old[i].delete();
@@ -179,7 +182,7 @@ final class SelfUpdate {
                     out.write(buffer, 0, n);
                 }
             }
-            if (total != size || digest.startsWith("sha256:") && !digest.substring(7).equalsIgnoreCase(hex(sha.digest()))) {
+            if (total != size || !digest.substring(7).equalsIgnoreCase(hex(sha.digest()))) {
                 throw new IOException("the download doesn't match GitHub's size or SHA-256");
             }
             if (!part.renameTo(to)) throw new IOException("couldn't save the update");
@@ -203,8 +206,12 @@ final class SelfUpdate {
         String name = theirs.versionName == null ? "" : theirs.versionName;
         if (theirs.versionCode <= ours.versionCode || compare(name, ours.versionName) <= 0) return "isn't newer than this one";
         String cert = cert(theirs);
-        if (cert != null && !RELEASE_CERT.equals(cert)) return "isn't signed with Talkies' key";
-        return null;   // a signature that can't be read here is left to Android's installer, which refuses another key
+        // Either the project's key, or nothing: an APK whose signers can't be counted here (none, or more than one)
+        // is not one Talkies will hand to the installer. Android would refuse a different key anyway, but an update
+        // that stops here says so in its own words instead of leaving a stranger's question on the screen.
+        if (cert == null || !RELEASE_CERT.equals(cert)) return cert == null
+                ? "isn't signed by exactly one key" : "isn't signed with Talkies' key";
+        return null;
     }
 
     /** Hands the APK to Android's installer; its answer comes to Receiver. */

@@ -1,0 +1,26 @@
+<resources>
+    <string name="app_name">Talkies</string>
+    <string name="sleep_service_label">Talkies</string>
+    <!-- Lo que Android muestra en el aviso antes de encender el servicio: la frase que más asusta y la que primero
+         merecía estar en el idioma de la persona. -->
+    <string name="sleep_service_description">Mantiene Talkies como tu pantalla de inicio (el botón Home lo abre a él, y se abre por encima de la pantalla de inicio de Google TV, salvo justo después de que el Assistant muestre ahí sus resultados), pone el TV en reposo para Turn off now y para el temporizador de apagado, y escribe un partido de críquet en el buscador de JioHotstar cuando eliges su tarjeta. Filtra solo el botón Home y mira solo las ventanas de JioHotstar, de la pantalla de inicio de Google TV y del Assistant. Cuando pulsas Home dentro de una app pregunta cuál era esa app, para Recent apps.</string>
+    <string name="watch_service_label">Talkies: vistos hace poco</string>
+
+    <!-- Fase 1 de la traducción de la app (docs/l10n.md). -->
+    <string name="add_to_dock">Añadir al dock</string>
+    <string name="remove_from_dock">Quitar del dock</string>
+    <string name="move">Mover</string>
+    <string name="change_image">Cambiar imagen</string>
+    <string name="your_picture">tu imagen</string>
+    <string name="remove_from_home">Quitar de Home</string>
+    <string name="hide">Ocultar</string>
+    <string name="uninstall">Desinstalar</string>
+    <string name="app_info">Info. de la app</string>
+    <string name="all_apps">Todas las apps</string>
+    <string name="language">Idioma</string>
+    <string-array name="lang_labels">
+        <item>Auto</item>
+        <item>Inglés</item>
+        <item>Español</item>
+    </string-array>
+</resources>

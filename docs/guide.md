@@ -1,5 +1,7 @@
 # Talkies guide
 
+*This guide in: [English](guide.md) · [español](guide.es.md)*
+
 Everything Talkies does, screen by screen. For installing and first-time setup, see the [README](../README.md); for
 building it yourself, [building.md](building.md).
 

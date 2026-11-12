@@ -1,0 +1,19 @@
+# The blobs here are LF. A Windows checkout with core.autocrlf=true turns them into CRLF, and bash then reads the
+# carriage return as part of the command: every .sh fails with "$'\r': command not found". These three lines say
+# "LF, whatever the machine" for the files that get executed, and leave the rest to each person's own git settings.
+*.sh text eol=lf
+gradlew text eol=lf
+*.py text eol=lf
+
+# Windows runs .bat through cmd, which wants its own endings.
+*.bat text eol=crlf
+
+# Never let a converter touch a binary.
+*.jar binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ttf binary
+*.apk binary

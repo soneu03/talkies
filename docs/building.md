@@ -1,5 +1,7 @@
 # Building Talkies
 
+*This document in: [English](building.md) · [español](building.es.md)*
+
 For changing Talkies, or installing it from source. To just install it, the ready APK in the
 [README](../README.md#install) is simpler. Everything Talkies does is in the [guide](guide.md).
 
@@ -9,13 +11,14 @@ For changing Talkies, or installing it from source. To just install it, the read
 - [Install by hand](#install-by-hand)
 - [Scripts](#scripts)
 - [Signing and releases](#signing-and-releases)
+- [On Windows](#on-windows)
 
 ## What you need
 
 | | |
 |---|---|
 | **The TV** | Android TV or Google TV, **Android 8.0 (API 26) or newer**. The install script checks this before building. |
-| **A computer** | On the same Wi-Fi as the TV. macOS or Linux run the scripts as they are; on Windows use WSL, or the commands under [Install by hand](#install-by-hand). |
+| **A computer** | On the same Wi-Fi as the TV. macOS or Linux run the scripts as they are; on Windows run them in Git Bash (see [On Windows](#on-windows)), or use the commands under [Install by hand](#install-by-hand). |
 | **Tools** | `adb` (Android platform tools), JDK 17, and the Android SDK command-line tools with platform 35. |
 
 Installing the tools on macOS with [Homebrew](https://brew.sh):
@@ -76,7 +79,8 @@ Gradle, so it takes a few minutes.
 
 ## Install by hand
 
-What `build-and-install.sh` does, one command at a time (also the way on Windows without WSL: use `gradlew.bat`).
+What `build-and-install.sh` does, one command at a time (and the way without Git Bash, where `gradlew.bat` is the same
+build).
 
 ```bash
 ./gradlew assembleRelease                                   # → app/build/outputs/apk/release/app-release.apk
@@ -101,7 +105,7 @@ Google Photos. More in the guide: [Google TV's setup wizard](guide.md#google-tvs
 ## Scripts
 
 ```bash
-./build-and-install.sh                 # optimised build (about 200 KB, no libraries), install, set as home
+./build-and-install.sh                 # optimised build (about 260 KB, no libraries), install, set as home
 ./restore.sh                           # the TV's own home screen back, Talkies removed
 ./restore.sh --keep-talkies            # the TV's own home screen back, Talkies kept
 ./switch-home.sh list|talkies|stock    # choose the home screen (see the guide)
@@ -113,7 +117,8 @@ Google Photos. More in the guide: [Google TV's setup wizard](guide.md#google-tvs
 ```
 
 Every script takes the TV's address as an optional last argument; otherwise it uses `TALKIES_TV` or the `.tv` file.
-The build script uses Homebrew's paths unless `JAVA_HOME` / `ANDROID_HOME` say otherwise.
+The build script takes its JDK and SDK from `JAVA_HOME` / `ANDROID_HOME` when you set them, and asks
+`android-env.sh` otherwise — the same script decides on Windows ([On Windows](#on-windows)).
 
 **Back up your settings:** `./backup-settings.sh` saves Talkies settings, the dock and app order, hidden apps, remote
 keys, channels, football leagues, the keys and the weather area (and your `wallpaper.jpg`) to `talkies-backup.json`
@@ -138,3 +143,23 @@ screen the same way whatever density the TV reports.
   attaches `talkies.apk`.
 - Talkies uses an accessibility service, which is fine for sideloading but not allowed on Google Play for this
   purpose.
+
+## On Windows
+
+The scripts run in Git Bash (part of [Git for Windows](https://git-scm.com/downloads/win)), not in `cmd` or PowerShell,
+and need neither WSL nor `/opt/homebrew`. `android-env.sh`, new and at the top of the project, works out the JDK and
+the SDK for the system it's on — Microsoft's JDK 17 through the `java` on your PATH, the SDK in `C:\Android` or
+wherever you keep it — and writes `local.properties` when it's missing. Anything you put in `JAVA_HOME` /
+`ANDROID_HOME` beats all of that.
+
+- The `.sh` files are forced to LF by `.gitattributes`. If the tree shows files as modified when you haven't touched
+  anything, that's Git for Windows' `stat` cache: there's nothing to undo, `git diff` comes back empty.
+- `release-apk.sh` looks for `apksigner.bat` on Windows, and picks the build-tools by version rather than by
+  alphabetical order.
+- `release-apk.sh` refuses to publish a tree that isn't committed, a version with no `CHANGELOG.md` section, a
+  `versionCode` that hasn't gone up, or a GitHub release that doesn't point at the commit being built (`--force` still
+  makes it listen).
+- `restore.sh` asks before uninstalling (`--yes` for scripts and AI assistants), and `switch-home.sh` and `restore.sh`
+  no longer define a function called `sh`, which used to hide the real shell under Git Bash.
+- The CI in `.github/workflows/build.yml` builds the debug APK and the minified release one, and checks the version
+  and the CHANGELOG agree.

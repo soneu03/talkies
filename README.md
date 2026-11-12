@@ -5,6 +5,10 @@
 <h1 align="center">Talkies</h1>
 
 <p align="center">
+  English · <a href="README.es.md">Español</a>
+</p>
+
+<p align="center">
   A small, ad-free home screen for Android TV and Google TV.<br>
   One calm screen: your apps, what's trending where you live, live cricket and football, light by day and dark at night.
 </p>
@@ -18,7 +22,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/rajupp/talkies/releases/latest"><b>Latest release</b></a> (about 220 KB) · free and open source (MIT) · made by Raju · <a href="https://techpp.com">TechPP</a>
+  <a href="https://github.com/rajupp/talkies/releases/latest"><b>Latest release</b></a> (about 260 KB) · free and open source (MIT) · made by Raju · <a href="https://techpp.com">TechPP</a>
 </p>
 
 ## What you get

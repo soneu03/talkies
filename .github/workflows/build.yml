@@ -1,0 +1,47 @@
+name: build
+# What this proves, and what it can't: every push builds the app, and builds it twice. The release build is the one
+# that matters here - minification and resource shrinking only break in that configuration, and with no tests they are
+# the changes a person can't see coming. It can't check the signing key (release.properties never comes to CI), so the
+# release build here carries the debug key on purpose; ./release-apk.sh is what refuses to publish anything else.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Build, plain and minified
+        run: ./gradlew --no-daemon assembleDebug assembleRelease
+
+      - name: What came out
+        run: ls -l app/build/outputs/apk/*/*.apk
+
+      - name: The version in build.gradle is a version CHANGELOG.md tells
+        run: |
+          NAME="$(sed -n "s/.*versionName '\(.*\)'.*/\1/p" app/build.gradle | head -1)"
+          CODE="$(sed -n 's/^[[:space:]]*versionCode \([0-9]*\).*/\1/p' app/build.gradle | head -1)"
+          echo "versionName $NAME, versionCode $CODE"
+          tr -d '\r' < CHANGELOG.md | awk -v s="## $NAME" 'index($0, s " ") == 1 || $0 == s { found = 1; exit }
+                                                        END { exit found ? 0 : 1 }' || {
+            echo "CHANGELOG.md has no '## $NAME' section. Write what this version is before pushing it."; exit 1; }
+
+      - name: Still no libraries
+        run: |
+          N="$(grep -cE '^[[:space:]]*(implementation|api|compileOnly|runtimeOnly|testImplementation)[[:space:]]' app/build.gradle)"
+          [ "$N" = 0 ] || {
+            echo "app/build.gradle now asks for $N artifact(s), and Talkies has shipped with none.";
+            echo "That is a decision, not a detail: THIRD_PARTY_NOTICES.md, a ProGuard look and the ~260 KB APK all";
+            echo "move with it. Say why in docs/building.md and let this check know you meant it."; exit 1; }
+
+      - name: The scripts still parse
+        run: for f in *.sh gradlew; do bash -n "$f" || exit 1; done
