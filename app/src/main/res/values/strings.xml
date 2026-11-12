@@ -4,7 +4,7 @@
     <string name="sleep_service_description">Keeps Talkies as your home screen (the Home button opens it, and it opens over the Google TV home screen, except right after the Assistant shows results there), puts the TV in standby for Turn off now and the sleep timer, and types a cricket match into JioHotstar\'s search when you pick its card. It filters only the Home button and watches only JioHotstar\'s, Google TV\'s and the Assistant\'s windows. When you press Home in an app it asks which app that was, for Recent apps.</string>
     <string name="watch_service_label">Talkies: recently watched</string>
 
-    <!-- Phase 1 of the app's own translation (docs/l10n.md): the menu that holds OK opens, the All apps button and
+    <!-- Phase 1 of the app's own translation (docs/l10n.en.md): the menu that holds OK opens, the All apps button and
          the Language row. The rest of Home still speaks English in code; each phase moves a screen over whole, so a
          language never splits one menu in two. -->
     <string name="add_to_dock">Add to dock</string>

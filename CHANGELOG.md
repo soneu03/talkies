@@ -13,14 +13,17 @@ features, a new fix number only fixes. The version shows in Talkies settings →
   developer options on first; **Turn off** now puts both switches down, not only the old one. The Android 11+ switch is
   read first, because on current TVs it is the only one that is on (measured on a MiTV, where the classic
   `adb_enabled` stays at 0 while the TV answers on 5555). What
-  [docs/building.md](docs/building.md#connect-to-the-tv) asks you to turn on can now be checked on the TV itself.
+  [docs/building.en.md](docs/building.en.md#connect-to-the-tv) asks you to turn on can now be checked on the TV itself.
 - **Talkies settings → Language**: Auto, English or Español. Following the TV is not enough on its own, because many
   TVs stay on "English (United States)" wherever they are sold. The first things to move into resources are the menu
   hold-OK opens on an app, the All apps button and Android's own warning about the accessibility service; the rest
-  follow screen by screen, in the order [docs/l10n.md](docs/l10n.md) sets out.
-- **The docs in Spanish**: [README.es.md](README.es.md), [docs/guide.es.md](docs/guide.es.md),
-  [docs/building.es.md](docs/building.es.md) and [docs/l10n.es.md](docs/l10n.es.md), each with a link back to the
-  English.
+  follow screen by screen, in the order [docs/l10n.en.md](docs/l10n.en.md) sets out.
+- **Spanish is what the docs show first**: [README.md](README.md), [docs/guide.md](docs/guide.md),
+  [docs/building.md](docs/building.md) and [docs/l10n.md](docs/l10n.md) are the Spanish ones, which is what GitHub
+  puts on the front page, and the English that was there before sits beside each of them as `README.en.md`,
+  `docs/guide.en.md`, `docs/building.en.md` and `docs/l10n.en.md`. Every link follows its own language: an English
+  page links English pages, a Spanish page Spanish ones, and the scripts and code comments, which are written in
+  English, point at the `.en` files.
 - **Building on Windows**: the scripts keep LF endings through `.gitattributes`, and `android-env.sh` finds JDK 17
   and the SDK wherever the machine keeps them instead of assuming Homebrew paths. Paths on the TV are written
   `//sdcard/…` from now on: Git Bash rewrites an argument that starts with one `/` into a Windows path, so
@@ -463,8 +466,8 @@ features, a new fix number only fixes. The version shows in Talkies settings →
   notification access and the Wi-Fi name and Watch Next permissions, each one OK away. Talkies also asks for the two
   permissions the first time it opens, so an APK installed without a computer works fully.
 - **A README for everyone**: install without a computer (the Downloader app), with one, or through an AI assistant,
-  then a first-time checklist, updates, privacy and fixes. The full reference moved to `docs/guide.md`, and building
-  from source to `docs/building.md`.
+  then a first-time checklist, updates, privacy and fixes. The full reference moved to `docs/guide.en.md`, and building
+  from source to `docs/building.en.md`.
 
 ### Changed
 - **Up lands on Control Center** the first time, instead of Inputs; after that it still goes to the icon you used

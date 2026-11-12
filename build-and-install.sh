@@ -22,7 +22,7 @@ fi
 echo "== Building"
 if [ ! -f "$HERE/release.properties" ]; then
   echo "   No release.properties here, so this APK gets the debug key: fine on your own TV, but it won't install"
-  echo "   over an official Talkies and it can't update itself (docs/building.md -> Signing and releases)."
+  echo "   over an official Talkies and it can't update itself (docs/building.en.md -> Signing and releases)."
 fi
 (cd "$HERE" && ./gradlew -q assembleRelease)
 APK="$HERE/app/build/outputs/apk/release/app-release.apk"

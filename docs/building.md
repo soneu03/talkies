@@ -1,27 +1,27 @@
-# Building Talkies
+# Compilar Talkies
 
-*This document in: [English](building.md) · [español](building.es.md)*
+*(Este documento en: [English](building.en.md) · español)*
 
-For changing Talkies, or installing it from source. To just install it, the ready APK in the
-[README](../README.md#install) is simpler. Everything Talkies does is in the [guide](guide.md).
+Para modificar Talkies, o instalarlo desde el código fuente. Si solo quieres instalarlo, es más simple el APK
+listo del [README](../README.md#instalación). Todo lo que hace Talkies está en la [guía](guide.md).
 
-- [What you need](#what-you-need)
-- [Connect to the TV](#connect-to-the-tv)
-- [Build and install](#build-and-install)
-- [Install by hand](#install-by-hand)
+- [Qué necesitas](#qué-necesitas)
+- [Conectar con el TV](#conectar-con-el-tv)
+- [Compilar e instalar](#compilar-e-instalar)
+- [Instalar a mano](#instalar-a-mano)
 - [Scripts](#scripts)
-- [Signing and releases](#signing-and-releases)
-- [On Windows](#on-windows)
+- [Firma y versiones publicadas](#firma-y-versiones-publicadas)
+- [En Windows](#en-windows)
 
-## What you need
+## Qué necesitas
 
 | | |
 |---|---|
-| **The TV** | Android TV or Google TV, **Android 8.0 (API 26) or newer**. The install script checks this before building. |
-| **A computer** | On the same Wi-Fi as the TV. macOS or Linux run the scripts as they are; on Windows run them in Git Bash (see [On Windows](#on-windows)), or use the commands under [Install by hand](#install-by-hand). |
-| **Tools** | `adb` (Android platform tools), JDK 17, and the Android SDK command-line tools with platform 35. |
+| **El TV** | Android TV o Google TV, **Android 8.0 (API 26) o posterior**. El script de instalación lo comprueba antes de compilar. |
+| **Un ordenador** | En la misma Wi-Fi que el TV. macOS y Linux ejecutan los scripts tal cual; en Windows ejecútalos en Git Bash (mira [En Windows](#en-windows)), o usa las órdenes de [Instalar a mano](#instalar-a-mano). |
+| **Herramientas** | `adb` (Android platform tools), JDK 17 y las Android SDK command-line tools con la plataforma 35. |
 
-Installing the tools on macOS with [Homebrew](https://brew.sh):
+Instala las herramientas en macOS con [Homebrew](https://brew.sh):
 
 ```bash
 brew install openjdk@17
@@ -29,61 +29,63 @@ brew install --cask android-platform-tools android-commandlinetools
 sdkmanager "platforms;android-35" "build-tools;35.0.0"
 ```
 
-On Linux, install JDK 17 and `adb` from your package manager and the
-[command-line tools](https://developer.android.com/studio#command-line-tools-only) from Google, then run the same
-`sdkmanager` line. If yours aren't in Homebrew's paths, set `JAVA_HOME` and `ANDROID_HOME`. The first build downloads
-Gradle, so it takes a few minutes.
+En Linux, instala el JDK 17 y `adb` con tu gestor de paquetes y las
+[command-line tools](https://developer.android.com/studio#command-line-tools-only) de Google, y ejecuta la misma
+línea de `sdkmanager`. Si los tuyos no están en las rutas de Homebrew, define `JAVA_HOME` y `ANDROID_HOME`. La
+primera compilación descarga Gradle, así que tarda unos minutos.
 
-## Connect to the TV
+## Conectar con el TV
 
-1. **On the TV**, turn on developer options (Settings → Device Preferences → About → press **Build** seven times),
-   then **USB debugging** / **Network debugging** in Developer options. Note the TV's IP address
-   (Settings → Network & Internet → your Wi-Fi network), something like `192.168.0.105`.
+1. **En el TV**, activa las opciones de desarrollador (Settings → Device Preferences → About → pulsa **Build**
+   siete veces) y después **USB debugging** / **Network debugging** en Developer options. Apunta la dirección IP
+   del TV (Settings → Network & Internet → tu red Wi-Fi), algo como `192.168.0.105`.
 
-   Talkies settings → Network debugging shows both switches with what they are doing, so you can read this on the TV
-   itself: whether developer options are on, and whether debugging is reachable over the network.
+   Talkies settings → Network debugging enseña los dos interruptores con lo que están haciendo, así que eso se puede
+   leer en la propia TV: si las opciones de desarrollador están activas y si la depuración es accesible por la red.
 
-   **No Network debugging, only Wireless debugging?** Newer TVs (Android 11 and later) may only offer *Wireless
-   debugging*, which needs pairing once. Open it on the TV, choose **Pair device with pairing code**, and on the
-   computer run `adb pair` with the address and code it shows (the pairing port is different from the connect
-   port):
+   **¿Sin Network debugging, solo Wireless debugging?** Los TV más recientes (Android 11 o posterior) a veces solo
+   ofrecen *Wireless debugging*, que hay que emparejar una vez. Ábrelo en el TV, elige **Pair device with pairing
+   code** y, en el ordenador, ejecuta `adb pair` con la dirección y el código que muestra (el puerto de emparejamiento
+   es distinto del de conexión):
    ```bash
    adb pair 192.168.1.20:37123
    ```
-   Then use the address and port shown under **Wireless debugging** itself (not 5555) in the steps below.
+   Después usa en los pasos de abajo la dirección y el puerto que aparecen dentro de **Wireless debugging**
+   (no el 5555).
 
-   > **Every `192.168.1.20` here is an example.** Put your own TV's address in its place; `:5555` stays as it is
-   > (it's the port network debugging uses).
-2. **Connect once** and accept "Allow debugging?" on the TV:
+   > **Todas las `192.168.1.20` de este doc son un ejemplo.** Pon en su lugar la dirección de tu TV; `:5555` se
+   > queda igual (es el puerto que usa network debugging).
+2. **Conecta una vez** y acepta "Allow debugging?" en el TV:
    ```bash
    adb connect 192.168.1.20:5555
    ```
-3. **Tell the scripts which TV** (this file stays on your computer; git ignores it):
+3. **Dile a los scripts qué TV** (este archivo se queda en tu ordenador; git lo ignora):
    ```bash
    echo 192.168.1.20:5555 > .tv
    ```
-   For the `adb` commands in these docs, also `export TALKIES_TV=192.168.1.20:5555`.
+   Para las órdenes `adb` de esta documentación, exporta también `TALKIES_TV=192.168.1.20:5555`.
 
-## Build and install
+## Compilar e instalar
 
-1. **Choose your dock** in `app/src/main/res/values/dock.xml` (package names; list yours with the command under
-   [Rearrange apps](guide.md#rearrange-apps)). You can rearrange on the TV later.
-2. **Build and install**: `./build-and-install.sh`. It makes Talkies the home screen and grants the permissions it
-   can (location for the Wi-Fi name, TV listings for Watch Next), and puts back keys saved by the key scripts.
-3. **On the TV**, finish the [first-time setup](../README.md#first-time-setup) (Accessibility and notification
-   access).
-4. **Keys and your weather area**: on the TV in Talkies settings → **Keys and location**, or from here:
+1. **Elige tu dock** en `app/src/main/res/values/dock.xml` (nombres de paquete; los tuyos los listas con la orden
+   de [Reordenar apps](guide.md#reordenar-apps)). Después puedes reordenarlos en el TV.
+2. **Compila e instala**: `./build-and-install.sh`. Deja Talkies como pantalla de inicio, concede los permisos que
+   puede (ubicación para el nombre de la Wi-Fi, lista de canales para Watch Next) y restaura las claves que
+   guardaron los scripts de claves.
+3. **En el TV**, completa la [configuración inicial](../README.md#configuración-inicial) (Accessibility y acceso a las
+   notificaciones).
+4. **Las claves y tu zona del tiempo**: en el TV, en Talkies settings → **Keys and location**, o desde aquí:
    ```bash
    ./set-tmdb-key.sh                    # picks (paste the key when it asks)
    ./set-location.sh "Camden, London"   # weather: a place, or "lat,lon"
    ```
-   Keys are stored on the TV and in git-ignored files next to the scripts; your location only on the TV. Neither is
-   in the app or the repository.
+   Las claves se guardan en el TV y en archivos junto a los scripts que git ignora; tu ubicación solo en el TV.
+   Ninguna de las dos está en la app ni en el repositorio.
 
-## Install by hand
+## Instalar a mano
 
-What `build-and-install.sh` does, one command at a time (and the way without Git Bash, where `gradlew.bat` is the same
-build).
+Lo que hace `build-and-install.sh`, una orden cada vez (y el camino también sin Git Bash, donde `gradlew.bat` es la
+misma compilación).
 
 ```bash
 ./gradlew assembleRelease                                   # → app/build/outputs/apk/release/app-release.apk
@@ -94,16 +96,17 @@ adb -s 192.168.1.20:5555 shell pm grant com.techpp.glass android.permission.ACCE
 adb -s 192.168.1.20:5555 shell pm grant com.techpp.glass android.permission.READ_TV_LISTINGS       # Watch Next
 ```
 
-Optional keys are plain text files the app reads from its folder on the TV:
+Las claves opcionales son archivos de texto plano que la app lee de su carpeta en el TV:
 
 ```bash
 adb -s 192.168.1.20:5555 shell mkdir -p /sdcard/Android/data/com.techpp.glass/files
 adb -s 192.168.1.20:5555 push tmdb_key.txt /sdcard/Android/data/com.techpp.glass/files/
 ```
 
-**Google TV only:** leave its launcher and setup wizard (`com.google.android.tungsten.setupwraith`) on, although both
-answer Home: Talkies' Accessibility switch keeps the Home button on Talkies. The screensaver needs the wizard for your
-Google Photos. More in the guide: [Google TV's setup wizard](guide.md#google-tvs-setup-wizard).
+**Solo Google TV:** deja activados su launcher y su setup wizard (`com.google.android.tungsten.setupwraith`), aunque
+los dos responden a Home: el interruptor de Accessibility de Talkies mantiene el botón Home en Talkies. El
+salvapantallas necesita el wizard para tus fotos de Google Photos. Más en la guía:
+[El asistente de configuración de Google TV](guide.md#el-asistente-de-configuración-de-google-tv).
 
 ## Scripts
 
@@ -119,55 +122,58 @@ Google Photos. More in the guide: [Google TV's setup wizard](guide.md#google-tvs
 ./release-apk.sh                       # maintainer only: attach the signed talkies.apk to this version's release
 ```
 
-Every script takes the TV's address as an optional last argument; otherwise it uses `TALKIES_TV` or the `.tv` file.
-The build script takes its JDK and SDK from `JAVA_HOME` / `ANDROID_HOME` when you set them, and asks
-`android-env.sh` otherwise — the same script decides on Windows ([On Windows](#on-windows)).
+Todos los scripts aceptan la dirección del TV como último argumento opcional; si no, usan `TALKIES_TV` o el archivo
+`.tv`. El script de compilación usa las rutas de Homebrew salvo que `JAVA_HOME` / `ANDROID_HOME` digan otra cosa
+(en Windows decide `android-env.sh`: mira [En Windows](#en-windows)).
 
-**Back up your settings:** `./backup-settings.sh` saves Talkies settings, the dock and app order, hidden apps, remote
-keys, channels, football leagues, the keys and the weather area (and your `wallpaper.jpg`) to `talkies-backup.json`
-next to the scripts. After an uninstall, or on another TV, install Talkies, open it once, and run
-`./restore-settings.sh`: it starts again with everything as it was. The picks, scores and weather aren't in it; they
-fetch again. The file holds your keys, so git ignores it; keep it private.
+**Guarda tus ajustes:** `./backup-settings.sh` guarda los ajustes de Talkies, el dock y el orden de las apps, las
+apps ocultas, las teclas del mando, los canales, las ligas de fútbol, las claves y la zona del tiempo (y tu
+`wallpaper.jpg`) en `talkies-backup.json`, junto a los scripts. Tras desinstalar, o en otro TV, instala Talkies,
+ábrelo una vez y ejecuta `./restore-settings.sh`: arranca de nuevo con todo como estaba. Las recomendaciones, las
+valoraciones y el tiempo no están en el archivo; se vuelven a descargar. El archivo guarda tus claves, así que git
+lo ignora; mantenlo en privado.
 
-**Screens:** the layout is drawn for a 960 × 540 dp screen and scales itself to any TV's width, so it fills the
-screen the same way whatever density the TV reports.
+**Pantallas:** el diseño se dibuja para una pantalla de 960 × 540 dp y se escala solo al ancho de cualquier TV, así
+que ocupa la pantalla igual sea cual sea la densidad que reporte el TV.
 
-## Signing and releases
+## Firma y versiones publicadas
 
-- **Your build** is signed with your computer's debug key. A build from another computer, or the release APK, can't
-  install over it: uninstall first (back up your settings before). It can't take updates from Talkies settings →
-  Updates either, and it never asks for them: a build without the project's key doesn't check GitHub, doesn't show
-  the bell and doesn't even list the Updates row, so new versions reach it by building and installing again.
-- **The release APK** (`talkies.apk` on each release) is signed with the project's key, which only the maintainer
-  has (`release.properties`, never in git). Talkies only installs updates signed with that key.
-- **Making a release** (maintainer): bump `versionCode` and `versionName` in `app/build.gradle` and the CHANGELOG,
-  write the short notes Talkies shows after the update in `app/src/main/assets/whats_new.md` (a bold name, one
-  sentence, where to find it),
-  commit, tag `vX.Y.Z`, push, `gh release create vX.Y.Z`, then `./release-apk.sh` builds, checks the signature and
-  attaches `talkies.apk`.
-- Talkies uses an accessibility service, which is fine for sideloading but not allowed on Google Play for this
-  purpose.
+- **Tu compilación** va firmada con la clave de depuración de tu ordenador. Una compilación de otro ordenador, o el
+  APK de la release, no se puede instalar encima: desinstala primero (antes guarda tus ajustes). Tampoco puede
+  recibir actualizaciones desde Talkies settings → Updates, y tampoco las pide: una compilación sin la clave del
+  proyecto no comprueba GitHub, no muestra la campana y ni siquiera lista la fila Updates, así que las versiones
+  nuevas le llegan volviendo a compilar e instalar.
+- **El APK de la versión publicada** (`talkies.apk` en cada release) va firmado con la clave del proyecto, que solo
+  tiene el mantenedor (`release.properties`, nunca en git). Talkies solo instala actualizaciones firmadas con esa
+  clave.
+- **Hacer una release** (mantenedor): sube `versionCode` y `versionName` en `app/build.gradle` y en el CHANGELOG,
+  escribe en `app/src/main/assets/whats_new.md` las notas breves que Talkies muestra tras la actualización (un
+  nombre en negrita, una frase, dónde encontrarlo),
+  commitea, crea la etiqueta `vX.Y.Z`, haz push, `gh release create vX.Y.Z` y después `./release-apk.sh` compila,
+  comprueba la firma y adjunta `talkies.apk`.
+- Talkies usa un servicio de accesibilidad, que es válido para sideloading pero Google Play no lo permite para este
+  fin.
 
-## On Windows
+## En Windows
 
-The scripts run in Git Bash (part of [Git for Windows](https://git-scm.com/downloads/win)), not in `cmd` or PowerShell,
-and need neither WSL nor `/opt/homebrew`. `android-env.sh`, new and at the top of the project, works out the JDK and
-the SDK for the system it's on — Microsoft's JDK 17 through the `java` on your PATH, the SDK in `C:\Android` or
-wherever you keep it — and writes `local.properties` when it's missing. Anything you put in `JAVA_HOME` /
-`ANDROID_HOME` beats all of that.
+Los scripts corren bajo [Git Bash](https://git-scm.com/downloads/win) (no con `cmd` ni PowerShell) y no hacen falta
+WSL ni `/opt/homebrew`.
+`android-env.sh`, nuevo y en la raíz, detecta el JDK y el SDK según el sistema operativo (el JDK 17 de Microsoft por
+la `java` del PATH, el SDK en `C:\Android` o donde lo tengas) y escribe `local.properties` si falta; lo que tú
+pongas en `JAVA_HOME` / `ANDROID_HOME` manda sobre todo eso.
 
-- The `.sh` files are forced to LF by `.gitattributes`. If the tree shows files as modified when you haven't touched
-  anything, that's Git for Windows' `stat` cache: there's nothing to undo, `git diff` comes back empty.
-- `release-apk.sh` looks for `apksigner.bat` on Windows, and picks the build-tools by version rather than by
-  alphabetical order.
-- `release-apk.sh` refuses to publish a tree that isn't committed, a version with no `CHANGELOG.md` section, a
-  `versionCode` that hasn't gone up, or a GitHub release that doesn't point at the commit being built (`--force` still
-  makes it listen).
-- `restore.sh` asks before uninstalling (`--yes` for scripts and AI assistants), and `switch-home.sh` and `restore.sh`
-  no longer define a function called `sh`, which used to hide the real shell under Git Bash.
-- Paths *on the TV* are written `//sdcard/…` in these scripts. Git Bash rewrites an argument starting with a single `/`
-  into a Windows path before the program sees it, so `adb pull /sdcard/Android/data/…` was looking in
-  `C:\Program Files\Git\sdcard\…` and `./backup-settings.sh` said Talkies hadn't written a backup when it had.
-  `tv-address.sh` says why, and local paths keep the single slash — those are the ones the rewrite is for.
-- The CI in `.github/workflows/build.yml` builds the debug APK and the minified release one, and checks the version
-  and the CHANGELOG agree. It runs only when you start it (Actions → build → *Run workflow*), never on a push.
+- Los `.sh` están forzados a LF con un `.gitattributes`. Si el árbol aparece "modificado" sin que hayas tocado
+  nada, es la caché de `stat` de Git para Windows: no hay cambios reales (`git diff` sale vacío).
+- `release-apk.sh` busca `apksigner.bat` en Windows y elige los build-tools por versión, no por orden lexicográfico.
+- `release-apk.sh` se niega a publicar si el árbol no está commiteado, si `CHANGELOG.md` no tiene la sección de la
+  versión, si el `versionCode` no ha subido o si el release de GitHub no apunta al commit que se compila
+  (`--force` para saltarse esos comprobadores).
+- `restore.sh` pregunta antes de desinstalar (`--yes` para scripts) y `switch-home.sh` / `restore.sh` ya no definen
+  una función llamada `sh`, que en Git Bash tapaba la real.
+- Las rutas *dentro de la TV* se escriben `//sdcard/…` en estos scripts. Git Bash convierte un argumento que empieza
+  por una sola `/` en una ruta de Windows antes de que el programa lo vea, así que `adb pull /sdcard/Android/data/…`
+  buscaba en `C:\Program Files\Git\sdcard\…` y `./backup-settings.sh` decía que Talkies no había escrito un respaldo
+  cuando sí lo había. `tv-address.sh` explica el porqué, y las rutas locales mantienen una sola barra: para esas es
+  para lo que existe la conversión.
+- La CI de `.github/workflows/build.yml` compila la debug y la release (la de minificación) y comprueba la versión
+  y el CHANGELOG. Solo corre cuando la arrancas tú (Actions → build → *Run workflow*), nunca con un push.

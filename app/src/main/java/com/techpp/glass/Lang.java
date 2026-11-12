@@ -10,7 +10,7 @@ import java.util.Locale;
  * The language Talkies speaks, which is not the TV's often enough to be worth a setting: plenty of TVs stay on
  * "English (United States)" wherever they are sold, and a Spanish screen then has no way to ask for Spanish.
  * Auto follows the TV; English and Español say otherwise.
- * Only Talkies' own words (docs/l10n.md). What country the picks, the scores and °C/°F come from is Region's
+ * Only Talkies' own words (docs/l10n.en.md). What country the picks, the scores and °C/°F come from is Region's
  * business, and that reads the TV's time zone and the system locale, which this leaves alone: choosing Spanish
  * here changes no data, only the labels.
  */

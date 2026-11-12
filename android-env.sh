@@ -48,7 +48,7 @@ env_check() {
     return 1
   fi
   if [ -z "${ANDROID_HOME:-}" ] || [ ! -d "$ANDROID_HOME/platforms" ]; then
-    echo "!! No Android SDK. Set ANDROID_HOME (docs/building.md) or install Android Studio." >&2
+    echo "!! No Android SDK. Set ANDROID_HOME (docs/building.en.md) or install Android Studio." >&2
     return 1
   fi
   # Gradle reads local.properties first; it is git-ignored, so writing it only ever helps this machine.
