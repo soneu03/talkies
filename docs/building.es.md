@@ -108,7 +108,7 @@ salvapantallas necesita el wizard para tus fotos de Google Photos. Más en la gu
 ## Scripts
 
 ```bash
-./build-and-install.sh                 # optimised build (about 260 KB, no libraries), install, set as home
+./build-and-install.sh                 # optimised build (about 270 KB, no libraries), install, set as home
 ./restore.sh                           # the TV's own home screen back, Talkies removed
 ./restore.sh --keep-talkies            # the TV's own home screen back, Talkies kept
 ./switch-home.sh list|talkies|stock    # choose the home screen (see the guide)

@@ -22,7 +22,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/rajupp/talkies/releases/latest"><b>Última versión</b></a> (unos 260 KB) · gratis y de código abierto (MIT) · hecha por Raju · <a href="https://techpp.com">TechPP</a>
+  <a href="https://github.com/rajupp/talkies/releases/latest"><b>Última versión</b></a> (unos 270 KB) · gratis y de código abierto (MIT) · hecha por Raju · <a href="https://techpp.com">TechPP</a>
 </p>
 
 ## Qué te llevas

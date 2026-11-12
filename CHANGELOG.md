@@ -19,6 +19,11 @@ features, a new fix number only fixes. The version shows in Talkies settings →
   `versionCode` and CHANGELOG.md stop agreeing.
 
 ### Changed
+- **Recent apps, redone.** The focused card is much bigger, with its neighbours peeking in at each side. A card shows
+  what you last watched in the app when Talkies knows it (the Continue picture, with its title and how far in you are),
+  else the app's logo as before. The focused card's colours glow softly behind everything, the app's name sits on the
+  card's top edge, and OK grows the card to fill the screen as its app opens. The layout is after
+  [Flow launcher](https://github.com/sghmire/flow-launcher-tv)'s.
 - **An update is checked the same way every time.** GitHub's SHA-256 is now required before a byte is downloaded, and
   an APK signed by more than one key is refused; either check could quietly not happen before.
 - **Nothing leaves the TV unencrypted** on Android 8 either, which allowed it unless told otherwise (the newer ones
@@ -28,6 +33,15 @@ features, a new fix number only fixes. The version shows in Talkies settings →
   commit it is building (`--force` still means it will listen).
 - **`./restore.sh` asks before uninstalling Talkies** (`--yes` for scripts and AI assistants), and the scripts no
   longer define a function called `sh`, which used to hide the shell itself.
+
+## 1.3.0 — 12 November 2026
+
+### Added
+- **Football during international breaks.** Football leagues adds the **Nations League** and **international
+  friendlies**, on unless you've picked your own leagues, so the Football row has matches when the club leagues stop.
+  From @dossantosee.
+
+### Changed
 - **Focus is easier to see.** The focused card keeps its lift and gains a thin light outline, so it stands out on dark
   posters too. Talkies settings → Focus now has three choices: Outline (new, the default), Lift and Ring. If you had
   chosen Lift or Ring, that's kept.
@@ -48,10 +62,10 @@ features, a new fix number only fixes. The version shows in Talkies settings →
 ### Fixed
 - **Apps you install or uninstall show up on Home right away.** Talkies missed changes made while it was in the
   background, in the Play Store or Settings, until the TV restarted. Thanks to Ganeshkumar for reporting it.
-- **Fire TV: Inputs switch to the HDMI port.** They opened Live TV's settings instead; Talkies now asks Fire TV the way
-  its own Inputs menu does. Thanks to Macario for the log that showed how. If Fire TV refuses that, Talkies asks
-  Amazon's input switch service instead, with the TCL Fire TV's own number for HDMI 4 (from
-  [Free My TV](https://github.com/simbasjungles/free-my-tv), tested there on Xiaomi and TCL Fire TVs).
+- **Fire TV: Inputs try harder to switch to the HDMI port.** They opened Live TV's settings; Talkies now also tries
+  Amazon's input switch service, with the TCL Fire TV's own number for HDMI 4 (from
+  [Free My TV](https://github.com/simbasjungles/free-my-tv), tested there on Xiaomi and TCL Fire TVs). Some Fire TVs
+  still open Live TV's settings; a further fix is being tested. Thanks to Macario for the logs.
 - **Sony: each app button can have its own job.** Five of them send Android the same key, so Remote keys treated them
   as one; Talkies now tells them apart by the remote's own code. A job you gave one of them before needs setting again.
 - **Xiaomi: a button with a new job does it once.** Some Xiaomi remotes send one press as several.

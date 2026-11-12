@@ -22,7 +22,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/rajupp/talkies/releases/latest"><b>Latest release</b></a> (about 260 KB) · free and open source (MIT) · made by Raju · <a href="https://techpp.com">TechPP</a>
+  <a href="https://github.com/rajupp/talkies/releases/latest"><b>Latest release</b></a> (about 270 KB) · free and open source (MIT) · made by Raju · <a href="https://techpp.com">TechPP</a>
 </p>
 
 ## What you get

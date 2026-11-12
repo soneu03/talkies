@@ -39,7 +39,7 @@ jobs:
         run: |
           if grep -nE '^[[:space:]]*(implementation|api|compileOnly|runtimeOnly|testImplementation)[[:space:]]' app/build.gradle; then
             echo "app/build.gradle now asks for the artifact(s) above, and Talkies has shipped with none.";
-            echo "That is a decision, not a detail: THIRD_PARTY_NOTICES.md, a ProGuard look and the ~260 KB APK all";
+            echo "That is a decision, not a detail: THIRD_PARTY_NOTICES.md, a ProGuard look and the ~270 KB APK all";
             echo "move with it. Say why in docs/building.md and let this check know you meant it."; exit 1;
           fi
 

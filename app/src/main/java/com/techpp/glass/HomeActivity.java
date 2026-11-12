@@ -1513,7 +1513,7 @@ public class HomeActivity extends Activity {
         String kind = m.kind.isEmpty() ? "" : m.kind + "  ·  ";
         String status = m.live ? "LIVE  " + kind + m.status : !m.ended && m.start != null ? kind + "starts " + m.start : kind + m.status;
         SpannableStringBuilder sb = new SpannableStringBuilder(status);
-        if (m.live) sb.setSpan(new PillSpan(0xFFE5383B, 0xFFFFFFFF, px(7), px(6)), 0, 4, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        if (m.live) sb.setSpan(new PillSpan("LIVE", 0xFFE5383B, 0xFFFFFFFF, px(7), px(6)), 0, 4, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         st.setText(sb);
         st.setSingleLine(true);
         st.setEllipsize(android.text.TextUtils.TruncateAt.END);
@@ -1572,19 +1572,25 @@ public class HomeActivity extends Activity {
         return rounded(focused ? 0x33FFFFFF : 0x1AFFFFFF, focused ? 0x55FFFFFF : 0x2EFFFFFF, 10);
     }
 
-    /** A small filled pill behind a word in a line of text: "LIVE" on a match card. */
+    /**
+     * A small filled pill behind a word in a line of text: "LIVE" on a match card. It draws its own word, not the
+     * text it's given: where the line is cut short with an ellipsis, Android hands it placeholder characters instead.
+     */
     private static final class PillSpan extends android.text.style.ReplacementSpan {
+        private final String word;
         private final int fill, text;
         private final float padX, gap;
         private final RectF box = new RectF();
-        PillSpan(int fill, int text, float padX, float gap) { this.fill = fill; this.text = text; this.padX = padX; this.gap = gap; }
+        PillSpan(String word, int fill, int text, float padX, float gap) {
+            this.word = word; this.fill = fill; this.text = text; this.padX = padX; this.gap = gap;
+        }
 
         @Override public int getSize(android.graphics.Paint p, CharSequence s, int start, int end, android.graphics.Paint.FontMetricsInt fm) {
-            return Math.round(p.measureText(s, start, end) * 0.92f + 2 * padX + gap);
+            return Math.round(p.measureText(word) * 0.92f + 2 * padX + gap);
         }
 
         @Override public void draw(android.graphics.Canvas c, CharSequence s, int start, int end, float x, int top, int y, int bottom, android.graphics.Paint p) {
-            float size = p.getTextSize(), w = p.measureText(s, start, end) * 0.92f + 2 * padX;
+            float size = p.getTextSize(), w = p.measureText(word) * 0.92f + 2 * padX;
             int was = p.getColor();
             android.graphics.Paint.FontMetrics m = p.getFontMetrics();
             float mid = y + (m.ascent + m.descent) / 2f, h = size * 1.5f;
@@ -1595,7 +1601,7 @@ public class HomeActivity extends Activity {
             p.setTextSize(size * 0.92f);
             p.setFakeBoldText(true);
             android.graphics.Paint.FontMetrics sm = p.getFontMetrics();
-            c.drawText(s, start, end, x + padX, mid - (sm.ascent + sm.descent) / 2f, p);
+            c.drawText(word, x + padX, mid - (sm.ascent + sm.descent) / 2f, p);
             p.setFakeBoldText(false);
             p.setTextSize(size);
             p.setColor(was);
@@ -2324,7 +2330,9 @@ public class HomeActivity extends Activity {
         boolean nav = k == KeyEvent.KEYCODE_DPAD_UP || k == KeyEvent.KEYCODE_DPAD_DOWN
                 || k == KeyEvent.KEYCODE_DPAD_LEFT || k == KeyEvent.KEYCODE_DPAD_RIGHT;
         boolean back = k == KeyEvent.KEYCODE_BACK || k == KeyEvent.KEYCODE_ESCAPE;
-        if (!select && !nav && !back) return super.dispatchKeyEvent(e);
+        // Menu matters only on Recent apps' cards, where it opens a card's options.
+        boolean menuKey = k == KeyEvent.KEYCODE_MENU && recents != null;
+        if (!select && !nav && !back && !menuKey) return super.dispatchKeyEvent(e);
         lastKeyAt = android.os.SystemClock.uptimeMillis();
         if (nav && e.getAction() == KeyEvent.ACTION_DOWN) sampleSmoothness();
         // OK and Back act when let go, so a release whose press went to another app must do nothing here: an app
@@ -2337,6 +2345,7 @@ public class HomeActivity extends Activity {
             if (!ours) return true;
         }
         if (recents != null) {
+            if (recents.leaving()) return true;
             boolean down = e.getAction() == KeyEvent.ACTION_DOWN;
             if (down && (k == KeyEvent.KEYCODE_DPAD_LEFT || k == KeyEvent.KEYCODE_DPAD_RIGHT)) {
                 if (recents.move(k == KeyEvent.KEYCODE_DPAD_LEFT ? -1 : 1)) navigationSound(k);
@@ -5514,7 +5523,16 @@ public class HomeActivity extends Activity {
         for (String pkg : RecentApps.list(this)) {
             AppEntry a = appFor(pkg);
             if (a == null && pm.getLeanbackLaunchIntentForPackage(pkg) == null && pm.getLaunchIntentForPackage(pkg) == null) continue;  // uninstalled since
-            entries.add(new RecentsCards.Entry(pkg, a != null ? a.label : Channels.label(pm, pkg)));
+            RecentsCards.Entry entry = new RecentsCards.Entry(pkg, a != null ? a.label : Channels.label(pm, pkg));
+            // What you last watched there, if Continue knows (newest first): its picture fills the card.
+            for (Trending.Pick p : recentPicks) {
+                if (!pkg.equals(p.pkg) || p.image == null || p.artMissing || !p.image.exists()) continue;
+                entry.still = p.image;
+                entry.watched = p.title;
+                entry.progress = p.progress;
+                break;
+            }
+            entries.add(entry);
             found.add(a);
         }
         RecentsCards cards = new RecentsCards(this, entries, theme.tileBg, lite);
@@ -5530,17 +5548,34 @@ public class HomeActivity extends Activity {
             for (int i = 0; i < entries.size(); i++) {
                 RecentsCards.Entry e = entries.get(i);
                 int color;
-                android.graphics.Bitmap sized, blur;
+                android.graphics.Bitmap sized, blur, chip, still = null;
                 try {
+                    if (e.still != null) {
+                        // About the card's size: a 4K backdrop decoded whole is tens of megabytes.
+                        BitmapFactory.Options o = new BitmapFactory.Options();
+                        o.inJustDecodeBounds = true;
+                        BitmapFactory.decodeFile(e.still.getPath(), o);
+                        int sample = 1;
+                        while (o.outWidth / (sample * 2) >= cards.cardWidth()) sample *= 2;
+                        o = new BitmapFactory.Options();
+                        o.inSampleSize = sample;
+                        still = BitmapFactory.decodeFile(e.still.getPath(), o);
+                    }
                     Drawable d = artOf(e.pkg, found.get(i));
                     color = RecentsCards.colorOf(d, fallback);
                     blur = RecentsCards.blurOf(d);
                     sized = RecentsCards.rounded(d, cards.artWidth(), px(11));
+                    chip = still == null ? null : RecentsCards.rounded(d, px(50), px(5));
                 } catch (RuntimeException | OutOfMemoryError ex) {
                     Log.w(TAG, "No art for " + e.pkg, ex);
                     continue;  // its card stays plain
                 }
-                runOnUiThread(() -> { if (recents == cards) cards.showArt(e.pkg, sized, color, blur); });
+                android.graphics.Bitmap picture = still;
+                runOnUiThread(() -> {
+                    if (recents != cards) return;
+                    if (picture != null) cards.showStill(e.pkg, picture);
+                    cards.showArt(e.pkg, sized, color, blur, chip);
+                });
             }
         }, "Recents art");
         art.setPriority(Thread.NORM_PRIORITY - 1);
@@ -5579,7 +5614,14 @@ public class HomeActivity extends Activity {
         Intent open = pm.getLeanbackLaunchIntentForPackage(e.pkg);
         if (open == null) open = pm.getLaunchIntentForPackage(e.pkg);
         if (open == null) { closeRecents(); return; }  // uninstalled or disabled since the cards came up
-        startApp(open, null);
+        RecentsCards cards = recents;
+        Intent app = open;
+        // The card grows to fill the screen, then its app opens over it. If the app never comes up, the cards go.
+        cards.launch(() -> {
+            if (recents != cards) return;
+            startApp(app, null);
+            root.postDelayed(() -> { if (recents == cards) closeRecents(); }, 2500);
+        });
     }
 
     // ---------------------------------------------------------------- control center shortcuts
