@@ -27,7 +27,8 @@ while [ $# -gt 0 ]; do
   esac
 done
 [ "$MODE" = from ] || { . "$HERE/tv-address.sh"; DEV="${DEV:-$(tv_default)}"; need_tv; }
-[ -f "$OUT" ] || { echo "!! no bundle at $OUT." >&2; exit 1; }
+# Only --from reads a bundle someone else saved; live mode is about to write it.
+[ "$MODE" != from ] || [ -f "$OUT" ] || { echo "!! no bundle at $OUT." >&2; exit 1; }
 
 collect() {
   local A="adb -s $DEV shell -n"
@@ -38,8 +39,9 @@ collect() {
   echo "$($A wm density | tr -d '\r')"
   echo "##QUERY"
   # No projection: some builds name these columns differently, and the whole row is easier to read when a value is
-  # missing than a projection that quietly returns nothing.
-  $A content query --uri content://android.media.tv/watch_next_programs 2>/dev/null | tr -d '\r' || true
+  # missing than a projection that quietly returns nothing. The error stays in the bundle: adb shell isn't allowed to
+  # read Watch Next on every TV, and a table that says "0 rows" then blames the provider for our own lack of rights.
+  $A content query --uri content://android.media.tv/watch_next_programs 2>&1 | tr -d '\r' || true
   echo "##LOG"
   adb -s "$DEV" logcat -d -s GlassWatchNext:V GlassTrending:V GlassChannels:V 2>/dev/null | tr -d '\r' || true
   echo "##DISK"
@@ -102,7 +104,7 @@ sec == "s" {
 }
 
 sec == "q" {
-    if ($0 !~ /CursorRow/) next
+    if ($0 !~ /CursorRow/) { if (qerr == "" && $0 ~ /Error|Exception|denied|permission/) qerr = trim($0); next }
     pkg = value($0, "package_name")
     if (pkg == "") pkg = "(unknown package)"
     thumb = value($0, "thumbnail_uri")
@@ -174,9 +176,15 @@ END {
     cnt = keys_of(n, ks)
     for (i = 1; i <= cnt; i++) { p = ks[i]
         printf "%-38s %5d %7d %7d %9d\n", p, n[p], withThumb[p] + 0, withPoster[p] + 0, dup[p] + dupP[p] }
-    print "   rows = entries; thumb/poster = how many carry that address; reused = entries whose address another"
-    print "   entry already carries. A big reused column means the provider gives one picture per series, which no"
-    print "   code can invent; a zero thumb column means there is nothing to fetch at all."
+    if (cnt == 0) {
+        if (qerr != "") print "   nothing read: " qerr
+        print "   so this table is empty because adb shell has no right to ask the TV for Watch Next, not because the"
+        print "   TV has nothing to give. Read the two sections below (what Talkies fetched, what is on disk) instead."
+    } else {
+        print "   rows = entries; thumb/poster = how many carry that address; reused = entries whose address another"
+        print "   entry already carries. A big reused column means the provider gives one picture per series, which no"
+        print "   code can invent; a zero thumb column means there is nothing to fetch at all."
+    }
 
     print ""
     print "== What Talkies fetched (its log; a warm cache adds nothing to it)"
