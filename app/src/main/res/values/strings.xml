@@ -291,7 +291,7 @@
         <item quantity="one">%d min left</item>
         <item quantity="other">%d min left</item>
     </plurals>
-    <string name="storage_free_of">%1$s GB free of %2$s GB</string>
+    <string name="storage_free_of">%1$s of %2$s GB free</string>
     <string name="gb">GB</string>
     <string name="sc_network">Network</string>
     <string name="sc_bluetooth">Bluetooth</string>

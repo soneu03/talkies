@@ -3015,9 +3015,21 @@ public class HomeActivity extends Activity {
         return v;
     }
 
-    /** A cell: half a row, for the facts about the TV whose status is a word or two. Two make a line. */
+    /** A cell: half a row, for the facts about the TV whose status is a word or two. Two make a line, and the second
+     *  of them carries the rule between the columns - without it, one column's figure and the next one's name read
+     *  as a single phrase. */
     private View addCell(String label, String status, Runnable action, boolean keepOpen) {
-        return addIn(menuLine("cells", 2), R.layout.item_cc_cell, 0, label, status, action, keepOpen);
+        LinearLayout box = menuLine("cells", 2);
+        View v = addIn(box, R.layout.item_cc_cell, 0, label, status, action, keepOpen);
+        if (box.indexOfChild(v) == 1) rule(v, true);
+        return v;
+    }
+
+    /** The thin line between the two columns of a cells line, in the colour the menus are rimmed with. */
+    private void rule(View cell, boolean on) {
+        View r = cell.findViewById(R.id.cell_rule);
+        r.setVisibility(on ? View.VISIBLE : View.GONE);
+        r.setBackgroundColor(theme.menuStroke);
     }
 
     /**
@@ -5189,6 +5201,11 @@ public class HomeActivity extends Activity {
                 ((TextView) v).setTextColor("menuTitle".equals(tag) ? theme.text
                         : "menuCrumb".equals(tag) ? theme.menuValue : theme.menuAccent);
             }
+            // and the rule between the two columns of a cells line, which lives inside a row rather than beside one.
+            for (int i = 0; i < menuItems.size(); i++) {
+                View cell = menuItems.get(i), r = cell.findViewById(R.id.cell_rule);
+                if (r != null && r.getVisibility() == View.VISIBLE) rule(cell, true);
+            }
             focusMenu(menuIdx);
         }, true);
         addRow(getString(R.string.row_wallpaper), wallpaperLabel(), this::openWallpaperMenu, false);
@@ -6316,7 +6333,7 @@ public class HomeActivity extends Activity {
         start(i);
     }
 
-    /** "12.4 GB free of 32 GB": the TV's own storage, where apps and their data live. */
+    /** "12.4 of 32 GB free": the TV's own storage, where apps and their data live. */
     private String storageLine() {
         try {
             android.os.StatFs fs = new android.os.StatFs(android.os.Environment.getDataDirectory().getPath());

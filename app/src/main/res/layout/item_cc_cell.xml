@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- One Control Center cell: two of these across the sheet, for the facts about the TV whose status is short.
-     Half the sheet's width, so both lines give up their tail rather than their head: 302 dp of words, and the
-     longest status ("17,1 GB libres de 28,0 GB") takes 148 of them next to a 130 dp name. -->
+     Half the sheet's width, so both lines give up their tail rather than their head: 283 dp of words in the right
+     one (298 in the left, which carries no rule) against the widest pair there is - "Salida de sonido" and its
+     "Barra de sonido", 252 dp together.
+     The rule is the line between the two columns, shown only on the right one - without it, one column's figure and
+     the next column's name read as one phrase. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="0dp"
     android:layout_height="44dp"
@@ -10,6 +13,13 @@
     android:orientation="horizontal"
     android:paddingStart="10dp"
     android:paddingEnd="10dp">
+
+    <View
+        android:id="@+id/cell_rule"
+        android:layout_width="1dp"
+        android:layout_height="22dp"
+        android:layout_marginEnd="14dp"
+        android:visibility="gone" />
 
     <TextView
         android:id="@+id/input_label"
@@ -28,7 +38,7 @@
         android:layout_marginStart="8dp"
         android:ellipsize="end"
         android:fontFamily="@font/inter_tight"
-        android:maxWidth="150dp"
+        android:maxWidth="140dp"
         android:singleLine="true"
         android:textAlignment="viewEnd"
         android:textSize="12sp"

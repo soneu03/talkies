@@ -67,6 +67,11 @@ features, a new fix number only fixes. The version shows in Talkies settings →
   had, now in a 40 dp box with 6 dp of air between, so the measure is the same and only the room around it is new -
   measured with the two shipped faces, the longest line in settings takes 299 of the 616 dp it has. The day theme
   follows all of it with its own three colours.
+- **The Control Center's two columns say where each one ends.** The facts under **TV status** were 20 dp apart, which is
+  less than the 35 dp between a name and its own figure, so "…de 28 GB" read as the start of "Bluetooth" and the line
+  looked like four things in two wrong pairs. There are 43 dp between the columns now with a 1 dp line in the middle of
+  them, in the colour the popovers are rimmed with, and the storage figure stopped repeating its unit - "17,1 de 28 GB
+  libres" - so the widest pair still fits what is left of the half.
 - **The last card of a row no longer strands it.** Right at the end of the Continue row, or of any channel row, now
   lands on its first card, and left at the start lands on its last: a fresh press wraps, the way Up and Down already do
   in a menu, and a key still held down stops at the end instead of racing round the row.

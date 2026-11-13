@@ -292,7 +292,7 @@
         <item quantity="one">%d min para apagarse</item>
         <item quantity="other">%d min para apagarse</item>
     </plurals>
-    <string name="storage_free_of">%1$s GB libres de %2$s GB</string>
+    <string name="storage_free_of">%1$s de %2$s GB libres</string>
     <string name="gb">GB</string>
     <string name="sc_network">Red</string>
     <string name="sc_bluetooth">Bluetooth</string>
