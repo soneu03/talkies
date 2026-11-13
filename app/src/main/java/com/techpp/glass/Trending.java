@@ -103,6 +103,7 @@ final class Trending {
         float progress = -1; // Continue: how far in (0–1), or -1 when unknown
         Object extra;        // Cricket: the Cricket.Match this card shows
         transient boolean artMissing; // Watch Next: the app has a picture we couldn't fetch yet (offline after a restart)
+        transient String row;         // Continue: the app's own row a card came from, null when the system list did
 
         String key() { return "pick:" + tab + ":" + kind + ":" + id; }
     }

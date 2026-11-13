@@ -31,9 +31,9 @@ fuente de Talkies y `adb` (mira [building.md](building.md)); `$TALKIES_TV` es la
 |---|---|---|---|---|---|
 | Botones de iconos | — | Pestañas (o el dock cuando no hay sugerencias) | Siguiente botón; se para en los extremos | Abrir | Dock |
 | Pestañas | Botones de iconos | Sugerencias | Cambiar de pestaña; se para en los extremos | Sugerencias | Dock |
-| Sugerencias | Pestañas | Dock | Siguiente sugerencia (crece, la fila se desliza); se para en los extremos | Abrirla | Dock |
+| Sugerencias | Pestañas | Dock | Siguiente sugerencia (crece, la fila se desliza); un extremo lleva al otro, y manteniendo la tecla se para | Abrirla | Dock |
 | Dock | Sugerencias (o los botones de iconos) | Primera fila de canales (o All apps) | Siguiente app; tras la última, el botón redondo **All apps** | Abrir (mantener: dock, Move, Change image, Hide, Uninstall, App info); en el botón All apps, saltar a All apps | — |
-| Canales | Fila de arriba (el dock desde la primera) | Fila de abajo (All apps tras la última) | Siguiente tarjeta; la fila se desliza | Abrir ese título | Dock |
+| Canales | Fila de arriba (el dock desde la primera) | Fila de abajo (All apps tras la última) | Siguiente tarjeta; la fila se desliza; un extremo lleva al otro, y manteniendo la tecla se para | Abrir ese título | Dock |
 | All apps | Una fila arriba (la última fila de canales, desde la fila de arriba) | Una fila abajo | Siguiente app de la fila | Abrir (mantener: dock, Move, Change image, Hide, Uninstall, App info) | Dock |
 | Inputs / Control Center / ajustes | Anterior (desde el primero, el último) | Siguiente (desde el último, el primero) | Cerrar | Elegir | Cerrar |
 
@@ -102,7 +102,7 @@ la TV).
 | Sharp YouTube pictures | Con Off por defecto. Con On: las tarjetas de YouTube en Continue reciben las miniaturas de 1280 píxeles de YouTube, buscadas por título y canal |
 | Sports | Cricket, Football, NBA y NFL, cada una en On u Off: lo que muestran la línea de marcador y las filas de marcadores. Football para empezar, cricket también donde se siga mucho, además de la NBA y la NFL en Estados Unidos y Canadá |
 | Football leagues | Solo con Football en On: las ligas que sigue la fila de Football; mira [Fútbol](#fútbol) |
-| Continue apps | Cada app con algo que continuar: Shown u Hidden, para la pestaña Continue y la fila Watch Next |
+| Continue apps | Dos bloques. **Por app**: cada app con algo que continuar, en *se muestra* u *oculta* - apagarla quita todo lo que aporta, también sus filas, porque sólo la app decide cuántas tarjetas suyas llegan. **Por fila**: cada fila que una app enseña dice cuántas de sus tarjetas pueden salir (*oculta, 2, 4, 6, 8 o todas las que tenga*) con OK, o de una en una con ← →, y la línea dice lo que la fila trae de verdad |
 | Channels | Elige qué canales de apps se muestran debajo del dock, y su orden |
 | **Apps and inputs** | |
 | Dock apps | Todas las apps, la primera del dock (numerada): OK pone una en el dock o la saca, igual que **Add to dock** y **Remove from dock** cuando mantienes OK sobre una app. Para cambiar el orden, mantén OK sobre una app del dock y elige **Move** |

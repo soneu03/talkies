@@ -33,6 +33,8 @@
     <string name="heading_talkies">Talkies</string>
     <string name="heading_on_screen">On screen</string>
     <string name="heading_tv_status">TV status</string>
+    <string name="heading_continue_apps">By app · everything that app brings</string>
+    <string name="heading_continue_rows">By row · what each row has to offer</string>
 
     <string name="row_appearance">Appearance</string>
     <string name="row_wallpaper">Wallpaper</string>
@@ -120,6 +122,12 @@
     <string name="country_automatic">Automatic (%1$s)</string>
     <string name="remote_keys_set">On · %1$d set</string>
     <string name="continue_hidden_count">%1$d hidden</string>
+    <string name="continue_cards_state">%1$d · %2$s</string>
+    <string name="continue_row_status">%1$d of %2$d · %3$s</string>
+    <string name="continue_cap_upto">up to %1$d</string>
+    <string name="continue_cap_free">no limit</string>
+    <string name="continue_cap_none">nothing in progress</string>
+    <string name="continue_row_app_off">the app is off</string>
     <string name="wallpaper_yours">Your picture</string>
     <string name="wallpaper_day">Picture of the day</string>
     <string name="wallpaper_from_folder">A picture a day from %1$s</string>

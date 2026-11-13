@@ -41,9 +41,48 @@ final class Channels {
         String key, pkg, name, title;
         long id = -1;
         int count;
+        /** What this read took from the row, or - in a census, where nothing is taken - what the row has to offer. */
+        int kept;
         boolean shown;
         final List<Trending.Pick> items = new ArrayList<>();
     }
+
+    /**
+     * How many cards one row may put in Continue, chosen per row in Talkies settings → Continue apps. Anything else
+     * is that number. Eight is what every row got before the choice existed, so a TV that never opened the menu keeps
+     * the row it has always had.
+     */
+    static final int CAP_OFF = 0, CAP_FREE = -1, CAP_DEFAULT = 8;
+    /** What OK walks through, and what the arrows step along: hidden · 2 · 4 · 6 · 8 · as many as it has. */
+    static final int[] CAPS = {CAP_OFF, 2, 4, 6, CAP_DEFAULT, CAP_FREE};
+
+    static int cap(Context c, String row) { return caps(c).getInt(row, CAP_DEFAULT); }
+
+    static void setCap(Context c, String row, int cap) { caps(c).edit().putInt(row, cap).apply(); }
+
+    /** How many rows you have hidden from Continue, whatever their apps' own switches say. */
+    static int rowsOff(Context c) {
+        int n = 0;
+        for (Object v : caps(c).getAll().values()) if (v instanceof Integer && (Integer) v == CAP_OFF) n++;
+        return n;
+    }
+
+    /** The next choice, going back to hidden after the last one. */
+    static int capNext(int from) { return CAPS[(rung(from) + 1) % CAPS.length]; }
+
+    /** One step up or down the choices, where the ends stay put: the arrows, which shouldn't hide a row by accident. */
+    static int capStep(int from, int dir) {
+        return CAPS[Math.max(0, Math.min(rung(from) + dir, CAPS.length - 1))];
+    }
+
+    /** Where a number sits among the choices; a hand-edited one is read as the default it came from. */
+    private static int rung(int cap) {
+        for (int i = 0; i < CAPS.length; i++) if (CAPS[i] == cap) return i;
+        for (int i = 0; i < CAPS.length; i++) if (CAPS[i] == CAP_DEFAULT) return i;
+        return 0;
+    }
+
+    private static SharedPreferences caps(Context c) { return c.getSharedPreferences("continue_caps", Context.MODE_PRIVATE); }
 
     private Channels() { }
 
@@ -86,9 +125,7 @@ final class Channels {
                 ch.name = name;
                 ch.id = id;
                 ch.count = count;
-                String app = label(pm, pkg);
-                ch.title = name.equalsIgnoreCase(app) || app.toLowerCase(Locale.ROOT).contains(name.toLowerCase(Locale.ROOT))
-                        ? app : app + " · " + name;
+                ch.title = titleOf(pm, pkg, name);
                 found.put(key, ch);
                 if (cur.getInt(4) == 1) browsable.add(key);
             }
@@ -160,7 +197,7 @@ final class Channels {
             if (WATCH_NEXT.equals(ch.key)) {
                 ch.items.addAll(watchNext);
             } else {
-                readItems(c, ch, dir, keep, ART_W, false);
+                readItems(c, ch, dir, keep, ART_W, false, false);
             }
             if (!ch.items.isEmpty()) out.add(ch);
         }
@@ -171,11 +208,21 @@ final class Channels {
     }
 
     /**
-     * What apps' rows mark as partway through, shown or not: every card on a row named for it, and the cards marked one
-     * by one on other rows (Netflix's row is called "Netflix": the first cards are yours, the rest are promotions, and
-     * only the link and description tell them apart). With artwork. Blocking. An idea from tvOS Launcher (Apache-2.0).
+     * What apps' rows mark as partway through, shown or not: every card on a row named for it, and on other rows the
+     * cards that say so one by one, either with where they left you (Stremio and Plex fill that in, and every row that
+     * only promotes leaves it empty) or with their link and description, as Netflix's do. With artwork. Blocking. An
+     * idea from tvOS Launcher (Apache-2.0).
      */
     static List<Channel> continueRows(Context c, File dir, Set<String> keep, int artWidth) {
+        return continueRows(c, dir, keep, artWidth, false);
+    }
+
+    /** The same rows with their numbers and no artwork, for the menu that lists them. Blocking, but not online. */
+    static List<Channel> continueCensus(Context c) {
+        return continueRows(c, null, null, 0, true);
+    }
+
+    private static List<Channel> continueRows(Context c, File dir, Set<String> keep, int artWidth, boolean census) {
         PackageManager pm = c.getPackageManager();
         Map<String, Channel> found = new LinkedHashMap<>();
         String[] cols = {TvContract.Channels._ID, TvContract.Channels.COLUMN_PACKAGE_NAME,
@@ -192,6 +239,7 @@ final class Channels {
                 ch.key = key;
                 ch.pkg = pkg;
                 ch.name = name;
+                ch.title = titleOf(pm, pkg, name);
                 ch.id = cur.getLong(0);
                 ch.count = count;
                 found.put(key, ch);
@@ -199,8 +247,21 @@ final class Channels {
         } catch (Exception e) {
             Log.w(TAG, "Couldn't read continue rows: " + e);
         }
-        for (Channel ch : found.values()) readItems(c, ch, dir, keep, artWidth, !isContinueRow(ch.name));
+        for (Channel ch : found.values()) {
+            boolean named = isContinueRow(ch.name);
+            // A row hidden from the menu is never read, so its pictures are never even asked for.
+            if (!census && cap(c, ch.key) == CAP_OFF) continue;
+            readItems(c, ch, dir, keep, artWidth, !named, census);
+            if (named) Log.i(TAG, "continue row " + ch.key + ": named for it, kept " + ch.items.size() + " of " + ch.count);
+        }
         return new ArrayList<>(found.values());
+    }
+
+    /** "Netflix · Netflix" says the app twice: a row called for the app reads as the app. */
+    private static String titleOf(PackageManager pm, String pkg, String name) {
+        String app = label(pm, pkg);
+        return name.equalsIgnoreCase(app) || app.toLowerCase(Locale.ROOT).contains(name.toLowerCase(Locale.ROOT))
+                ? app : app + " · " + name;
     }
 
     private static boolean isContinueRow(String name) {
@@ -224,26 +285,39 @@ final class Channels {
         }
     }
 
-    private static void readItems(Context c, Channel ch, File dir, Set<String> keep, int artWidth, boolean markedOnly) {
+    private static void readItems(Context c, Channel ch, File dir, Set<String> keep, int artWidth, boolean markedOnly, boolean census) {
         String[] cols = {TvContract.PreviewPrograms.COLUMN_TITLE, TvContract.PreviewPrograms.COLUMN_SHORT_DESCRIPTION,
                 TvContract.PreviewPrograms.COLUMN_POSTER_ART_URI, TvContract.PreviewPrograms.COLUMN_THUMBNAIL_URI,
                 TvContract.PreviewPrograms.COLUMN_INTENT_URI, TvContract.PreviewPrograms.COLUMN_BROWSABLE,
                 TvContract.PreviewPrograms.COLUMN_SEASON_DISPLAY_NUMBER, TvContract.PreviewPrograms.COLUMN_EPISODE_DISPLAY_NUMBER,
                 TvContract.PreviewPrograms.COLUMN_EPISODE_TITLE, TvContract.PreviewPrograms.COLUMN_WEIGHT,
                 ENGAGED, TvContract.PreviewPrograms.COLUMN_LAST_PLAYBACK_POSITION_MILLIS,
-                TvContract.PreviewPrograms.COLUMN_DURATION_MILLIS};
+                TvContract.PreviewPrograms.COLUMN_DURATION_MILLIS, WATCH_NEXT_TYPE};
         // Android declares the last-watched column for Watch Next only, but its table for channel cards has it too;
         // read it by name in case a TV's doesn't.
         try (Cursor cur = c.getContentResolver().query(TvContract.buildPreviewProgramsUriForChannel(ch.id), null, null, null, null)) {
             if (cur == null) return;
             int[] col = new int[cols.length];
             for (int i = 0; i < cols.length; i++) col[i] = cur.getColumnIndex(cols[i]);
+            if (markedOnly && !toldColumns) {   // once per run: which signals this TV's card table actually carries
+                toldColumns = true;
+                Log.i(TAG, "cards carry these columns: " + java.util.Arrays.toString(cur.getColumnNames()));
+            }
+            int marked = 0, played = 0, timed = 0, both = 0, typed = 0, passed = 0;
             // What you watched last first, where the app says when (Nuvio does); then the app's own weight;
             // then the order the app added them (a stable sort keeps it). An idea from Plume (MIT).
             List<Integer> rows = new ArrayList<>();
             List<long[]> keys = new ArrayList<>();
             while (cur.moveToNext()) {
                 if (col[5] >= 0 && !cur.isNull(col[5]) && cur.getInt(col[5]) == 0) continue;
+                if (markedOnly) {   // counting each rule's hits before choosing one, rather than guessing from here
+                    if (marksContinue(str(cur, col[4]), str(cur, col[1]))) marked++;
+                    long position = num(cur, col[11]), duration = num(cur, col[12]);
+                    if (position > 0) played++;
+                    if (duration > 0) timed++;
+                    if (position > 0 && duration > 0) both++;   // where a "already finished" filter could work
+                    if (col[13] >= 0 && str(cur, col[13]).equals("0")) typed++;
+                }
                 rows.add(cur.getPosition());
                 keys.add(new long[]{num(cur, col[10]), num(cur, col[9])});
             }
@@ -254,9 +328,14 @@ final class Channels {
                 return x[0] != y[0] ? Long.compare(y[0], x[0]) : Long.compare(y[1], x[1]);
             });
             for (int i : order) {
-                if (ch.items.size() >= MAX_ITEMS) break;
+                if (!census && ch.items.size() >= MAX_ITEMS) break;
                 cur.moveToPosition(rows.get(i));
-                if (markedOnly && !marksContinue(str(cur, col[4]), str(cur, col[1]))) continue;
+                String link = str(cur, col[4]);
+                long position = num(cur, col[11]);
+                // Where the app left you is the sign you started it; some rows say it only in the link or the text.
+                if (markedOnly && position <= 0 && !marksContinue(link, str(cur, col[1]))) continue;
+                passed++;
+                if (census) continue;   // the menu counts the row: no cards, and so no pictures asked for
                 Trending.Pick p = new Trending.Pick();
                 p.kind = "channel";
                 p.tab = ch.key;
@@ -268,23 +347,34 @@ final class Channels {
                 if (!episode.isEmpty()) m.append(m.length() > 0 ? " · " : "").append("Episode ").append(episode);
                 if (!epTitle.isEmpty() && !epTitle.equals(p.title)) m.append(m.length() > 0 ? " · " : "").append(epTitle);
                 p.meta = m.length() > 0 ? m.toString() : desc;
-                p.intentUri = str(cur, col[4]).isEmpty() ? null : str(cur, col[4]);
+                p.intentUri = link.isEmpty() ? null : link;
                 String art = !str(cur, col[3]).isEmpty() ? str(cur, col[3]) : str(cur, col[2]);
                 p.id = (ch.key + "\n" + p.title + "\n" + art).hashCode();
                 p.image = art.isEmpty() ? null : WatchNext.cached(c, dir, art, artWidth);
                 p.at = num(cur, col[10]);
-                long position = num(cur, col[11]), duration = num(cur, col[12]);
+                long duration = num(cur, col[12]);
                 if (position > 0 && duration > 0) p.progress = Math.min(1f, position / (float) duration);
                 if (p.image != null) keep.add(p.image.getName());
                 p.artMissing = p.image == null && !art.isEmpty();
                 ch.items.add(p);
             }
+            ch.kept = passed;
+            if (markedOnly)
+                Log.i(TAG, "continue row " + ch.key + ": " + rows.size() + " cards, kept " + ch.items.size()
+                        + " | " + marked + " say so in their link or text, " + played + " have a position, "
+                        + timed + " have a length (" + both + " both), "
+                        + (col[13] < 0 ? "no type column here" : typed + " of type continue"));
         } catch (Exception e) {
             Log.w(TAG, "Couldn't read " + ch.key + ": " + e);
         }
     }
 
     private static final String ENGAGED = "last_engagement_time_utc_millis";
+
+    /** Channel cards have no declared watch-next type, so ask for it by name and treat a missing column as none. */
+    private static final String WATCH_NEXT_TYPE = "watch_next_program_type";
+
+    private static boolean toldColumns;
 
     private static long num(Cursor c, int i) { return i < 0 || c.isNull(i) ? 0 : c.getLong(i); }
 

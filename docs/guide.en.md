@@ -31,9 +31,9 @@ everything they do can also be done on the TV, in Talkies settings.
 |---|---|---|---|---|---|
 | Icon buttons | — | Tabs (or the dock when there are no picks) | Next button; stops at the ends | Open | Dock |
 | Tabs | Icon buttons | Picks | Switch tab; stops at the ends | Picks | Dock |
-| Picks | Tabs | Dock | Next pick (it grows, the row slides); stops at the ends | Open it | Dock |
+| Picks | Tabs | Dock | Next pick (it grows, the row slides); either end leads to the other, and holding the key stops there | Open it | Dock |
 | Dock | Picks (or the icon buttons) | First channel (or All apps) | Next app; past the last, the round **All apps** button | Launch (hold: dock, Move, Change image, Hide, Uninstall, App info); on the All apps button, jump to All apps | — |
-| Channels | Row above (the dock from the first) | Row below (All apps after the last) | Next card; the row slides | Open that title | Dock |
+| Channels | Row above (the dock from the first) | Row below (All apps after the last) | Next card; the row slides; either end leads to the other, and holding the key stops there | Open that title | Dock |
 | All apps | One row up (the last channel from the top row) | One row down | Next app in the row | Launch (hold: dock, Move, Change image, Hide, Uninstall, App info) | Dock |
 | Inputs / Control Center / settings | Previous (from the first, the last) | Next (from the last, the first) | Close | Choose | Close |
 
@@ -99,7 +99,7 @@ Control Center → **Talkies settings**, or **hold OK on the ⚙ icon** (a press
 | Sharp YouTube pictures | Off by default. On: YouTube cards in Continue get YouTube's 1280-pixel thumbnails, looked up by title and channel |
 | Sports | Cricket, Football, NBA and NFL, each On or Off: what the score line and the score rows show. Football to start, cricket too where it's widely followed, plus the NBA and NFL in the US and Canada |
 | Football leagues | Only while Football is on: the leagues the Football row follows; see [Football](#football) |
-| Continue apps | Each app with something to continue: Shown or Hidden, for the Continue tab and the Watch Next row |
+| Continue apps | Two blocks. **By app**: each app with something to continue, shown or hidden - off takes everything it brings, its rows included, since only the app decides how many of its cards arrive. **By row**: each row an app shows chooses how many of its cards may come (*hidden, 2, 4, 6, 8, or as many as it has*), cycled with OK or stepped one by one with the arrows, and the line says what the row really has |
 | Channels | Choose which app channels show below the dock, and their order |
 | **Apps and inputs** | |
 | Dock apps | Every app, the dock's first (numbered): OK puts one in the dock or takes it out, the same as **Add to dock** and **Remove from dock** when you hold OK on an app. To change the order, hold OK on an app in the dock and choose **Move** |

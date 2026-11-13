@@ -183,6 +183,8 @@ public class HomeActivity extends Activity {
     private final List<View> menuItems = new ArrayList<>();
     private final List<Runnable> menuActions = new ArrayList<>();
     private final List<Boolean> menuKeepsOpen = new ArrayList<>();
+    /** The rare menu whose focused row answers to the side keys rather than leaving: Continue's choice per row. */
+    private java.util.function.IntPredicate menuSideKeys;
     private View focusedView;
 
     // The ring and the page scroll.
@@ -1899,9 +1901,9 @@ public class HomeActivity extends Activity {
         v.setImageDrawable(logo);
         // The logo takes about half the card's width, whatever the card's size.
         v.addOnLayoutChangeListener((view, l, t, r, b, ol, ot, or, ob) -> {
+            if (view.getTag(R.id.img_state) != null) return;  // real art has taken this card: it fills it, logo padding and all
             int padX = Math.round((r - l) * 0.24f), padY = Math.round((b - t) * 0.22f);
             if (view.getPaddingLeft() != padX || view.getPaddingTop() != padY) view.post(() -> view.setPadding(padX, padY, padX, padY));
-            if (view.getTag(R.id.img_state) != null) return;  // real art has taken this card: it fills it, logo padding and all
         });
     }
 
@@ -1936,8 +1938,6 @@ public class HomeActivity extends Activity {
         });
     }
 
-    /** Runs `shown` once `v` has its picture (checked every frame or so, for a second at most). */
-    private void whenShown(ImageView v, String want, Runnable shown, int tries) {
     /**
      * A picture whose shape is near the card's fills it; one of the other shape sits whole on a plate of its own
      * colours. Filling across shapes is what cut two of every five pixels off a landscape picture in a portrait card,
@@ -1959,6 +1959,8 @@ public class HomeActivity extends Activity {
         v.setImageBitmap(b);
     }
 
+    /** Runs `shown` once `v` has its picture (checked every frame or so, for a second at most). */
+    private void whenShown(ImageView v, String want, Runnable shown, int tries) {
         if (v.getDrawable() != null || tries > 60 || !want.equals(v.getTag(R.id.img_state))) shown.run();
         else v.postDelayed(() -> whenShown(v, want, shown, tries + 1), 16);
     }
@@ -2474,10 +2476,14 @@ public class HomeActivity extends Activity {
                 if (up) stepMenu(menuNextLine(menuIdx, -1), menuItems.size() - 1);
                 else if (down) stepMenu(menuNextLine(menuIdx, 1), 0);
                 else if (left || right) {
-                    // Along a line of tiles or cells first; at its ends, and in every single-column menu, out.
-                    int to = menuNextCol(menuIdx, left ? -1 : 1);
-                    if (to >= 0) focusMenu(to);
-                    else closeMenu();
+                    // A row that takes the side keys (Continue's choice per row) answers for itself, sound included.
+                    // Everywhere else: along a line of tiles or cells first; at its ends, and in every single-column
+                    // menu, out.
+                    if (menuSideKeys == null || !menuSideKeys.test(k)) {
+                        int to = menuNextCol(menuIdx, left ? -1 : 1);
+                        if (to >= 0) focusMenu(to);
+                        else closeMenu();
+                    }
                 }
                 break;
             case Z_TOP:
@@ -2492,12 +2498,17 @@ public class HomeActivity extends Activity {
                 else if (up) focusTop(iconIdx);
                 else if (down) focusPicks(picksRow.anchor());
                 break;
-            case Z_PICKS:
-                if (left && picksRow.anchor() > 0) focusPicks(picksRow.anchor() - 1);
-                else if (right && picksRow.anchor() < rowPicks.size() - 1) focusPicks(picksRow.anchor() + 1);
+            case Z_PICKS: {
+                int n = rowPicks.size(), a = picksRow.anchor();
+                if (left && a > 0) focusPicks(a - 1);
+                else if (right && a < n - 1) focusPicks(a + 1);
+                // Either end returns to the other on a fresh press, so the last card doesn't strand the row; holding
+                // the key still stops there, instead of racing round the row. As in the menus.
+                else if (!heldKey && n > 1 && (left || right)) focusPicks(left ? n - 1 : 0);
                 else if (up) focusTabs(tabIdx);
                 else if (down) focusDock(dockIdx);
                 break;
+            }
             case Z_DOCK:
                 if (left && dockIdx > 0) focusDock(dockIdx - 1);
                 else if (right && dockIdx < dockTiles.size() - 1) focusDock(dockIdx + 1);
@@ -2520,6 +2531,7 @@ public class HomeActivity extends Activity {
                 int n = chanRows.get(chanIdx).items.size(), c = chanCol[chanIdx];
                 if (left && c > 0) focusChan(chanIdx, c - 1);
                 else if (right && c < n - 1) focusChan(chanIdx, c + 1);
+                else if (!heldKey && n > 1 && (left || right)) focusChan(chanIdx, left ? n - 1 : 0);
                 else if (up && chanIdx == 0) focusDock(dockIdx);
                 else if (up) focusChan(chanIdx - 1, chanCol[chanIdx - 1]);
                 else if (down && chanIdx < chanRows.size() - 1) focusChan(chanIdx + 1, chanCol[chanIdx + 1]);
@@ -2850,6 +2862,7 @@ public class HomeActivity extends Activity {
         menuItems.clear();
         menuActions.clear();
         menuKeepsOpen.clear();
+        menuSideKeys = null;
         menuMode = MENU_PLAIN;
         menuScroll.animate().cancel();
         menu.removeAllViews();
@@ -4644,44 +4657,102 @@ public class HomeActivity extends Activity {
         });
     }
 
+    /** What the row that settings → Continue apps shows: how much you have taken out, in either of the two ways. */
     private String continueAppsLabel() {
-        int off = prefs.getStringSet("continue_apps_off", java.util.Collections.emptySet()).size();
+        int off = prefs.getStringSet("continue_apps_off", java.util.Collections.emptySet()).size() + Channels.rowsOff(this);
         return off == 0 ? getString(R.string.state_all) : getString(R.string.continue_hidden_count, off);
     }
 
     /**
-     * Talkies settings → Continue apps: on or off for each app that has something to continue, and any turned off
-     * (which no longer appear in the row, so they couldn't be found otherwise). Off hides its cards in the Continue
-     * tab and the Watch Next row. Asked for by AndyVRD (Discussion #22).
+     * Talkies settings → Continue apps, in two blocks. The first is the apps behind the system's own list: one switch
+     * each, because only the app knows how many cards it puts there. The second is the rows the TV's apps show, where
+     * you choose how many of their cards may come: hidden · 2 · 4 · 6 · 8 · as many as the row has, cycled with OK and
+     * stepped one by one with the arrows. An app switched off hides its rows too, which the row then says. The counts
+     * are read from the TV as the menu opens, the same way the Channels menu reads them (no artwork, so no waiting on
+     * the network). Asked for by AndyVRD (Discussion #22).
      */
     private void openContinueApps() {
         beginMenu(settingsAt, getString(R.string.row_continue_apps));
         Set<String> pkgs = new HashSet<>(prefs.getStringSet("continue_apps_off", java.util.Collections.emptySet()));
         for (Trending.Pick p : RecentStore.load(this)) if (p.pkg != null) pkgs.add(p.pkg);
         for (Trending.Pick p : watchNextPicks) if (p.pkg != null) pkgs.add(p.pkg);
-        List<String[]> rows = new ArrayList<>();
-        for (String p : pkgs) rows.add(new String[]{p, Channels.label(pm, p)});
-        rows.sort((x, y) -> x[1].compareToIgnoreCase(y[1]));
-        if (rows.isEmpty()) addRow(getString(R.string.continue_nothing), null, () -> { }, true);
-        for (String[] r : rows) {
+        Map<String, Integer> inRow = new java.util.HashMap<>();
+        for (Trending.Pick p : recentPicks) if (p.pkg != null) inRow.merge(p.pkg, 1, Integer::sum);
+        List<Channels.Channel> shelves = Channels.continueCensus(this);
+        List<String[]> apps = new ArrayList<>();
+        for (String p : pkgs) apps.add(new String[]{p, Channels.label(pm, p)});
+        apps.sort((x, y) -> x[1].compareToIgnoreCase(y[1]));
+        shelves.sort((x, y) -> x.title.compareToIgnoreCase(y.title));
+        if (apps.isEmpty() && shelves.isEmpty()) addRow(getString(R.string.continue_nothing), null, () -> { }, true);
+        // The two lists sit beside the menu's own, so the arrows find the row they belong to: null for an app line.
+        List<Channels.Channel> capOf = new ArrayList<>();
+        List<View> capView = new ArrayList<>();
+        if (!apps.isEmpty()) addMenuHeading(getString(R.string.heading_continue_apps));
+        for (String[] a : apps) {
             final View[] row = new View[1];
-            boolean off = prefs.getStringSet("continue_apps_off", java.util.Collections.emptySet()).contains(r[0]);
-            row[0] = addRow(r[1], state(off, R.string.state_hidden, R.string.state_shown), () -> {
+            row[0] = addRow(a[1], continueAppStatus(a[0], inRow), () -> {
                 Set<String> now = new HashSet<>(prefs.getStringSet("continue_apps_off", java.util.Collections.emptySet()));
-                boolean hide = now.add(r[0]);
-                if (!hide) now.remove(r[0]);
+                boolean hide = now.add(a[0]);
+                if (!hide) now.remove(a[0]);
                 prefs.edit().putStringSet("continue_apps_off", now).apply();
-                setStatus(row[0], state(hide, R.string.state_hidden, R.string.state_shown));
+                setStatus(row[0], continueAppStatus(a[0], inRow));
             }, true);
+            capOf.add(null);
+            capView.add(row[0]);
         }
+        if (!shelves.isEmpty()) addMenuHeading(getString(R.string.heading_continue_rows));
+        for (Channels.Channel ch : shelves) {
+            final View[] row = new View[1];
+            row[0] = addRow(ch.title, continueRowStatus(ch, Channels.cap(this, ch.key)), () -> {
+                int next = Channels.capNext(Channels.cap(this, ch.key));
+                Channels.setCap(this, ch.key, next);
+                setStatus(row[0], continueRowStatus(ch, next));
+            }, true);
+            capOf.add(ch);
+            capView.add(row[0]);
+        }
+        menuSideKeys = k -> {
+            int i = menuIdx;
+            if (i < 0 || i >= capOf.size() || capOf.get(i) == null) return false;
+            Channels.Channel ch = capOf.get(i);
+            int now = Channels.cap(this, ch.key), stepped = Channels.capStep(now, k == KeyEvent.KEYCODE_DPAD_LEFT ? -1 : 1);
+            if (stepped == now) return true;   // at either end of the choice, where the arrows have nothing left to do
+            Channels.setCap(this, ch.key, stepped);
+            setStatus(capView.get(i), continueRowStatus(ch, stepped));
+            navigationSound(k);
+            return true;
+        };
         menuClosed = () -> {
             recentPicks = continuePicks(RecentStore.load(this), watchNextPicks);
             refreshChannels();
             buildPicksRow(0);
             focusTop(settingsAt);
         };
-        showMenu(360);
+        showMenu(420);
         focusMenu(0);
+    }
+
+    /** Whether an app is switched out of Continue altogether - the first block's choice, which covers its rows too. */
+    private boolean continueAppOff(String pkg) {
+        return prefs.getStringSet("continue_apps_off", java.util.Collections.emptySet()).contains(pkg);
+    }
+
+    /** The right of an app's line: how many of its cards are in the row now, and whether it is switched off. */
+    private String continueAppStatus(String pkg, Map<String, Integer> inRow) {
+        return getString(R.string.continue_cards_state, inRow.getOrDefault(pkg, 0),
+                state(!continueAppOff(pkg), R.string.state_shown, R.string.state_hidden));
+    }
+
+    /**
+     * The right of a row's line: what the row offers and what you have allowed - or why neither matters, because the
+     * app is switched off or nothing on it has been started.
+     */
+    private String continueRowStatus(Channels.Channel ch, int cap) {
+        if (continueAppOff(ch.pkg)) return getString(R.string.continue_row_app_off);
+        if (ch.kept == 0) return getString(R.string.continue_cap_none);
+        String how = cap == Channels.CAP_OFF ? getString(R.string.state_hidden)
+                : cap < 0 ? getString(R.string.continue_cap_free) : getString(R.string.continue_cap_upto, cap);
+        return getString(R.string.continue_row_status, ch.kept, ch.count, how);
     }
 
     /** "pkg / title / episode line": a new episode of the same show is a new key, so it comes back. */

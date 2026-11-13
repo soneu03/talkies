@@ -34,6 +34,8 @@
     <string name="heading_talkies">Talkies</string>
     <string name="heading_on_screen">En pantalla</string>
     <string name="heading_tv_status">Estado de la TV</string>
+    <string name="heading_continue_apps">Por app · todo lo que esa app aporta</string>
+    <string name="heading_continue_rows">Por fila · lo que cada fila trae</string>
 
     <string name="row_appearance">Apariencia</string>
     <string name="row_wallpaper">Fondo de pantalla</string>
@@ -121,6 +123,12 @@
     <string name="country_automatic">Automático (%1$s)</string>
     <string name="remote_keys_set">Activado · %1$d asignadas</string>
     <string name="continue_hidden_count">%1$d ocultas</string>
+    <string name="continue_cards_state">%1$d · %2$s</string>
+    <string name="continue_row_status">%1$d de %2$d · %3$s</string>
+    <string name="continue_cap_upto">hasta %1$d</string>
+    <string name="continue_cap_free">sin límite</string>
+    <string name="continue_cap_none">nada en curso</string>
+    <string name="continue_row_app_off">la app está apagada</string>
     <string name="wallpaper_yours">Tu imagen</string>
     <string name="wallpaper_day">Imagen del día</string>
     <string name="wallpaper_from_folder">Una imagen al día de %1$s</string>

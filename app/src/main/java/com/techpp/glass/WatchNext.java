@@ -35,8 +35,6 @@ final class WatchNext {
     private static final int MAX = 16;
     /** Past this far in, a title is done: apps don't always take it off their list. */
     private static final float FINISHED = 0.97f;
-    /** Cards taken from one app's "Continue Watching" row. */
-    private static final int MAX_ROW = 8;
 
     private WatchNext() { }
 
@@ -133,16 +131,19 @@ final class WatchNext {
         for (Trending.Pick p : out) known.put(p.pkg + "\n" + p.title, p);
         for (Channels.Channel ch : Channels.continueRows(c, dir, keep, 1280)) {
             if (ch.items.isEmpty()) continue;
+            // What you chose for this row in the menu: eight unless you say otherwise, none if you hid it.
+            int cap = Channels.cap(c, ch.key);
+            if (cap == Channels.CAP_OFF) continue;
             String top = ch.items.get(0).title + "\n" + ch.items.get(0).meta, before = seen.getString(ch.key, null);
             long changed = seen.getLong(ch.key + "@", 0);
             if (!top.equals(before)) {
                 changed = before == null ? 0 : System.currentTimeMillis();
                 seen.edit().putString(ch.key, top).putLong(ch.key + "@", changed).apply();
             }
-            Log.i(TAG, "row " + ch.key + ": " + ch.items.size() + " items, changed " + changed);
+            Log.i(TAG, "row " + ch.key + ": " + ch.items.size() + " items, changed " + changed + ", cap " + cap);
             String service = label(c, ch.pkg);
             int added = 0;
-            for (int i = 0; i < ch.items.size() && added < MAX_ROW; i++) {
+            for (int i = 0; i < ch.items.size() && (cap < 0 || added < cap); i++) {
                 Trending.Pick p = ch.items.get(i);
                 if (p.progress >= FINISHED) continue;
                 long at = p.at > 0 ? p.at : changed > 0 ? changed - i * 60_000L : 0;
@@ -152,6 +153,7 @@ final class WatchNext {
                     continue;
                 }
                 p.kind = "watchnext";
+                p.row = ch.key;
                 p.tab = RecentStore.TAB;
                 p.service = service;
                 p.at = at;

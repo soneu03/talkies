@@ -6,6 +6,16 @@ features, a new fix number only fixes. The version shows in Talkies settings →
 ## Unreleased
 
 ### New
+- **Continue apps now chooses per row, not only per app.** Talkies settings → **Continue apps** comes in two blocks.
+  *By app* keeps the switch each app always had, which takes everything that app brings - its rows included, since only
+  the app decides how many of its cards arrive. *By row* is new: every row the TV's apps show chooses how many of its
+  cards may come - hidden · 2 · 4 · 6 · 8 · as many as the row has - cycled with OK and stepped one at a time with the
+  arrows. Each line says what its row really has, counted the same way as the cards that show where you stopped:
+  measured on a MiTV, *Stremio · Seguir Viendo* brings 16 of its 20, *Plex* 4 of 22, and *RTVE · Contenido destacado*
+  0 of 32, so the rows that only promote say so rather than looking like a choice. A row you hide isn't read at all, so
+  its pictures are never even asked for. Eight is what every row got before the choice existed, so a TV that never
+  opens this menu keeps the row it has always had. The one thing this can't reach is the total: the Continue row still
+  takes sixteen cards, so its front can fill before a generous row gets its turn.
 - **The debug state on Home**: the ⚙ icon takes a red dot while a computer can control this TV over the network, a pale
   one while only developer options are on, and no dot while neither is, so the answer is on the screen rather than two
   presses away. It is refreshed the same way the row is, on Android's own switches, and after this app switches one.
@@ -20,7 +30,7 @@ features, a new fix number only fixes. The version shows in Talkies settings →
 - **Talkies settings → Language**: Auto, English or Español. Following the TV is not enough on its own, because many
   TVs stay on "English (United States)" wherever they are sold. With nothing chosen yet the app starts in **Español**;
   Auto and English stay one press away.
-- **The whole interface is in resources now, in both languages** (493 strings, English and Spanish side by side):
+- **The whole interface is in resources now, in both languages** (495 strings, English and Spanish side by side):
   every menu, row, toast, title, the Home furniture (clock, date, weather line, score strip), the screensaver, the
   sleep timer and the remote-key screens. Spanish weekday and month names come from `Lang.wrap` also setting the
   default locale, not only the context. Weather's condition words and the names Talkies gives an HDMI device are
@@ -43,6 +53,15 @@ features, a new fix number only fixes. The version shows in Talkies settings →
   runs on a push), and says so when `versionName`, `versionCode` and CHANGELOG.md stop agreeing.
 
 ### Changed
+- **The last card of a row no longer strands it.** Right at the end of the Continue row, or of any channel row, now
+  lands on its first card, and left at the start lands on its last: a fresh press wraps, the way Up and Down already do
+  in a menu, and a key still held down stops at the end instead of racing round the row.
+- **Continue now reads where an app left you.** On a row that mixes your titles with promotions, a card is yours when the
+  row says how far you got (`last_playback_position_millis`) - or, as before, when its link or text says so, which is all
+  Netflix publishes. Measured on the MiTV: 27 of its 161 channel cards carry a position, and they are Stremio's 23 and
+  Plex's 4; the rows that only promote (Prime 23, RTVE 32, YouTube 24) leave that column empty on every card, so the rule
+  adds nothing but your own. Each preview row also leaves one log line counting how far each signal reaches, which is how
+  this was chosen instead of guessed.
 - **Artwork arrives at the size the card shows.** TMDB backdrops come at w780 instead of w1280, and what the apps
   publish for Continue is kept at 780 px too: the large card is 331 dp, 662 px on a TV whose interface is 1920 px wide,
   so the extra pixels were downloaded, decoded and thrown away - about a third of the memory per picture now. Posters
@@ -91,10 +110,6 @@ features, a new fix number only fixes. The version shows in Talkies settings →
 ### Fixed
 - **Home stopped refreshing the weather, the scores and the picks after the TV woke from standby, and stayed stopped.**
   It asked Android whether its window still had focus; on the MiTV that answer stayed "no" for hours after a wakeup
-- **A picture of the other shape is shown whole.** A landscape artwork in a small portrait card was cropped to fill it,
-  and two of every five pixels of its width went with it - a title burned into the picture came out cut in half. Each
-  card now compares the two shapes and, when they don't match, shows the picture entire on a plate of its own colours.
-  A portrait picture reaching the large card is treated the same way.
   while Home was still the window on screen, and every refresh walked away. Whether something is over Home is now read
   from the window's own visibility, which Android sets as it happens. Refreshing resumed on the next minute, and a card
   row opened over Home still stops it.
@@ -102,6 +117,10 @@ features, a new fix number only fixes. The version shows in Talkies settings →
   debugging row's text and looking for the English word *On*, so with the interface in Spanish the wireless switch read
   as off and the dot went pale however reachable the TV was. The reach is now asked in code, not in words, so the red
   dot means a computer can get in - in either language, and on a TV whose old `adb_enabled` stays at 0.
+- **A picture of the other shape is shown whole.** A landscape artwork in a small portrait card was cropped to fill it,
+  and two of every five pixels of its width went with it - a title burned into the picture came out cut in half. Each
+  card now compares the two shapes and, when they don't match, shows the picture entire on a plate of its own colours.
+  A portrait picture reaching the large card is treated the same way.
 - **The focused card of a row showed only a strip of its picture.** It was 440 × 186, wider than any landscape
   picture the providers send (16:9), so the artwork lost its top and bottom and what was left read as a thin band.
   It is now 331 × 186 - the picture's own ratio - so the whole frame shows, and a fourth card peeks in beside it.

@@ -20,6 +20,10 @@ El clima (**#21**, **#22**, **#23**) es independiente y puede ir en paralelo. El
   **Decidir antes de programar:** reparto 16:9 / 2:3; si el nombre va sobre el arte con degradado (hoy
   no hay scrim: el texto vive fuera) o sigue debajo; qué se ilumina (el anillo es `HighlightView`, con
   `snapRing` en `:2138` y `followRing` en `:2145`).
+  **Ya resuelto aparte (2026-11-13):** cuánto sale de cada fila se eligió en *Apps para continuar*
+  (`openContinueApps`, `HomeActivity.java:4668`: dos bloques, interruptor por app y tope por fila).
+  Quedan de este punto el orden cuando una tarjeta no trae hora y el techo de `MAX_CONTINUE` (16), que
+  deja fuera lo que una fila generosa ya permite sacar.
 - **#19 · Filas de servicios y apps.** No hay logotipos propios: `AppEntry.load`
   (`AppEntry.java:143-171`) prueba un jpg en `files/tiles/<paquete>.jpg` (`:204`), los glifos de
   entrada del TV, el banner del launcher a la máxima densidad (`sharpBanner`, `:178`) y, si no, el
