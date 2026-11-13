@@ -203,6 +203,7 @@ final class Channels {
         }
         File[] files = dir.listFiles();
         if (files != null) for (File f : files) if (!keep.contains(f.getName())) f.delete();
+        WatchNext.forget(dir);   // so the next lookup reads the folder again instead of finding deleted pictures
         Log.i(TAG, out.size() + " rows shown");
         return out;
     }

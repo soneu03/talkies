@@ -116,6 +116,7 @@ final class WatchNext {
         addContinueRows(c, out, dir, keep);
         File[] files = dir.listFiles();
         if (files != null) for (File f : files) if (!keep.contains(f.getName())) f.delete();
+        forget(dir);   // the listing is a page behind now, and a page behind is a card showing nothing
         Log.i(TAG, out.size() + " to show");
         return out;
     }
@@ -172,6 +173,8 @@ final class WatchNext {
     }
 
     private static boolean landscape(File f) {
+        float s = shape(f);
+        if (s > 0) return s >= 1f;   // the name already says it, and says it without a decode
         BitmapFactory.Options o = new BitmapFactory.Options();
         o.inJustDecodeBounds = true;
         BitmapFactory.decodeFile(f.getPath(), o);
@@ -233,16 +236,104 @@ final class WatchNext {
     }
 
     /**
+     * The file this address already landed as, at the width asked for - or null, which means fetch it. The width stays
+     * in the name because the same address asked for at 440 and at 1280 is two different pictures, and answering one
+     * with the other is how the large card would quietly go soft on every refresh.
+     */
+    private static File existing(File dir, String hash, int width) {
+        String want = hash + "_" + width + "_";
+        for (java.util.Map.Entry<String, File> e : index(dir).entrySet()) {
+            String name = e.getKey();
+            if (!name.startsWith(want)) continue;
+            // A blur of a picture keeps this prefix too, and is not the picture. A .part is a download that died
+            // halfway through: the sweep that follows a read deletes both, but a half-written file is not artwork.
+            if (name.contains("_blur")) continue;
+            if (!(name.endsWith(".jpg") || name.endsWith(".png"))) continue;
+            if (sizeOf(name) == null) continue;   // a name that says nothing about its size is no use to a card
+            return e.getValue();
+        }
+        return null;
+    }
+
+    /**
+     * An artwork kept under the name used before the size went into it (`hash_440.jpg`): measured once, renamed to
+     * carry its size, and used. Fetching it again is not an option - a `content://` address is only good while the app
+     * that wrote it still means it, and Plex answers a second look with FileNotFoundException, so re-downloading the
+     * cache would have emptied the cards that were already filled.
+     */
+    private static File migrated(File dir, String hash, int width) {
+        for (String ext : new String[]{".jpg", ".png"}) {
+            File old = new File(dir, hash + "_" + width + ext);
+            if (!old.isFile()) continue;
+            BitmapFactory.Options o = new BitmapFactory.Options();
+            o.inJustDecodeBounds = true;
+            BitmapFactory.decodeFile(old.getPath(), o);
+            if (o.outWidth <= 0 || o.outHeight <= 0) return old;
+            File renamed = new File(dir, hash + "_" + width + "_" + o.outWidth + "x" + o.outHeight + ext);
+            if (!old.renameTo(renamed)) return old;   // a name it won't take is still the same picture
+            java.util.Map<String, File> ls = index(dir);
+            ls.remove(old.getName());
+            ls.put(renamed.getName(), renamed);
+            return renamed;
+        }
+        return null;
+    }
+
+    /** Folder listings, kept because a name's size is only known by reading the names: one readdir per folder per
+     *  read rather than one per card. Anything deleting artwork calls forget on the folder it swept. */
+    private static final java.util.Map<String, java.util.Map<String, File>> listing = new java.util.concurrent.ConcurrentHashMap<>();
+
+    private static java.util.Map<String, File> index(File dir) {
+        return listing.computeIfAbsent(dir.getPath(), k -> {
+            java.util.Map<String, File> m = new java.util.HashMap<>();
+            File[] fs = dir.listFiles();
+            if (fs != null) for (File f : fs) m.put(f.getName(), f);
+            return m;
+        });
+    }
+
+    /** A folder was swept: drop its listing so the next lookup reads the folder again. */
+    static void forget(File dir) { listing.remove(dir.getPath()); }
+
+    /** The pixels a name says it holds, or null when it says nothing. The hash is hex, so the only "x" in a name is
+     *  ours; a blur of a picture keeps its name and so keeps its size in it too. */
+    static int[] sizeOf(String name) {
+        int x = name.indexOf('x');
+        if (x <= 0) return null;
+        int ws = x;
+        while (ws > 0 && name.charAt(ws - 1) >= '0' && name.charAt(ws - 1) <= '9') ws--;
+        int hs = x + 1;
+        while (hs < name.length() && name.charAt(hs) >= '0' && name.charAt(hs) <= '9') hs++;
+        if (hs - ws < 3 || ws == x || hs == x + 1) return null;
+        try {
+            int w = Integer.parseInt(name.substring(ws, x)), h = Integer.parseInt(name.substring(x + 1, hs));
+            return w > 0 && h > 0 ? new int[]{w, h} : null;
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /** How wide one picture is for every dp of its height: 1.78 for a frame, 0.67 for a poster. Zero when the name
+     *  doesn't say, which is the same as saying "keep the card you would have used anyway". */
+    static float shape(File f) {
+        int[] wh = f == null ? null : sizeOf(f.getName());
+        return wh == null ? 0f : (float) wh[0] / wh[1];
+    }
+
+    /**
      * The artwork as a small JPEG on disk (at most `width` px wide), downloaded once per address; a PNG instead when it
      * has transparency (team logos), which JPEG would fill with black. Also used for channels and match cards.
+     * Its name keeps both the width asked for and the size the file really holds: a card wants to know the shape of
+     * its picture before decoding it, and the two widths only agree when the source is at least that big.
      */
     static File cached(Context c, File dir, String uri, int width) {
-        String base = key(uri) + "_" + width;
-        File f = new File(dir, base + ".jpg"), png = new File(dir, base + ".png");
-        if (f.isFile()) return f;
-        if (png.isFile()) return png;
+        String hash = key(uri);
+        File have = existing(dir, hash, width);
+        if (have != null) return have;
+        File kept = migrated(dir, hash, width);   // one already on disk, under the name it had then
+        if (kept != null) return kept;
         if (!dir.isDirectory() && !dir.mkdirs()) return null;
-        File raw = new File(dir, base + ".raw");
+        File raw = new File(dir, hash + "_" + width + ".raw");
         try (InputStream in = open(c.getContentResolver(), uri)) {
             if (in == null) return null;
             // The bytes land on disk before anything is decoded, so the picture can be measured and then read at a
@@ -270,7 +361,8 @@ final class WatchNext {
             }
             if (b.getWidth() > width) b = Bitmap.createScaledBitmap(b, width, Math.max(1, b.getHeight() * width / b.getWidth()), true);
             boolean alpha = b.hasAlpha();
-            File done = alpha ? png : f, tmp = new File(dir, done.getName() + ".part");
+            File done = new File(dir, hash + "_" + width + "_" + b.getWidth() + "x" + b.getHeight() + (alpha ? ".png" : ".jpg"));
+            File tmp = new File(dir, done.getName() + ".part");
             try (OutputStream out = new FileOutputStream(tmp)) {
                 b.compress(alpha ? Bitmap.CompressFormat.PNG : Bitmap.CompressFormat.JPEG, 85, out);
             }
@@ -280,6 +372,7 @@ final class WatchNext {
                 Log.w(TAG, "Artwork failed: could not keep " + done.getName());
                 return null;
             }
+            index(dir).put(done.getName(), done);   // the listing of this folder learns the file it just grew
             Log.i(TAG, "art " + shortOf(uri) + " " + o.outWidth + "x" + o.outHeight + " -> " + done.getName());
             return done;
         } catch (Exception e) {
