@@ -209,15 +209,33 @@ final class WatchNext {
         }
     }
 
-    /** Up to 1280 px: these fill the large card (about 1040 px on screen). */
-    private static File cached(Context c, File dir, String uri) { return cached(c, dir, uri, 1280); }
+    /** Up to 780 px: the large card is 331 dp wide, 662 px on a TV whose interface is 1920 px, and 780 is the step
+     * just above that. It used to be 1280, which asked for two and a half times the memory for pixels no card shows. */
+    private static File cached(Context c, File dir, String uri) { return cached(c, dir, uri, 780); }
+
+    /**
+     * The name an artwork is kept under: a digest of the whole address, not a 32-bit hash of it. Providers put a
+     * changing token in the address, and two of those differing only there landed on one file and shared one picture
+     * - which is what "TVE repeats images" looked like from here.
+     */
+    private static String key(String uri) {
+        byte[] d;
+        try {
+            d = java.security.MessageDigest.getInstance("MD5").digest(uri.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        } catch (java.security.NoSuchAlgorithmException e) {
+            return Integer.toHexString(uri.hashCode());
+        }
+        StringBuilder s = new StringBuilder(24);
+        for (int i = 0; i < 12; i++) s.append(Character.forDigit((d[i] >> 4) & 0xF, 16)).append(Character.forDigit(d[i] & 0xF, 16));
+        return s.toString();
+    }
 
     /**
      * The artwork as a small JPEG on disk (at most `width` px wide), downloaded once per address; a PNG instead when it
      * has transparency (team logos), which JPEG would fill with black. Also used for channels and match cards.
      */
     static File cached(Context c, File dir, String uri, int width) {
-        String base = Integer.toHexString(uri.hashCode()) + "_" + width;
+        String base = key(uri) + "_" + width;
         File f = new File(dir, base + ".jpg"), png = new File(dir, base + ".png");
         if (f.isFile()) return f;
         if (png.isFile()) return png;

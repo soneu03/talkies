@@ -161,7 +161,8 @@ END {
             dw = int(s[1] * 160 / dp + 0.5); dh = int(s[2] * 160 / dp + 0.5)
             printf "== The TV\n   %s, Android API %s\n   %s px at %d dpi = %dx%d dp\n",
                    model, sdk, wp, dp, dw, dh
-            print  "   a card measured in dp is that many px here: large 440dp = 880px (PicksRow LARGE_W),"
+            printf "   a card measured in dp is that many px here: large 331dp = %dpx (PicksRow LARGE_W),\n",
+                   int(331 * dp / 160 + 0.5)
             printf "   small 134dp = %dpx, tall 186dp = %dpx, channel 200x112dp = %dx%dpx\n",
                    int(134 * dp / 160 + 0.5), int(186 * dp / 160 + 0.5), int(200 * dp / 160 + 0.5), int(112 * dp / 160 + 0.5)
         }

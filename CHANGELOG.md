@@ -43,6 +43,13 @@ features, a new fix number only fixes. The version shows in Talkies settings →
   runs on a push), and says so when `versionName`, `versionCode` and CHANGELOG.md stop agreeing.
 
 ### Changed
+- **Artwork arrives at the size the card shows.** TMDB backdrops come at w780 instead of w1280, and what the apps
+  publish for Continue is kept at 780 px too: the large card is 331 dp, 662 px on a TV whose interface is 1920 px wide,
+  so the extra pixels were downloaded, decoded and thrown away - about a third of the memory per picture now. Posters
+  stay at w342, which already covers the small card's 268 px. Measured on the MiTV; the census still owes the same
+  numbers for the other two TVs.
+- **An artwork file is named for its whole address** (a digest of it) rather than a 32-bit hash of it, so two addresses
+  that differ only in a token can no longer land on one file and share one picture.
 - **The Control Center is half the screen, in three blocks.** Four big buttons across the top - Talkies settings,
   Recent apps, the sleep timer, Restart - then **On screen** as full rows (what's playing, the weather, an unpinned
   score) and **TV status** as two cells to a row. It used to be 350 dp of one long column, so the bottom of it was
@@ -84,6 +91,10 @@ features, a new fix number only fixes. The version shows in Talkies settings →
 ### Fixed
 - **Home stopped refreshing the weather, the scores and the picks after the TV woke from standby, and stayed stopped.**
   It asked Android whether its window still had focus; on the MiTV that answer stayed "no" for hours after a wakeup
+- **A picture of the other shape is shown whole.** A landscape artwork in a small portrait card was cropped to fill it,
+  and two of every five pixels of its width went with it - a title burned into the picture came out cut in half. Each
+  card now compares the two shapes and, when they don't match, shows the picture entire on a plate of its own colours.
+  A portrait picture reaching the large card is treated the same way.
   while Home was still the window on screen, and every refresh walked away. Whether something is over Home is now read
   from the window's own visibility, which Android sets as it happens. Refreshing resumed on the next minute, and a card
   row opened over Home still stops it.

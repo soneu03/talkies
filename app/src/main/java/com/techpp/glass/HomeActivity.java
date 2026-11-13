@@ -1837,9 +1837,10 @@ public class HomeActivity extends Activity {
     }
 
     /**
-     * Loads each pick card's picture for its size: the large card gets the full landscape picture (TMDB's 1280 px
-     * backdrop); small cards show the portrait poster, or a half-size landscape picture when there is no poster.
-     * Pictures a card no longer needs are released, so only one full-size picture is ever in memory.
+     * Loads each pick card's picture for its size: the large card takes the landscape picture (TMDB's backdrop), the
+     * small ones the portrait poster, or the landscape picture when an app shares no poster. A picture whose shape
+     * isn't the hole's shows whole instead of cropped; see loadInto. Pictures a card no longer needs are released, so
+     * only one full-size picture is ever in memory.
      */
     private void updatePickImages(int anchor) {
         for (int i = 0; i < picksRow.getChildCount() && i < rowPicks.size(); i++) {
@@ -1848,15 +1849,17 @@ public class HomeActivity extends Activity {
             ImageView back = item.findViewWithTag("backdrop"), poster = item.findViewWithTag("poster");
             if (back == null || poster == null) continue;
             boolean large = i == anchor, usePoster = !large && p.poster != null && p.poster.isFile();
-            if (usePoster) loadInto(poster, p.poster, 1, null);
+            // The hole's own shape, so a picture is judged against the card it is about to fill.
+            float hole = large ? (float) PicksRow.LARGE_W / PicksRow.CARD_H : (float) PicksRow.SMALL_W / PicksRow.CARD_H;
+            if (usePoster) loadInto(poster, p.poster, 1, hole, null);
             boolean hasImage = p.image != null && p.image.isFile();
             // Becoming the large card: the poster stays until the landscape picture is decoded (it was let go while
             // covered), else the card shows blank for a moment on slower TVs.
-            if (large && hasImage) loadInto(back, p.image, 1, () -> poster.animate().alpha(0f).setDuration(250).start());
+            if (large && hasImage) loadInto(back, p.image, 1, hole, () -> poster.animate().alpha(0f).setDuration(250).start());
             else poster.animate().alpha(usePoster ? 1f : 0f).setDuration(250).start();
             if (!hasImage) continue;
             if (large) continue;
-            else if (!usePoster) loadInto(back, p.image, 2, null);
+            else if (!usePoster) loadInto(back, p.image, 2, hole, null);
             else {
                 // Covered by the poster: let it go once the fade is done.
                 final ImageView b = back;
@@ -1898,6 +1901,7 @@ public class HomeActivity extends Activity {
         v.addOnLayoutChangeListener((view, l, t, r, b, ol, ot, or, ob) -> {
             int padX = Math.round((r - l) * 0.24f), padY = Math.round((b - t) * 0.22f);
             if (view.getPaddingLeft() != padX || view.getPaddingTop() != padY) view.post(() -> view.setPadding(padX, padY, padX, padY));
+            if (view.getTag(R.id.img_state) != null) return;  // real art has taken this card: it fills it, logo padding and all
         });
     }
 
@@ -1908,10 +1912,10 @@ public class HomeActivity extends Activity {
     }
 
     /**
-     * Decodes `file` at 1/`sample` size in the background and shows it, unless it's already showing; then runs `shown`
-     * (if any), also when it was already there or couldn't be decoded.
+     * Decodes `file` at 1/`sample` size in the background and shows it to fill or fit a hole of `hole` ratio, then
+     * runs `shown` (if any), also when it was already there or couldn't be decoded.
      */
-    private void loadInto(ImageView v, File file, int sample, Runnable shown) {
+    private void loadInto(ImageView v, File file, int sample, float hole, Runnable shown) {
         String want = file.getName() + "@" + sample;
         if (want.equals(v.getTag(R.id.img_state))) {
             // Showing, or on its way from an earlier call.
@@ -1921,19 +1925,40 @@ public class HomeActivity extends Activity {
         v.setTag(R.id.img_state, want);
         Bitmap ready = Pictures.ready(file, sample);
         if (ready != null) {
-            v.setImageBitmap(ready);
+            showIn(v, ready, hole);
             if (shown != null) shown.run();
             return;
         }
         Pictures.load(file, sample, b -> {
             if (!want.equals(v.getTag(R.id.img_state))) return;
-            if (b != null) v.setImageBitmap(b);
+            if (b != null) showIn(v, b, hole);
             if (shown != null) shown.run();
         });
     }
 
     /** Runs `shown` once `v` has its picture (checked every frame or so, for a second at most). */
     private void whenShown(ImageView v, String want, Runnable shown, int tries) {
+    /**
+     * A picture whose shape is near the card's fills it; one of the other shape sits whole on a plate of its own
+     * colours. Filling across shapes is what cut two of every five pixels off a landscape picture in a portrait card,
+     * a title burned into the art included.
+     */
+    private void showIn(ImageView v, Bitmap b, float hole) {
+        boolean fills = Math.abs((float) b.getWidth() / b.getHeight() - hole) <= 0.15f * hole;
+        View card = (View) v.getParent();
+        v.setScaleType(fills ? ImageView.ScaleType.CENTER_CROP : ImageView.ScaleType.FIT_CENTER);
+        Bitmap plate = fills ? null : RecentsCards.blurOf(new android.graphics.drawable.BitmapDrawable(getResources(), b));
+        if (plate != null) {
+            android.graphics.drawable.BitmapDrawable d = new android.graphics.drawable.BitmapDrawable(getResources(), plate);
+            d.setFilterBitmap(true);
+            card.setBackground(d);
+        } else {
+            v.setPadding(0, 0, 0, 0);
+            card.setBackgroundColor(theme.tileBg);
+        }
+        v.setImageBitmap(b);
+    }
+
         if (v.getDrawable() != null || tries > 60 || !want.equals(v.getTag(R.id.img_state))) shown.run();
         else v.postDelayed(() -> whenShown(v, want, shown, tries + 1), 16);
     }

@@ -39,26 +39,26 @@ El clima (**#21**, **#22**, **#23**) es independiente y puede ir en paralelo. El
 
 ## Arte de las filas (#25, #26) — antes que el aspecto
 
-Síntomas que cuenta él de memoria, con su explicación en el código:
+Síntomas que cuenta él de memoria, con su explicación en el código. Los tres de abajo están ya corregidos; lo que
+falta es comprobarlos en los TVs (#17), porque cada número de tamaño está medido solo en el MiTV.
 
-- **Continuar sale recortado, con fragmentos del título.** Bug de montaje, no de red: a las entradas de Continuar
-  solo se les guarda la miniatura horizontal del proveedor (`WatchNext.java:107`); el póster vertical se pone en el
-  único camino de ocultar spoilers (`:104`). El hueco pequeño es vertical (268x372 px) y se rellena con la horizontal
-  a `CENTER_CROP` (`HomeActivity.java:1810-1837`): se pierden ~2 de cada 5 px de ancho. Si el proveedor trae el título
-  quemado en la imagen, sale cortado.
-- **TVE repite imágenes.** Dos causas posibles, hoy indistinguibles: el proveedor publica la misma URI de arte para
-  varios episodios (una imagen por serie), o el archivo se nombra con el hash de la cadena URI
-  (`WatchNext.java:220`) y dos URIs distintas colisionan en 32 bits. La primera es dato real del proveedor; la segunda
-  es un fallo que hay que quitar.
-- **Plex: solo la primera y las demás ni salen.** Sospechoso firme: la imagen se decodifica entera en memoria
-  (`WatchNext.java:228`) y se encoje después (`:230`). Un fanart grande no cabe, `decodeStream` da null o lanza, la
-  función devuelve null (`:237-240`) y no se reintenta nunca. `landscape()` (`:172-177`) ya usa `inJustDecodeBounds`,
-  así que el patrón correcto existe en el repo; solo falta usarlo al decodificar.
+- **Continuar sale recortado, con fragmentos del título.** HECHO (2026-11-13): el hueco elige la forma del arte en
+  `HomeActivity.showIn` (`:1944`). Una foto cuya proporción se aleja más de un 15 % de la del hueco se ve entera
+  (`FIT_CENTER`) sobre un plato de sus propios colores (`RecentsCards.blurOf`); CENTER_CROP solo queda cuando las dos
+  formas ya se parecen, y ahí no recorta nada. Queda por ver en el TV si el plato convence a las tarjetas pequeñas.
+- **TVE repite imágenes.** HECHO la parte que era fallo nuestro: los archivos de arte se nombran con un MD5 de la
+  dirección entera (`WatchNext.key`, `:221`) y no con el hashCode de 32 bits, así que dos direcciones que solo
+  diferían en un token ya no caen en el mismo archivo. Si aún se repiten, es dato real del proveedor: publica la misma
+  URI para varios episodios, y `census-art.sh` lo dice.
+- **Plex: solo la primera y las demás ni salen.** HECHO con el límite al decodificar (`WatchNext.cached`, `:246-264`):
+  las bytes se guardan, se miden y se leen a un `inSampleSize`; un fanart de 4000 px ya no pide más memoria de la que
+  hay y el descodificador no devuelve null para siempre.
 
-Estrategia, por coste: límite al decodificar y tamaños TMDB que corresponden al hueco (w780 / w500 en vez de
-w1280 / w342) → clave de archivo por contenido y columna de origen registrada → el hueco elige la forma del arte
-(FIT_CENTER sobre plato desenfocado si no hay póster; nunca CENTER_CROP a otro ratio) → plato con el nombre cuando el
-proveedor no publica nada utilizable.
+Estrategia, y dónde está: límite al decodificar (hecho) → tamaños que corresponden al hueco (hecho: TMDB w780/w342 y
+el arte de los proveedores a 780 px; los pósteres se quedan en w342 porque el hueco pequeño son 268 px) → clave de
+archivo por la dirección entera (hecho) → el hueco elige la forma del arte (hecho) → plato con el nombre cuando el
+proveedor no publica nada utilizable (pendiente; hoy es `showAppLogo`, que pone el logotipo de la app en vez del
+nombre del título).
 
 ## Clima
 

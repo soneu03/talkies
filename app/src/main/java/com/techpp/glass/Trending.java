@@ -48,8 +48,12 @@ import java.util.concurrent.Executors;
 final class Trending {
     private static final String TAG = "GlassTrending";
     private static final String API = "https://api.themoviedb.org/3";
-    /** Backdrops at 1280 px for the large card (about 1040 px on screen); posters at 342 px for the small ones. */
-    private static final String BACKDROPS = "https://image.tmdb.org/t/p/w1280", POSTERS = "https://image.tmdb.org/t/p/w342";
+    /**
+     * Backdrops at 780 px and posters at 342: the large card is 331 dp (662 px where the interface is 1920 px wide)
+     * and the small ones 134 dp (268 px), so these are the TMDB steps just above each hole. w1280 asked for two and a
+     * half times the memory to fill a card that never showed the extra pixels.
+     */
+    private static final String BACKDROPS = "https://image.tmdb.org/t/p/w780", POSTERS = "https://image.tmdb.org/t/p/w342";
     /** The TV's country, read at each refresh (Region). */
     private String region = "US";
     private static final long REFRESH_MS = 6 * 3600_000L, RETRY_MS = 30 * 60_000L;
@@ -766,7 +770,7 @@ final class Trending {
         m.append(" · ").append(p.service);
         p.meta = m.toString();
         // Pictures are downloaded once all picks are chosen (downloadImages), several at a time.
-        p.image = new File(dir, kind + "_" + p.id + "_w1280.jpg");
+        p.image = new File(dir, kind + "_" + p.id + "_w780.jpg");
         p.backdropPath = o.getString("backdrop_path");
         String posterPath = o.optString("poster_path", "");
         if (!posterPath.isEmpty() && !posterPath.equals("null")) {
