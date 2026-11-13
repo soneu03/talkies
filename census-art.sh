@@ -150,6 +150,19 @@ sec == "d" {
     d[cwd]++
     dkb[cwd] += $5 / 1024
     if ($5 + 0 > biggest[cwd] + 0) { biggest[cwd] = $5; bigName[cwd] = $NF }
+    # What shape each kept picture is, read out of its name: a card is now cut to the shape of its picture, so the
+    # balance of posters to frames across a TV is what says whether that ever shows.
+    p = index($NF, "x")
+    if ($NF ~ /_blur/) p = 0   # a blur of a picture is that picture counted twice; the original is already here
+    if (p > 1) {
+        head = substr($NF, 1, p - 1); tail = substr($NF, p + 1)
+        w = 0; mul = 1
+        for (j = length(head); j >= 1; j--) { ch = substr(head, j, 1); if (ch < "0" || ch > "9") break; w = w + (ch - "0") * mul; mul *= 10 }
+        h = 0
+        for (j = 1; j <= length(tail); j++) { ch = substr(tail, j, 1); if (ch < "0" || ch > "9") break; h = h * 10 + (ch - "0") }
+        if (w > 0 && h > 0) { r = w / h; tot[cwd]++
+            if (r < 0.8) po[cwd]++; else if (r < 1.2) sq[cwd]++; else if (r < 1.55) fo[cwd]++; else fr[cwd]++ }
+    }
     next
 }
 
@@ -212,8 +225,14 @@ END {
     print "== On disk"
     printf "   %-34s %7s %8s  %s\n", "dir", "files", "KB", "biggest"
     cnt = keys_of(d, ks)
-    for (i = 1; i <= cnt; i++) { k = ks[i]; printf "   %-34s %7d %8d  %s\n", k, d[k], dkb[k], bigName[k] }
+    for (i = 1; i <= cnt; i++) { k = ks[i]
+        printf "   %-34s %7d %8d  %s\n", k, d[k], dkb[k], bigName[k]
+        if (tot[k] > 0) printf "       of those %d sized: frames %d, four-three %d, square %d, posters %d\n",
+                              tot[k], fr[k] + 0, fo[k] + 0, sq[k] + 0, po[k] + 0
+    }
     if (stray > 0) printf "   %d leftover .raw files (a download died halfway; the next load clears them)\n", stray
+    print "   shapes come from the size kept in each file name, so a card and its picture are decided by the same"
+    print "   number. Poster-only addresses show up there as posters, not as frames cut down to fit one."
 
     print ""
     print "== One file name from two different addresses (the bug, not the provider)"
