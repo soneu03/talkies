@@ -301,6 +301,11 @@ lo hace; otras mantienen su propio orden); el título y la descripción de la ta
 abre ese título en su app (por ejemplo, una tarjeta de JioHotstar abre la página de esa película). Las filas se
 renuevan cada vez que se abre la pantalla de inicio.
 
+Cada tarjeta mide 112 dp de alto y el ancho que **su propia imagen** pide a esa altura: 200 dp para un fotograma 16:9,
+149 para un 4:3, 75 para un póster 2:3. Una fila puede mezclar las dos formas; lo que ya no pasa es meter un póster en
+un marco 16:9, que era como se perdían dos tercios de cada tarjeta en las apps que solo publican póster. Sin imagen,
+la tarjeta vuelve a los 200 dp de siempre.
+
 **Elegir canales:** Talkies settings → **Channels** lista todos los canales que publican tus apps.
 
 - **OK** muestra o esconde un canal.
@@ -310,7 +315,9 @@ renuevan cada vez que se abre la pantalla de inicio.
 Para empezar, se muestran Watch Next y la fila de pantalla de inicio propia de cada app (las filas que una app pide a
 Android TV que muestre, o, cuando la TV no lo dice, como en Google TV, la primera fila de cada app); el resto empieza
 oculto, y también los canales que una app añada después. Una TV que ya tuvo Talkies antes de esto conserva las filas
-que tenía. Las imágenes se guardan en caché en la TV, en `files/channels/`.
+que tenía. Las imágenes se guardan en caché en la TV, en `files/channels/`; el nombre de cada archivo lleva el tamaño
+que ocupa (`…_440_440x247.jpg`), que es como sabe la fila su forma antes de decodificar nada y como `./census-art.sh`
+puede decir cuántos pósters guarda una TV sin sacar ningún archivo.
 
 ## El tiempo
 

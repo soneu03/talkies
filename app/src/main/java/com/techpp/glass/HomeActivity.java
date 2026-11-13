@@ -136,6 +136,9 @@ public class HomeActivity extends Activity {
     private List<Channels.Channel> chanRows = new ArrayList<>();
     private final List<android.widget.HorizontalScrollView> chanScrolls = new ArrayList<>();
     private final List<List<View>> chanCards = new ArrayList<>();
+    /** Where each card of a row starts inside it, in dp: cards are no longer all the same width, so the row can't be
+     *  slid by counting cards. */
+    private final List<int[]> chanLeft = new ArrayList<>();
     private int[] chanCol = new int[0];
     private int chanIdx;
     private String chanSignature = "";
@@ -1411,6 +1414,7 @@ public class HomeActivity extends Activity {
         chanScrolls.clear();
         chanSprings.clear();
         chanCards.clear();
+        chanLeft.clear();
         int[] old = chanCol;
         chanCol = new int[list.size()];
         for (int r = 0; r < list.size(); r++) {
@@ -1470,9 +1474,14 @@ public class HomeActivity extends Activity {
             track.setClipToPadding(false);
             track.setPadding(px(40), 0, px(960), 0);
             List<View> cards = new ArrayList<>();
-            int w = cardW(ch);
+            int[] left = new int[ch.items.size()];
+            int acc = 0;
             for (int i = 0; i < ch.items.size(); i++) {
-                View card = channelCard(ch.items.get(i));
+                Trending.Pick p = ch.items.get(i);
+                View card = channelCard(p);
+                int w = cardW(p);
+                left[i] = acc;
+                acc += w + CH_GAP;
                 LinearLayout.LayoutParams cl = new LinearLayout.LayoutParams(px(w), px(CH_H));
                 if (i > 0) cl.leftMargin = px(CH_GAP);
                 track.addView(card, cl);
@@ -1505,8 +1514,12 @@ public class HomeActivity extends Activity {
             channelsBox.addView(row, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, px(CHAN_ROW_H)));
             chanScrolls.add(hsv);
             chanCards.add(cards);
+            chanLeft.add(left);
             final int rr = r;
-            Spring sp = new Spring(0.34f, 1f, px(chanCol[rr] * (w + CH_GAP)), 0.25f);
+            // A row can arrive with no cards (an app that changed its mind while this was built), so the saved column
+            // is only trusted as far as the row goes.
+            int at = chanCol[rr] < left.length ? left[chanCol[rr]] : 0;
+            Spring sp = new Spring(0.34f, 1f, px(at), 0.25f);
             chanSprings.add(sp);
             hsv.post(() -> hsv.scrollTo(Math.round(sp.value), 0));
         }
@@ -1514,8 +1527,19 @@ public class HomeActivity extends Activity {
         layoutPage();
     }
 
-    /** Cricket cards are wider: a Test's scores ("425/9d & 84/1 (25)") need the room. */
-    private static int cardW(Channels.Channel ch) { return isScores(ch) ? CRICKET_W : CH_W; }
+    /**
+     * A card is as wide as its picture wants at the row's height: 200 dp for a 16:9 frame, which is all CH_W ever
+     * meant, and 75 dp for a 2:3 poster - so a poster keeps its shape instead of losing two thirds of itself inside a
+     * frame it was never made for. The height never moves: a row of mixed shapes is a row of mixed widths.
+     * Cricket cards keep theirs; there is no picture there, only two lines of numbers.
+     */
+    private static int cardW(Trending.Pick p) {
+        if (p.extra instanceof Cricket.Match) return CRICKET_W;
+        float s = WatchNext.shape(p.image);
+        if (s <= 0f) return CH_W;   // no picture, or one whose name says nothing: the card this row always had
+        if (Math.abs(s - (float) CH_W / CH_H) <= 0.05f * (float) CH_W / CH_H) return CH_W;
+        return Math.max(72, Math.min(CRICKET_W, Math.round(CH_H * s)));
+    }
 
     /** A card in a channel row: its artwork (loaded in the background), or the app's banner and the title. */
     private View channelCard(Trending.Pick p) {
@@ -1533,12 +1557,13 @@ public class HomeActivity extends Activity {
             showAppLogo(card, img, p.pkg);
         }
         if (p.progress >= 0) {
+            int bar = cardW(p) - 24;
             View fill = new View(this);
             fill.setBackground(rounded(0xFFFFFFFF, 0, 2));
             FrameLayout track = new FrameLayout(this);
             track.setBackground(rounded(0x4DFFFFFF, 0, 2));
-            track.addView(fill, new FrameLayout.LayoutParams(Math.round(px(CH_W - 24) * Math.max(0.02f, p.progress)), ViewGroup.LayoutParams.MATCH_PARENT));
-            FrameLayout.LayoutParams tl = new FrameLayout.LayoutParams(px(CH_W - 24), px(3));
+            track.addView(fill, new FrameLayout.LayoutParams(Math.round(px(bar) * Math.max(0.02f, p.progress)), ViewGroup.LayoutParams.MATCH_PARENT));
+            FrameLayout.LayoutParams tl = new FrameLayout.LayoutParams(px(bar), px(3));
             tl.gravity = android.view.Gravity.BOTTOM | android.view.Gravity.CENTER_HORIZONTAL;
             tl.bottomMargin = px(8);
             card.addView(track, tl);
@@ -2366,8 +2391,10 @@ public class HomeActivity extends Activity {
         int col = Math.max(0, Math.min(c, items.size() - 1));
         chanCol[chanIdx] = col;
         scrollPage(px(CHAN_TOP + chanIdx * CHAN_ROW_H - 64));
-        // Slide the row so the focused card sits at the left, like Projectivy.
-        if (chanIdx < chanSprings.size()) chanSprings.get(chanIdx).target = px(col * (cardW(chanRows.get(chanIdx)) + CH_GAP));
+        // Slide the row so the focused card sits at the left, like Projectivy. Where it sits is added up card by card,
+        // because a row now carries posters and frames side by side.
+        if (chanIdx < chanSprings.size() && chanIdx < chanLeft.size())
+            chanSprings.get(chanIdx).target = px(chanLeft.get(chanIdx)[col]);
         startMotion();
         for (int i = 0; i < channelsBox.getChildCount(); i++) {
             View caption = channelsBox.getChildAt(i).findViewWithTag("caption");

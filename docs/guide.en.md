@@ -280,6 +280,11 @@ others keep their own order); the focused card's title and description appear un
 opens that title in its app (for example a JioHotstar card opens that film's page). Rows refresh whenever the home
 screen opens.
 
+Every card is 112 dp tall and as wide as **its own picture** wants at that height: 200 dp for a 16:9 frame, 149 for a
+4:3, 75 for a 2:3 poster. A row can carry both shapes side by side; what no longer happens is a poster let into a 16:9 frame,
+which is how two thirds of a card went missing in the apps that publish nothing but posters. With no picture at all the
+card goes back to the 200 dp it always had.
+
 **Choose channels:** Talkies settings → **Channels** lists every channel your apps publish.
 
 - **OK** shows or hides a channel.
@@ -288,7 +293,9 @@ screen opens.
 To start with, Watch Next and each app's own home-screen row are shown (the rows an app asks Android TV to show,
 or, where the TV doesn't say, as on Google TV, each app's first row); the rest start hidden, and so do channels an
 app adds later. A TV that had Talkies before this keeps the rows it had.
-Artwork is cached on the TV in `files/channels/`.
+Artwork is cached on the TV in `files/channels/`. Each file's name carries the size it holds
+(`…_440_440x247.jpg`), which is how a row knows a picture's shape before decoding it, and how `./census-art.sh` can
+say how many posters a TV keeps without pulling a single file off it.
 
 ## Weather
 

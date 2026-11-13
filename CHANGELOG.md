@@ -53,6 +53,17 @@ features, a new fix number only fixes. The version shows in Talkies settings →
   runs on a push), and says so when `versionName`, `versionCode` and CHANGELOG.md stop agreeing.
 
 ### Changed
+- **A row of channels takes the shape of each picture in it.** Every card in one used to be 200 × 112 dp - a 16:9
+  frame - and the picture was cut to fill it. An app that publishes only a poster, Stremio among them, lost two thirds
+  of every card that way: a 240 × 360 poster let into a 400 × 224 px hole keeps the middle 224 of its 600 px, grown
+  1,7× to boot. The row keeps the height it always had and each card now takes the width *its own picture* wants at
+  that height: 200 dp for a frame (within 5 %, so a row of frames stays as even as it was), 149 dp for a 4:3, 75 dp for
+  a 2:3. A row can hold both, and the card no longer asks the picture to fit it. Measured over the 80 pictures a MiTV
+  holds: 68 frames, 7 four-three, 5 posters - so what changes is the few cards that only ever had posters, and a row
+  of frames does not move by a pixel. No picture keeps the 200 dp it had, and cricket scores the 280 they were given.
+  The size a picture ended up as is written into its file name (`…_440_440x247.jpg`), which is how a card knows the
+  shape before decoding anything; old names get fetched once more and then swept, so the first run asks for the cache
+  again (4,9 MB on that MiTV).
 - **Talkies settings and the Control Center open as a sheet.** The two menus worth reading now arrive in the middle of
   the screen - 672 dp wide, 70 % of Home's 960, and up to 472 tall - with the rest of Home dimmed behind them, the title
   at 24 sp, and a small line over it naming where you came from when you got there from the Control Center. Under the
@@ -161,6 +172,12 @@ features, a new fix number only fixes. The version shows in Talkies settings →
 - **`./census-art.sh`** (new) answers where every card picture came from: what each provider publishes, what Talkies
   fetched and what it could not, one file name reached from two different addresses, and the TV's screen in dp. It
   writes `artwork-census.txt`, which git ignores because it holds your titles.
+- **`./census-art.sh <tv>` reads a live TV again.** The check that the bundle exists ran before the script had written
+  one, so asking it about a TV stopped at "no bundle" - it belongs to `--from`, which reads a bundle somebody else
+  saved. And when `adb shell` has no right to read Watch Next, which is how that MiTV answers (`Unknown URI`), the
+  provider table printed no rows at all: that reads as the TV publishing nothing rather than as our own query being
+  refused, which is the wrong thing for a diagnostic to say. The refusal now prints where the table would be, and the
+  section on disk says how many of the cached pictures are frames, four-three, squares or posters.
 
 ## 1.3.0 — 12 November 2026
 
