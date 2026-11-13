@@ -49,6 +49,9 @@
     <string name="row_focus">Foco</string>
     <string name="row_effects">Efectos</string>
     <string name="row_meters">RAM y almacenamiento</string>
+    <string name="meter_ram">RAM</string>
+    <string name="meter_storage">Disco</string>
+    <string name="meter_free">%1$s libres</string>
     <string name="row_open_from_tile">Las apps se abren desde su tesela</string>
     <string name="row_country">País</string>
     <string name="row_for_you">Para ti</string>

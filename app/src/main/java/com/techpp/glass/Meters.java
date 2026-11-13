@@ -24,7 +24,7 @@ public class Meters extends View {
     private final float dp;
     private int text = 0xFFFFFFFF;
     private float ramUsed, storageUsed;
-    private String ramFree = "", storageFree = "";
+    private String ramName = "", storageName = "", ramFree = "", storageFree = "";
 
     public Meters(Context c, AttributeSet a) {
         super(c, a);
@@ -44,15 +44,18 @@ public class Meters extends View {
 
     /** Reads RAM and storage now. */
     void update() {
-        ActivityManager am = getContext().getSystemService(ActivityManager.class);
+        Context c = getContext();
+        ramName = c.getString(R.string.meter_ram);
+        storageName = c.getString(R.string.meter_storage);
+        ActivityManager am = c.getSystemService(ActivityManager.class);
         ActivityManager.MemoryInfo mi = new ActivityManager.MemoryInfo();
         am.getMemoryInfo(mi);
         ramUsed = mi.totalMem > 0 ? 1f - (float) mi.availMem / mi.totalMem : 0;
-        ramFree = gb(mi.availMem) + " free";
+        ramFree = c.getString(R.string.meter_free, gb(mi.availMem));
         try {
             StatFs fs = new StatFs(Environment.getDataDirectory().getPath());
             storageUsed = 1f - (float) fs.getAvailableBytes() / fs.getTotalBytes();
-            storageFree = gb(fs.getAvailableBytes()) + " free";
+            storageFree = c.getString(R.string.meter_free, gb(fs.getAvailableBytes()));
         } catch (RuntimeException e) {
             storageFree = "";
         }
@@ -68,8 +71,8 @@ public class Meters extends View {
     @Override
     protected void onDraw(Canvas c) {
         float w = getWidth(), h = getHeight();
-        row(c, "RAM", ramFree, ramUsed, 0, w);
-        row(c, "Storage", storageFree, storageUsed, h / 2f, w);
+        row(c, ramName, ramFree, ramUsed, 0, w);
+        row(c, storageName, storageFree, storageUsed, h / 2f, w);
     }
 
     /** A label and figure, with the bar under them, in the top or bottom half. */

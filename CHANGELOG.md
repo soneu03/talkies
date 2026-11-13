@@ -30,7 +30,7 @@ features, a new fix number only fixes. The version shows in Talkies settings →
 - **Talkies settings → Language**: Auto, English or Español. Following the TV is not enough on its own, because many
   TVs stay on "English (United States)" wherever they are sold. With nothing chosen yet the app starts in **Español**;
   Auto and English stay one press away.
-- **The whole interface is in resources now, in both languages** (497 strings, English and Spanish side by side):
+- **The whole interface is in resources now, in both languages** (500 strings, English and Spanish side by side):
   every menu, row, toast, title, the Home furniture (clock, date, weather line, score strip), the screensaver, the
   sleep timer and the remote-key screens. Spanish weekday and month names come from `Lang.wrap` also setting the
   default locale, not only the context. Weather's condition words and the names Talkies gives an HDMI device are
@@ -122,6 +122,16 @@ features, a new fix number only fixes. The version shows in Talkies settings →
   longer define a function called `sh`, which used to hide the shell itself.
 
 ### Fixed
+- **The sleep timer's button no longer cuts its own state in half.** "Temporizador de apagado" is two lines of Spanish,
+  and the box was 84 dp: icon, two lines and the state need about 90, so "Desactivado" arrived with its bottom gone. The
+  button is 96 dp now, which is also what the other three asked for.
+- **The storage cell stopped truncating its own figure.** "17,1 GB libres de 28,0 GB" measures 148 dp and its cap was
+  130, so it read "17,1 GB libres de 28…". The cap is 150 dp, and name plus figure still fit the 302 dp half of the
+  sheet they have.
+- **The RAM and storage line beside the icons speaks the language it is shown in.** It was the one piece of Home written
+  in code instead of resources - "Storage" and the word *free* were inside `Meters` - so a Spanish Home still read
+  "Storage 171 GB free". Three resources now, and the Spanish label is *Disco* because *Almacenamiento* next to its
+  figure wants 140 dp of the 112 that line has.
 - **Home stopped refreshing the weather, the scores and the picks after the TV woke from standby, and stayed stopped.**
   It asked Android whether its window still had focus; on the MiTV that answer stayed "no" for hours after a wakeup
   while Home was still the window on screen, and every refresh walked away. Whether something is over Home is now read

@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- One Control Center tile: four across the top of the sheet, each a thing you reach for while watching.
-     The sheet gives them 624 dp, so 150 apiece and 130 of that for words. Colours come from the theme in code,
-     as everywhere else. -->
+     The sheet gives them 624 dp, so 150 apiece and 130 of that for words. The height is the icon, two lines of
+     Spanish name ("Temporizador de apagado") and its state, so the state is not cut off at the bottom.
+     Colours come from the theme in code, as everywhere else. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="0dp"
-    android:layout_height="84dp"
+    android:layout_height="96dp"
     android:layout_weight="1"
     android:gravity="bottom"
     android:orientation="vertical"

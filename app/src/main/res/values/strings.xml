@@ -48,6 +48,9 @@
     <string name="row_focus">Focus</string>
     <string name="row_effects">Effects</string>
     <string name="row_meters">RAM and storage</string>
+    <string name="meter_ram">RAM</string>
+    <string name="meter_storage">Storage</string>
+    <string name="meter_free">%1$s free</string>
     <string name="row_open_from_tile">Apps open from their tile</string>
     <string name="row_country">Country</string>
     <string name="row_for_you">For You</string>
