@@ -30,7 +30,7 @@ features, a new fix number only fixes. The version shows in Talkies settings →
 - **Talkies settings → Language**: Auto, English or Español. Following the TV is not enough on its own, because many
   TVs stay on "English (United States)" wherever they are sold. With nothing chosen yet the app starts in **Español**;
   Auto and English stay one press away.
-- **The whole interface is in resources now, in both languages** (495 strings, English and Spanish side by side):
+- **The whole interface is in resources now, in both languages** (497 strings, English and Spanish side by side):
   every menu, row, toast, title, the Home furniture (clock, date, weather line, score strip), the screensaver, the
   sleep timer and the remote-key screens. Spanish weekday and month names come from `Lang.wrap` also setting the
   default locale, not only the context. Weather's condition words and the names Talkies gives an HDMI device are
@@ -53,6 +53,20 @@ features, a new fix number only fixes. The version shows in Talkies settings →
   runs on a push), and says so when `versionName`, `versionCode` and CHANGELOG.md stop agreeing.
 
 ### Changed
+- **Talkies settings and the Control Center open as a sheet.** The two menus worth reading now arrive in the middle of
+  the screen - 672 dp wide, 70 % of Home's 960, and up to 472 tall - with the rest of Home dimmed behind them, the title
+  at 24 sp, and a small line over it naming where you came from when you got there from the Control Center. Under the
+  panel a strip says what the two keys do here: *OK elige · Atrás vuelve* in the Control Center, *Atrás cierra* in
+  settings. Every other menu keeps the shape that suits it, a popover under the icon that opened it; the sheet is only
+  for the menus long enough to need it.
+- **Menus are slate, and read as printed on it.** The panel is `#39424F` at 94 % rather than near-black, which is the
+  difference between a white name glowing into a hole and one standing on a surface; the focused row is a rounded
+  square, not a stadium; the value at the right of a row has its own muted colour, so name-then-value reads as two
+  things instead of one shouty line; and section headings are cream capitals with no rule under them, which is what
+  separates the blocks now. The panel grew and the words did not: rows keep the 16 sp name and 14 sp value they always
+  had, now in a 40 dp box with 6 dp of air between, so the measure is the same and only the room around it is new -
+  measured with the two shipped faces, the longest line in settings takes 299 of the 616 dp it has. The day theme
+  follows all of it with its own three colours.
 - **The last card of a row no longer strands it.** Right at the end of the Continue row, or of any channel row, now
   lands on its first card, and left at the start lands on its last: a fresh press wraps, the way Up and Down already do
   in a menu, and a key still held down stops at the end instead of racing round the row.
@@ -69,7 +83,7 @@ features, a new fix number only fixes. The version shows in Talkies settings →
   numbers for the other two TVs.
 - **An artwork file is named for its whole address** (a digest of it) rather than a 32-bit hash of it, so two addresses
   that differ only in a token can no longer land on one file and share one picture.
-- **The Control Center is half the screen, in three blocks.** Four big buttons across the top - Talkies settings,
+- **The Control Center is two columns wide, in three blocks.** Four big buttons across the top - Talkies settings,
   Recent apps, the sleep timer, Restart - then **On screen** as full rows (what's playing, the weather, an unpinned
   score) and **TV status** as two cells to a row. It used to be 350 dp of one long column, so the bottom of it was
   eight presses away. Left and Right now walk along a line instead of closing it, and only close it past the edge -

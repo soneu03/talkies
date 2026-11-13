@@ -2,7 +2,9 @@
 <!-- A row in the Inputs or Control Center menu; colours are set in code per theme. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="44dp"
+    android:layout_height="40dp"
+    android:layout_marginTop="3dp"
+    android:layout_marginBottom="3dp"
     android:gravity="center_vertical"
     android:orientation="horizontal"
     android:paddingStart="14dp"

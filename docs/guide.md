@@ -46,9 +46,11 @@ está apagado, como el resto de la TV.
 
 ## Control Center
 
-Sube hasta los botones de iconos y elige el primero (los deslizadores). Ocupa media pantalla y va en tres bloques:
-cuatro botones grandes arriba para lo que tocas mientras ves algo, debajo **lo que hay en pantalla ahora**, y al final
-**el estado de la TV** en dos columnas. Todo lo que se ajusta una vez está en **Talkies settings**, arriba.
+Sube hasta los botones de iconos y elige el primero (los deslizadores). Se abre como hoja centrada de 672 dp (el 70 %
+del ancho) y va en tres bloques: cuatro botones grandes arriba para lo que tocas mientras ves algo, debajo **lo que hay
+en pantalla ahora**, y al final **el estado de la TV** en dos columnas. Abajo, una línea recuerda qué hacen OK y Atrás.
+**Talkies settings** es la misma hoja: se abre en el centro, sale de ahí con Atrás y arriba pone de dónde viene. Todo lo
+que se ajusta una vez está en **Talkies settings**, arriba.
 
 Izquierda y derecha recorren los botones de arriba y las parejas de celdas; al salir del borde cierran el menú, como
 siempre. Arriba y abajo pasan de línea y recuerdan en qué columna estabas.

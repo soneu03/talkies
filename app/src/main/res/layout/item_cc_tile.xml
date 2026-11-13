@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- One Control Center tile: four across the top of the menu, each a thing you reach for while watching.
-     Four of them share 464 dp, so 110 apiece and 86 of that for words - the label takes two lines because the
-     Spanish names are long ("Temporizador de apagado"). Colours come from the theme in code, as everywhere else. -->
+<!-- One Control Center tile: four across the top of the sheet, each a thing you reach for while watching.
+     The sheet gives them 624 dp, so 150 apiece and 130 of that for words. Colours come from the theme in code,
+     as everywhere else. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="0dp"
     android:layout_height="84dp"
@@ -27,7 +27,7 @@
         android:ellipsize="end"
         android:fontFamily="@font/plus_jakarta_sans"
         android:maxLines="2"
-        android:textSize="13sp" />
+        android:textSize="14sp" />
 
     <TextView
         android:id="@+id/input_status"
@@ -37,6 +37,6 @@
         android:ellipsize="end"
         android:fontFamily="@font/inter_tight"
         android:singleLine="true"
-        android:textSize="10sp"
+        android:textSize="12sp"
         android:visibility="gone" />
 </LinearLayout>

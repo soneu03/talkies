@@ -44,9 +44,11 @@ everything they do can also be done on the TV, in Talkies settings.
 
 ## Control Center
 
-Go up to the icon buttons and choose the first one (sliders). It takes half the screen in three blocks: four big
-buttons across the top for what you touch while watching, below them **what's on screen right now**, and at the
-bottom **TV status** in two columns. Everything you set once is in **Talkies settings**, at the top.
+Go up to the icon buttons and choose the first one (sliders). It opens as a sheet in the middle of the screen, 672 dp
+wide - 70 % of it - in three blocks: four big buttons across the top for what you touch while watching, below them
+**what's on screen right now**, and at the bottom **TV status** in two columns. A line under the sheet says what OK and
+Back do. **Talkies settings** is the same sheet: it opens centred, Back leaves it, and its top line says where it came
+from. Everything you set once is in **Talkies settings**, at the top.
 
 Left and Right walk the top buttons and the pairs of cells; past the edge they close the menu, as always. Up and Down
 change line and remember which column you were in.

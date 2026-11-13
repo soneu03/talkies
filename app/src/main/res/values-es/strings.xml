@@ -32,6 +32,8 @@
     <string name="heading_apps_inputs">Apps y entradas</string>
     <string name="heading_remote_power">Mando y encendido</string>
     <string name="heading_talkies">Talkies</string>
+    <string name="sheet_hint_close">OK elige · Atrás cierra</string>
+    <string name="sheet_hint_return">OK elige · Atrás vuelve</string>
     <string name="heading_on_screen">En pantalla</string>
     <string name="heading_tv_status">Estado de la TV</string>
     <string name="heading_continue_apps">Por app · todo lo que esa app aporta</string>
@@ -270,7 +272,7 @@
     <string name="cc_network">Red</string>
     <string name="cc_bluetooth">Bluetooth</string>
     <string name="cc_sound_output">Salida de sonido</string>
-    <string name="cc_soundbar">Barra de sonido conectada</string>
+    <string name="cc_soundbar">Barra de sonido</string>
     <string name="cc_tv_speakers">Altavoces del TV</string>
     <string name="cc_restart">Reiniciar…</string>
     <string name="cc_shortcuts_title">Atajos del Centro de mando  ·  lo que abre cada fila</string>

@@ -284,4 +284,15 @@
             android:orientation="vertical"
             android:padding="8dp" />
     </ScrollView>
+
+    <!-- The helper line under a sheet (Talkies settings and the Control Center): what OK and Atrás do here.
+         Placed and coloured in code, and only those two menus show it. -->
+    <TextView
+        android:id="@+id/menu_foot"
+        android:layout_width="wrap_content"
+        android:layout_height="34dp"
+        android:fontFamily="@font/inter_tight"
+        android:gravity="center"
+        android:textSize="12sp"
+        android:visibility="gone" />
 </FrameLayout>

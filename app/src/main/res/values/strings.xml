@@ -31,6 +31,8 @@
     <string name="heading_apps_inputs">Apps and inputs</string>
     <string name="heading_remote_power">Remote and power</string>
     <string name="heading_talkies">Talkies</string>
+    <string name="sheet_hint_close">OK chooses · Back closes</string>
+    <string name="sheet_hint_return">OK chooses · Back returns</string>
     <string name="heading_on_screen">On screen</string>
     <string name="heading_tv_status">TV status</string>
     <string name="heading_continue_apps">By app · everything that app brings</string>
@@ -269,7 +271,7 @@
     <string name="cc_network">Network</string>
     <string name="cc_bluetooth">Bluetooth</string>
     <string name="cc_sound_output">Sound output</string>
-    <string name="cc_soundbar">Soundbar connected</string>
+    <string name="cc_soundbar">Soundbar</string>
     <string name="cc_tv_speakers">TV speakers</string>
     <string name="cc_restart">Restart…</string>
     <string name="cc_shortcuts_title">Control Center shortcuts  ·  what each row opens</string>

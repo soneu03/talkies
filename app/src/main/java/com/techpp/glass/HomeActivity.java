@@ -117,7 +117,7 @@ public class HomeActivity extends Activity {
     private int gridCols = 6, gridTileW = 133, gridTileH = 75;
     private LinearLayout dock, grid, menu, channelsBox;
     private android.widget.ScrollView menuScroll;
-    private TextView title, info, credit, allAppsLabel, moveHint;
+    private TextView title, info, credit, allAppsLabel, moveHint, menuFoot;
     private TextView[] tabs;
     private ImageView[] icons;
     private PicksRow picksRow;
@@ -185,6 +185,9 @@ public class HomeActivity extends Activity {
     private final List<Boolean> menuKeepsOpen = new ArrayList<>();
     /** The rare menu whose focused row answers to the side keys rather than leaving: Continue's choice per row. */
     private java.util.function.IntPredicate menuSideKeys;
+    /** Talkies settings and the Control Center: a sheet in the middle of the screen, with its helper line under it. */
+    private boolean menuSheet;
+    private String menuHint;
     private View focusedView;
 
     // The ring and the page scroll.
@@ -311,6 +314,7 @@ public class HomeActivity extends Activity {
         grid = findViewById(R.id.grid);
         menu = findViewById(R.id.menu);
         menuScroll = findViewById(R.id.menu_scroll);
+        menuFoot = findViewById(R.id.menu_foot);
         // A long menu fades out at the edge it's cut at, so it reads as "there's more" rather than a row sliced in half.
         menuScroll.setVerticalFadingEdgeEnabled(true);
         menuScroll.setFadingEdgeLength(Math.round(36 * getResources().getDisplayMetrics().density));
@@ -364,7 +368,8 @@ public class HomeActivity extends Activity {
     /** Colours for the light (day) and dark (night) looks. */
     private static final class Theme {
         int bgTop, bgBottom, text, text2, iconBg, iconStroke, iconFocusBg, iconFocusFg, band, bandStroke,
-                scrimTop, scrimMid, scrimBottom, menuBg, menuStroke, menuFocusBg, menuFocusText, tileBg;
+                scrimTop, scrimMid, scrimBottom, menuBg, menuStroke, menuFocusBg, menuFocusText, menuValue, menuAccent,
+                tileBg;
         float ambientAlpha;
 
         static Theme of(boolean day) {
@@ -375,13 +380,17 @@ public class HomeActivity extends Activity {
                 t.band = 0x94FFFFFF; t.bandStroke = 0xF2FFFFFF;
                 t.scrimTop = 0x8CF5F6F8; t.scrimMid = 0x33EBEEF2; t.scrimBottom = 0xA6E2E5EA;
                 t.menuBg = 0xF7FFFFFF; t.menuStroke = 0x14000000; t.menuFocusBg = 0xFF1D1D1F; t.menuFocusText = 0xFFFFFFFF;
+                t.menuValue = 0xFF6A6A70; t.menuAccent = 0xFF8A6D1F;
                 t.tileBg = 0xFFD9DCE1; t.ambientAlpha = 0.5f;
             } else {
+                // A slate panel rather than a near-black one: the rows read as printed on something, and a white
+                // name on slate needs less contrast to be legible than one on black.
                 t.bgTop = 0xFF121419; t.bgBottom = 0xFF08090C; t.text = 0xFFF5F5F7; t.text2 = 0xFFB4B4BC;
                 t.iconBg = 0x1AFFFFFF; t.iconStroke = 0x1FFFFFFF; t.iconFocusBg = 0xFFF5F5F7; t.iconFocusFg = 0xFF111113;
                 t.band = 0x12FFFFFF; t.bandStroke = 0x1FFFFFFF;
                 t.scrimTop = 0x5908090C; t.scrimMid = 0x2608090C; t.scrimBottom = 0xB308090C;
-                t.menuBg = 0xF61C1C20; t.menuStroke = 0x2EFFFFFF; t.menuFocusBg = 0xFFF5F5F7; t.menuFocusText = 0xFF111113;
+                t.menuBg = 0xF039424F; t.menuStroke = 0x2EFFFFFF; t.menuFocusBg = 0xFFF5F5F7; t.menuFocusText = 0xFF111113;
+                t.menuValue = 0xFFA8B4C4; t.menuAccent = 0xFFE3D393;
                 t.tileBg = 0xFF232326; t.ambientAlpha = 0.65f;
             }
             return t;
@@ -2859,15 +2868,19 @@ public class HomeActivity extends Activity {
         menuAnchor = anchor;
         menuTile = null;
         menuClosed = null;
+        menuSheet = false;
+        menuHint = null;
         menuItems.clear();
         menuActions.clear();
         menuKeepsOpen.clear();
         menuSideKeys = null;
         menuMode = MENU_PLAIN;
         menuScroll.animate().cancel();
+        menuFoot.animate().cancel();
+        menuFoot.setVisibility(View.GONE);
         menu.removeAllViews();
-        menu.setPadding(px(8), px(8), px(8), px(8));  // What's new widens it
-        menuScroll.setBackground(rounded(theme.menuBg, theme.menuStroke, 20));
+        menu.setPadding(px(14), px(10), px(14), px(10));  // What's new widens it
+        menuScroll.setBackground(menuPanelBg(false));
         menuScroll.scrollTo(0, 0);
         if (heading != null) {
             TextView h = new TextView(this);
@@ -2879,6 +2892,55 @@ public class HomeActivity extends Activity {
             h.setPadding(px(14), px(8), px(14), px(6));
             menu.addView(h);
         }
+    }
+
+    /**
+     * A menu drawn as a sheet: the same 672 × 472 dp panel in the middle of the screen every time, its name big, the
+     * page it came from above that, and a line under it saying what OK and Atrás do. Only Talkies settings and the
+     * Control Center use it; everything else stays a popover beside the icon that opened it, which is what makes a
+     * short menu feel attached to the thing it's about.
+     */
+    private void beginSheet(int anchor, String crumb, String title, String hint) {
+        beginMenu(anchor, null);
+        menuSheet = true;
+        menuHint = hint;
+        if (crumb != null) {
+            TextView c = new TextView(this);
+            c.setText(crumb);
+            c.setTag("menuCrumb");
+            c.setTextSize(12);
+            c.setTextColor(theme.menuValue);
+            c.setPadding(px(26), px(6), px(26), 0);
+            menu.addView(c);
+        }
+        TextView h = new TextView(this);
+        h.setText(title);
+        h.setTag("menuTitle");
+        h.setTextSize(24);
+        h.setTextColor(theme.text);
+        h.setTypeface(Fonts.title(this, 700));
+        h.setPadding(px(26), px(2), px(26), px(8));
+        menu.addView(h);
+    }
+
+    /** The panel behind a menu: all four corners and a rim for a popover. A sheet drops the rim and rounds only its
+     * top, because its helper line carries the bottom two and the two have to read as one piece. */
+    private GradientDrawable menuPanelBg(boolean sheet) {
+        GradientDrawable g = new GradientDrawable();
+        float r = px(24), n = 0;
+        g.setColor(theme.menuBg);
+        g.setCornerRadii(sheet ? new float[]{r, r, r, r, n, n, n, n} : new float[]{r, r, r, r, r, r, r, r});
+        if (!sheet) g.setStroke(px(1), theme.menuStroke);
+        return g;
+    }
+
+    /** The helper line under a sheet: the panel's own colour, with only its bottom corners round. */
+    private GradientDrawable menuFootBg() {
+        GradientDrawable g = new GradientDrawable();
+        float r = px(24), n = 0;
+        g.setColor(theme.menuBg);
+        g.setCornerRadii(new float[]{n, n, n, n, r, r, r, r});
+        return g;
     }
 
     /**
@@ -3038,6 +3100,7 @@ public class HomeActivity extends Activity {
     }
 
     private void showMenu(int widthDp) {
+        if (menuSheet) { showSheet(widthDp); return; }
         RectF a = new RectF(rectOf(menuTile != null ? menuTile : icons[menuAnchor]));
         FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) menuScroll.getLayoutParams();
         lp.width = px(widthDp);
@@ -3067,6 +3130,42 @@ public class HomeActivity extends Activity {
         focusMenu(0);
     }
 
+    /**
+     * The sheet: 672 dp wide and up to 472 tall, in the middle of the screen, so it lands in the same place whether
+     * you came from the gear or from the Control Center. A short one stops where its rows do; a long one (settings)
+     * keeps the height and scrolls inside. The helper line sits against its bottom edge.
+     */
+    private void showSheet(int widthDp) {
+        int w = px(widthDp), foot = px(34), max = px(472);
+        int screenW = getResources().getDisplayMetrics().widthPixels, screenH = getResources().getDisplayMetrics().heightPixels;
+        menuScroll.setBackground(menuPanelBg(true));
+        menu.measure(View.MeasureSpec.makeMeasureSpec(w, View.MeasureSpec.EXACTLY), View.MeasureSpec.UNSPECIFIED);
+        int h = Math.min(max - foot, Math.max(px(120), Math.min(menu.getMeasuredHeight(), screenH - foot - px(32))));
+        FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) menuScroll.getLayoutParams();
+        lp.width = w;
+        lp.height = h;
+        lp.leftMargin = (screenW - w) / 2;
+        lp.topMargin = Math.max(px(16), (screenH - (h + foot)) / 2);
+        menuScroll.setLayoutParams(lp);
+        FrameLayout.LayoutParams fp = (FrameLayout.LayoutParams) menuFoot.getLayoutParams();
+        fp.width = w;
+        fp.leftMargin = lp.leftMargin;
+        fp.topMargin = lp.topMargin + h;
+        menuFoot.setLayoutParams(fp);
+        menuFoot.setText(menuHint);
+        menuFoot.setTextColor(theme.menuValue);
+        menuFoot.setBackground(menuFootBg());
+        menuFoot.setVisibility(View.VISIBLE);
+        menuFoot.setAlpha(0f);
+        menuFoot.animate().alpha(1f).setDuration(150).start();
+        menuScroll.setVisibility(View.VISIBLE);
+        menuScroll.setAlpha(0f);
+        menuScroll.setTranslationY(-px(6));
+        menuScroll.animate().alpha(1f).translationY(0).setDuration(150).start();
+        zone = Z_MENU;
+        focusMenu(0);
+    }
+
     /** One line up or down: to its neighbour if there is one, else to the menu's other end if the key was tapped. */
     private void stepMenu(int to, int end) {
         if (to >= 0) focusMenu(to);
@@ -3084,9 +3183,9 @@ public class HomeActivity extends Activity {
                 ((TextView) row.findViewById(R.id.input_label)).setTextColor(f ? theme.text : theme.text2);
                 continue;
             }
-            row.setBackground(f ? rounded(theme.menuFocusBg, 0, 12) : (android.graphics.drawable.Drawable) row.getTag(R.id.cc_resting));
+            row.setBackground(f ? rounded(theme.menuFocusBg, 0, 14) : (android.graphics.drawable.Drawable) row.getTag(R.id.cc_resting));
             ((TextView) row.findViewById(R.id.input_label)).setTextColor(f ? theme.menuFocusText : theme.text);
-            ((TextView) row.findViewById(R.id.input_status)).setTextColor(f ? (theme.menuFocusText & 0x00FFFFFF) | 0x99000000 : theme.text2);
+            ((TextView) row.findViewById(R.id.input_status)).setTextColor(f ? (theme.menuFocusText & 0x00FFFFFF) | 0x99000000 : theme.menuValue);
             ImageView g = row.findViewById(R.id.cc_glyph);
             if (g != null) g.setColorFilter(f ? theme.menuFocusText : theme.text2, PorterDuff.Mode.SRC_IN);
         }
@@ -3102,6 +3201,7 @@ public class HomeActivity extends Activity {
 
     private void closeMenu() {
         menuScroll.animate().alpha(0f).setDuration(110).withEndAction(() -> menuScroll.setVisibility(View.GONE)).start();
+        menuFoot.animate().alpha(0f).setDuration(110).withEndAction(() -> menuFoot.setVisibility(View.GONE)).start();
         if (menuMode == MENU_CHANNELS && channelsEdited) refreshChannels();
         menuMode = MENU_PLAIN;
         Runnable back = menuClosed;
@@ -4868,22 +4968,19 @@ public class HomeActivity extends Activity {
      * A section's name in a menu ("NEW", "LOOK"): a thin rule (after the first rows), then a small, spaced-out label in
      * the quieter text colour, so it reads as a divider, not as one more row. The arrows pass over both.
      */
+    /**
+     * A section inside a menu. Warm cream and letterspaced rather than a rule and a grey line, so the eye reads the
+     * groups before it reads the rows - the one thing that makes Lienzo's settings look clearer at a glance.
+     */
     private void addMenuHeading(String text) {
-        if (!menuItems.isEmpty()) {
-            View rule = new View(this);
-            rule.setTag("rule");
-            rule.setBackgroundColor(theme.menuStroke);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Math.max(1, px(1) / 2));
-            lp.setMargins(px(14), px(10), px(14), 0);
-            menu.addView(rule, lp);
-        }
         TextView h = new TextView(this);
         h.setText(text.toUpperCase(Locale.ROOT));
-        h.setTextSize(11);
-        h.setLetterSpacing(0.12f);
-        h.setTextColor(theme.text2);
+        h.setTag("menuHead");
+        h.setTextSize(12);
+        h.setLetterSpacing(0.06f);
+        h.setTextColor(theme.menuAccent);
         h.setTypeface(Fonts.title(this, 700));
-        h.setPadding(px(14), px(12), px(14), px(4));
+        h.setPadding(px(26), px(14), px(26), px(2));
         menu.addView(h);
     }
 
@@ -5003,12 +5100,12 @@ public class HomeActivity extends Activity {
     private static final int REQ_BLUETOOTH = 7;
 
     /**
-     * Half the screen, in three blocks: the four you reach for while watching across the top, what the TV has on
-     * screen right now as full rows, and the facts about the TV as two cells to a row. Wide enough that none of it
-     * needs scrolling, so nothing here is more than a step from the gear.
+     * The sheet, in three blocks: the four you reach for while watching across the top, what the TV has on screen
+     * right now as full rows, and the facts about the TV as two cells to a row. 672 dp wide, so none of it needs
+     * scrolling and nothing here is more than a step from the gear.
      */
     private void openControlCenter() {
-        beginMenu(P_CONTROL, getString(R.string.cc_title));
+        beginSheet(P_CONTROL, null, getString(R.string.cc_title), getString(R.string.sheet_hint_return));
         if (serviceStopped) addRow(getString(R.string.cc_fix_home), getString(R.string.cc_fix_detail), () -> {
             Toast.makeText(this, getString(R.string.cc_fix_toast), Toast.LENGTH_LONG).show();
             start(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
@@ -5054,7 +5151,7 @@ public class HomeActivity extends Activity {
         speed[0] = addCell(getString(R.string.about_speed_test), lastSpeed, () -> runSpeedTest(speed[0]), true);
         if (Sleep.SUPPORTED) addCell(getString(R.string.cc_turn_off_now), null, () -> { if (!Sleep.now()) needsTurnOffSetup(); }, false);
         padLastCellLine();
-        showMenu(480);   // half of Home's 960 dp
+        showMenu(672);   // the sheet: 70 % of Home's 960 dp
     }
 
     /**
@@ -5063,7 +5160,8 @@ public class HomeActivity extends Activity {
      */
     private void openTalkiesSettings(int anchor) {
         settingsAt = anchor;
-        beginMenu(anchor, getString(R.string.talkies_settings));
+        beginSheet(anchor, anchor == P_CONTROL ? getString(R.string.cc_title) : null,
+                getString(R.string.talkies_settings), getString(R.string.sheet_hint_close));
         // What a new TV still needs (only while something does), then the rows in groups: how Home looks, what
         // it shows, the apps and inputs, the remote and power, and Talkies itself.
         int missing = setupMissing();
@@ -5080,12 +5178,16 @@ public class HomeActivity extends Activity {
             day = isDayNow();
             applyTheme();
             // Restyle the open menu too.
-            menuScroll.setBackground(rounded(theme.menuBg, theme.menuStroke, 20));
-            // The title, the group headings and their rules: what isn't a row.
+            menuScroll.setBackground(menuPanelBg(menuSheet));
+            menuFoot.setBackground(menuFootBg());
+            menuFoot.setTextColor(theme.menuValue);
+            // The title, the page it came from and the group headings: what isn't a row.
             for (int i = 0; i < menu.getChildCount(); i++) {
                 View v = menu.getChildAt(i);
-                if (v instanceof TextView && !menuItems.contains(v)) ((TextView) v).setTextColor("menuTitle".equals(v.getTag()) ? theme.text : theme.text2);
-                else if ("rule".equals(v.getTag())) v.setBackgroundColor(theme.menuStroke);
+                if (!(v instanceof TextView) || menuItems.contains(v)) continue;
+                Object tag = v.getTag();
+                ((TextView) v).setTextColor("menuTitle".equals(tag) ? theme.text
+                        : "menuCrumb".equals(tag) ? theme.menuValue : theme.menuAccent);
             }
             focusMenu(menuIdx);
         }, true);
@@ -5317,7 +5419,7 @@ public class HomeActivity extends Activity {
         adb[0] = addRow(getString(R.string.row_network_debugging), getString(R.string.state_checking), this::openNetworkDebugging, false);
         checkNetworkDebugging(st -> { if (adb[0].isAttachedToWindow()) setStatus(adb[0], st); });
         addRow(getString(R.string.row_about), null, this::openAbout, false);
-        showMenu(350);
+        showMenu(672);   // the sheet: 70 % of Home's 960 dp
     }
 
     /** How many installed apps have a phone launcher entry but no TV one (Talkies settings → Phone apps). */
@@ -6628,6 +6730,8 @@ public class HomeActivity extends Activity {
         if (menuMoving) endMenuMove(false);
         if (zone == Z_MENU) {
             menuScroll.setVisibility(View.GONE);
+            menuFoot.animate().cancel();
+            menuFoot.setVisibility(View.GONE);
             if (menuMode == MENU_CHANNELS && channelsEdited) refreshChannels();
             menuMode = MENU_PLAIN;
             zone = Z_TOP;
