@@ -37,6 +37,14 @@ final class DebugState {
         return Settings.Global.getInt(c.getContentResolver(), WIFI_ENABLED, 0) != 0;
     }
 
+    /**
+     * Whether a computer can get in right now, in code rather than in words: the text below is translated, and a
+     * caller that reads it looks for the English one. Waits up to 400 ms for the port, so not on the UI thread.
+     */
+    static boolean reachable(Context c) {
+        return wifiSwitch(c) || adbOn(c) && listening(c);
+    }
+
     /** Off · On · Wi-Fi · On · port 5555 · USB only. Waits up to 400 ms for the port, so not on the UI thread. */
     static String wirelessText(Context c) {
         if (wifiSwitch(c)) return c.getString(R.string.dbg_wifi_on);

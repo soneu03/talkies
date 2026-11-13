@@ -82,6 +82,15 @@ features, a new fix number only fixes. The version shows in Talkies settings →
   longer define a function called `sh`, which used to hide the shell itself.
 
 ### Fixed
+- **Home stopped refreshing the weather, the scores and the picks after the TV woke from standby, and stayed stopped.**
+  It asked Android whether its window still had focus; on the MiTV that answer stayed "no" for hours after a wakeup
+  while Home was still the window on screen, and every refresh walked away. Whether something is over Home is now read
+  from the window's own visibility, which Android sets as it happens. Refreshing resumed on the next minute, and a card
+  row opened over Home still stops it.
+- **The witness dot on the Settings icon was never red on a Spanish Home.** The colour came from reading the Network
+  debugging row's text and looking for the English word *On*, so with the interface in Spanish the wireless switch read
+  as off and the dot went pale however reachable the TV was. The reach is now asked in code, not in words, so the red
+  dot means a computer can get in - in either language, and on a TV whose old `adb_enabled` stays at 0.
 - **The focused card of a row showed only a strip of its picture.** It was 440 × 186, wider than any landscape
   picture the providers send (16:9), so the artwork lost its top and bottom and what was left read as a thin band.
   It is now 331 × 186 - the picture's own ratio - so the whole frame shows, and a fourth card peeks in beside it.

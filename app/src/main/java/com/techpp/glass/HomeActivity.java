@@ -4286,7 +4286,7 @@ public class HomeActivity extends Activity {
     private void refreshDebugDot() {
         background.execute(() -> {
             final boolean dev = DebugState.devOptions(this);
-            final boolean reachable = DebugState.wirelessText(this).startsWith("On");
+            final boolean reachable = DebugState.reachable(this);
             runOnUiThread(() -> setDebugDot(dev, reachable));
         });
     }
@@ -6467,8 +6467,12 @@ public class HomeActivity extends Activity {
      */
     private void refreshOnline() {
         android.os.PowerManager power = getSystemService(android.os.PowerManager.class);
-        if (!inFront || !hasWindowFocus() || power == null || !power.isInteractive()) {
-            Log.i(TAG, "Refresh skipped: " + (!inFront ? "another app in front" : !hasWindowFocus() ? "screensaver or dialog on top" : "display off"));
+        // Whether something is over Home is read from the window's own visibility, which Android sets as it happens: on
+        // the MiTV hasWindowFocus stayed false after a wakeup (2026-11-13) while Home was still the window on screen,
+        // and the weather and the scores stopped refreshing for good.
+        boolean behind = root == null || root.getWindowVisibility() != View.VISIBLE;
+        if (!inFront || behind || power == null || !power.isInteractive()) {
+            Log.i(TAG, "Refresh skipped: " + (!inFront ? "another app in front" : behind ? "screensaver or dialog on top" : "display off"));
             return;
         }
         if (sportsOn.contains("cricket")) cricket.refreshIfStale(this::onMatches);
