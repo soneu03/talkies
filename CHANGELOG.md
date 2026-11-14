@@ -136,6 +136,12 @@ features, a new fix number only fixes. The version shows in Talkies settings →
   commit it is building (`--force` still means it will listen).
 - **`./restore.sh` asks before uninstalling Talkies** (`--yes` for scripts and AI assistants), and the scripts no
   longer define a function called `sh`, which used to hide the shell itself.
+- **An artwork that will not load says which address it tried.** The warning used to name the host, which says nothing
+  when one host serves every picture an app has - Plex reads all of them from `images.plex.tv/photo`. It carries the
+  path and the *names* of the query's parameters now, never their values, because providers put tokens there and logcat
+  is readable over the network on some TVs. With the real address on the line, a MiTV named its two cases: Plex points
+  its cards at a provider its own app never registers, and Plezy hands out its shelf artwork one address at a time, so
+  its cards keep their pictures while Plezy has synced recently and fall back to its logo once it is killed.
 
 ### Fixed
 - **The sleep timer's button no longer cuts its own state in half.** "Temporizador de apagado" is two lines of Spanish,

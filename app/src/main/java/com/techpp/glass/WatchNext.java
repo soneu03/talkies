@@ -89,10 +89,11 @@ final class WatchNext {
                 if (position > 0 && duration > 0) p.progress = Math.min(1f, position / (float) duration);
                 p.at = cur.isNull(6) ? 0 : cur.getLong(6);
                 p.intentUri = str(cur, 10).isEmpty() ? null : str(cur, 10);
-                String art = !str(cur, 8).isEmpty() ? str(cur, 8) : str(cur, 9);
+                String wide = str(cur, 8), tall = str(cur, 9);
+                String art = !wide.isEmpty() ? wide : tall;
                 if (hideSpoilers && type == TvContract.WatchNextPrograms.WATCH_NEXT_TYPE_NEXT) {
-                    String posterArt = str(cur, 9);
-                    File poster = posterArt.isEmpty() || posterArt.equals(str(cur, 8)) ? null : cached(c, dir, posterArt);
+                    String posterArt = tall;
+                    File poster = posterArt.isEmpty() || posterArt.equals(wide) ? null : cached(c, dir, posterArt);
                     if (poster != null && landscape(poster)) {
                         p.image = poster;
                     } else {
@@ -376,8 +377,7 @@ final class WatchNext {
             Log.i(TAG, "art " + shortOf(uri) + " " + o.outWidth + "x" + o.outHeight + " -> " + done.getName());
             return done;
         } catch (Exception e) {
-            Uri u = Uri.parse(uri);
-            Log.w(TAG, "Artwork failed: " + e.getClass().getSimpleName() + " from " + u.getScheme() + "://" + u.getHost());
+            Log.w(TAG, "Artwork failed: " + e.getClass().getSimpleName() + " from " + shortOf(uri));
             return null;
         } finally {
             raw.delete();
@@ -386,13 +386,29 @@ final class WatchNext {
 
     /**
      * Where an artwork address came from, without its secrets: providers put tokens in the query, and logcat is
-     * readable over the network on some TVs.
+     * readable over the network on some TVs. The names of the query's parameters do go in, because without them three
+     * different pictures from one address - Plex serves all its art from images.plex.tv/photo - read as the same
+     * address tried three times.
      */
     private static String shortOf(String uri) {
         try {
             Uri u = Uri.parse(uri);
             String path = u.getPath() == null ? "" : u.getPath();
-            return u.getScheme() + "://" + u.getAuthority() + (path.length() > 90 ? path.substring(path.length() - 90) : path);
+            // Cut a long path at a "/", never through a character: cutting through one glues the folder behind it
+            // onto the authority, and the log names a provider that was never registered.
+            if (path.length() > 90) {
+                int keep = path.length() - 89;
+                int at = path.indexOf("/", keep + 1);
+                path = at < 0 ? "/…" : path.substring(at);
+            }
+            StringBuilder names = new StringBuilder();
+            for (String k : u.getQueryParameterNames()) {
+                if (names.length() > 0) names.append(",");
+                names.append(k);
+                if (names.length() > 60) break;
+            }
+            return u.getScheme() + "://" + u.getAuthority() + path
+                    + (names.length() > 0 ? "?" + names : "");
         } catch (Exception e) {
             return "an address that will not parse";
         }
